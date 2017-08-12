@@ -30,29 +30,29 @@ console.log("%j", packer.bins[1].rects); // [{"width":1000,"height":1000,"x":0,"
 console.log(packer.bins[2].width, packer.bins[2].height); // 1000 1020
 console.log("%j", packer.bins[2].rects); // [{"width":1000,"height":1000,"x":0,"y":0,"data":{"name":"overlay"}},{"width":600,"height":20,"x":0,"y":1000,"data":{"name":"flower"}}]
 ```
+
 ## Test
 ```
 npm test
 ```
 
-
 ## API
 
 Note: maxrects-packer requires node >= 4.0.0
 
-### ```new MaxRectsPacker(maxWidth, maxHeight[, padding])```
+#### ```new MaxRectsPacker(maxWidth, maxHeight[, padding])```
 Creates a new Packer. maxWidth and maxHeight are passed on to all bins. If ```padding``` is supplied all rects will be kept at least ```padding``` pixels apart.
 
-### ```packer.add(width, height, data)```
+#### ```packer.add(width, height, data)```
 Adds a rect to an existing bin or creates a new one to accomodate it. ```data``` can be anything, it will be stored along with the position data of each rect.
 
-### ```packer.addArray([{width: width, height: height, data: data}, ...])```
+#### ```packer.addArray([{width: width, height: height, data: data}, ...])```
 Adds multiple rects. Since the input is automatically sorted before adding this approach usually leads to fewer bins created than separate calls to ```.add()```
 
-### ```packer.bins```
+#### ```packer.bins```
 Array of bins. Every bin has a ```width``` and ```height``` parameter as well as an array ```rects```.
 
-### ```packer.bins[n].rects```
+#### ```packer.bins[n].rects```
 Array of rects for a specific bin. Every rect has ```x```, ```y```, ```width```, ```height``` and ```data```. In case of an rect exceeding ```maxWidth```/```maxHeight``` there will also be an ```oversized``` flag set to ```true```.
 
 ## Support for oversized rectangles
@@ -61,9 +61,10 @@ Nornally all bins are of equal size or smaller than ```maxWidth```/```maxHeight`
 ## Packing algorithm
 Use Max Rectangle Algorithm for packing, same as famous **Texture Packer**
   
-  Efficiency
+### Efficiency
+
 |  #  |   size   |   1024x2048:0   |   1024x2048:1   |   1024x1024:0   |   1024x1024:1   |   2048:2048:1   |
-|-----|----------|-----------------|-----------------|-----------------|-----------------|-----------------|
+| ---:| ---:     | :---            | :---            | :---            | :---            | :---            |
 |   0 |   589824 | 100% (1 bins)   | 100% (1 bins)   | 100% (1 bins)   | 100% (1 bins)   | 100% (1 bins)   |
 |   1 |  2359296 | 100% (1 bins)   | 100% (1 bins)   | 100% (1 bins)   | 100% (1 bins)   | 100% (1 bins)   |
 |   2 |   128214 | 62.9% (1 bins)  | 62% (1 bins)    | 80.8% (1 bins)  | 79.6% (1 bins)  | 79.6% (1 bins)  |
