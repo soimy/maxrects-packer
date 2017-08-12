@@ -1,4 +1,7 @@
 # Max Rects Packer
+[![Build Status](https://travis-ci.org/soimy/maxrects-packer.svg?branch=master)](https://travis-ci.org/soimy/maxrects-packer)
+[![Coverage Status](https://coveralls.io/repos/github/soimy/maxrects-packer/badge.svg?branch=master)](https://coveralls.io/github/soimy/maxrects-packer?branch=master)
+
 A max rectangle 2d bin packer for packing glyphs or images into multiple sprite-sheet/atlas.
 
 This is a evolved version of [Multi-Bin-Packer](https://github.com/marekventur/multi-bin-packer) with much effiecent packing algorithm. All interfaces and methods are inherited so no tweaks needed in your current code except module name.
