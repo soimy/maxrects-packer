@@ -5,7 +5,7 @@
   "main": "lib/maxrectpacker.js",
   "scripts": {
     "test": "mocha --reporter spec",
-    "cover": "node_modules/istanbul/lib/cli.js cover node_modules/mocha/bin/_mocha -- -R spec test/*"
+    "cover": "node_modules/istanbul/lib/cli.js cover node_modules/mocha/bin/_mocha -- -R spec --timeout 30000 test/*"
   },
   "repository": {
     "type": "git",
