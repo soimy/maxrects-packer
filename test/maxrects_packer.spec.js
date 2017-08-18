@@ -84,6 +84,24 @@ describe("MaxRectsPacker", () => {
         });
     });
 
+    context("#save & load", () => {
+        it("Load old bins and continue packing", () => {
+            let input = [
+                {width: 512, height: 512, data: {number: 1}},
+                {width: 512, height: 512, data: {number: 2}},
+                {width: 512, height: 512, data: {number: 3}},
+                {width: 512, height: 512, data: {number: 4}},
+            ];
+            packer.add(input[0].width, input[0].height, input[0].data);
+            expect(packer.bins.length).to.equal(1);
+            let bins = packer.save();
+            expect(bins[0].freeRects.length).to.equal(2);
+            packer.load(bins);
+            packer.addArray(input);
+            expect(packer.bins.length).to.equal(2);
+        });
+    });
+
     it("passes padding through", () => {
         packer = new MaxRectsPacker(1024, 1024, 4);
         packer.add(500, 500, {number: 1});
