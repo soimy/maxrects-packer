@@ -3,12 +3,20 @@
 let MaxRectBin = require("../lib/maxrects_bin");
 let expect = require("chai").expect;
 
+const EDGE_MAX_VALUE = 4096;
+const EDGE_MIN_VALUE = 128;
+const opt = {
+    smart: true,
+    pot: true,
+    square: false
+}
+
 describe("MaxRectBin", () => {
     let bin;
 
     context("no padding", () => {
         beforeEach(() => {
-            bin = new MaxRectBin(1024, 1024);
+            bin = new MaxRectBin(1024, 1024, 0, opt);
         });
 
         it("is initially fit 1k", () => {
@@ -24,8 +32,8 @@ describe("MaxRectBin", () => {
 
         it("updates size correctly", () => {
             let position = bin.add(200, 100, {});
-            expect(bin.width).to.equal(200);
-            expect(bin.height).to.equal(100);
+            expect(bin.width).to.equal(256);
+            expect(bin.height).to.equal(128);
         });
 
         it("stores data correctly", () => {
@@ -43,8 +51,8 @@ describe("MaxRectBin", () => {
             }
             expect(i).to.equal(100);
             expect(bin.rects.length).to.equal(100);
-            expect(bin.width).to.equal(1000);
-            expect(bin.height).to.equal(1000);
+            expect(bin.width).to.equal(1024);
+            expect(bin.height).to.equal(1024);
 
             bin.rects.forEach((rect, i) => {
                 expect(rect.data.number).to.equal(i);
@@ -92,7 +100,7 @@ describe("MaxRectBin", () => {
 
     context("padding", () => {
         beforeEach(() => {
-            bin = new MaxRectBin(1024, 1024, 4);
+            bin = new MaxRectBin(1024, 1024, 4, opt);
         });
 
         it("is initially empty", () => {
@@ -101,11 +109,12 @@ describe("MaxRectBin", () => {
         })
 
         it("handles padding correctly", () => {
-            bin.add(500, 500, {});
-            bin.add(500, 500, {});
-            bin.add(500, 500, {});
-            expect(bin.width).to.equal(1004);
-            expect(bin.height).to.equal(1004);
+            bin.add(512, 512, {});
+            bin.add(508, 512, {});
+            bin.add(512, 508, {});
+            expect(bin.width).to.equal(1024);
+            expect(bin.height).to.equal(1024);
+            expect(bin.rects.length).to.equal(3);
         });
 
         it("adds rects with sizes close to the max", () => {

@@ -3,10 +3,16 @@
 let MaxRectsPacker = require("../lib/maxrects_packer");
 let expect = require("chai").expect;
 
+const opt = {
+    smart: true,
+    pot: false,
+    square: false
+}
+
 describe("MaxRectsPacker", () => {
     let packer;
     beforeEach(() => {
-        packer = new MaxRectsPacker(1024, 1024);
+        packer = new MaxRectsPacker(1024, 1024, 0, opt);
     });
 
     context("#add", () => {
@@ -95,7 +101,7 @@ describe("MaxRectsPacker", () => {
             packer.add(input[0].width, input[0].height, input[0].data);
             expect(packer.bins.length).to.equal(1);
             let bins = packer.save();
-            expect(bins[0].freeRects.length).to.equal(2);
+            expect(bins[0].freeRects.length).to.equal(0);
             packer.load(bins);
             packer.addArray(input);
             expect(packer.bins.length).to.equal(2);
@@ -103,7 +109,7 @@ describe("MaxRectsPacker", () => {
     });
 
     it("passes padding through", () => {
-        packer = new MaxRectsPacker(1024, 1024, 4);
+        packer = new MaxRectsPacker(1024, 1024, 4, opt);
         packer.add(500, 500, {number: 1});
         packer.add(500, 500, {number: 1});
         packer.add(500, 500, {number: 1});

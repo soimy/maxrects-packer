@@ -9,6 +9,8 @@ This is a evolved version of [Multi-Bin-Packer](https://github.com/marekventur/m
 
 It differs from the long list of similar packages by its packing approach: Instead of creating one output bin with a minimum size this package is trying to create a minimum number of bins under a certain size. This avoids problems with single massive image files that are not browser-friendly. This can be especially useful for WebGL games where the GPU will benefit from spritesheets close to power-of-2 sizes.
 
+And you can also save/load to reuse packer to add new sprites. (Below is a demo atlas packed with two difference bitmap fonts)
+
 ![Preview image](https://raw.githubusercontent.com/soimy/maxrects-packer/master/preview.png)
 
 ## Usage:
@@ -18,23 +20,32 @@ npm install maxrects-packer --save
 
 ```javascript
 let MaxRectsPacker = require("maxrects-packer");
-let packer = new MaxRectsPacker(1024, 1024, 2); // width, height, padding
+const options = {
+    smart: true,
+    pot: true,
+    square: false
+}; // Set packing options
+let packer = new MaxRectsPacker(1024, 1024, 2, options); // width, height, padding, options
 
-packer.addArray([
+let input = [
     {width: 600, height: 20, data: {name: "tree", foo: "bar"}},
     {width: 600, height: 20, data: {name: "flower"}},
     {width: 2000, height: 2000, data: {name: "oversized background"}},
     {width: 1000, height: 1000, data: {name: "background"}},
     {width: 1000, height: 1000, data: {name: "overlay"}}
-]);
+];
 
-console.log(packer.bins.length); // 3
-console.log(packer.bins[0].width, packer.bins[0].height); // 2000 2000
-console.log("%j", packer.bins[0].rects); // [{"x":0,"y":0,"width":2000,"height":2000,"data":{"name":"oversized background"},"oversized":true}]
-console.log(packer.bins[1].width, packer.bins[1].height); // 1000 1020
-console.log("%j", packer.bins[1].rects); // [{"width":1000,"height":1000,"x":0,"y":0,"data":{"name":"background"}},{"width":600,"height":20,"x":0,"y":1000,"data":{"name":"tree","foo":"bar"}}]
-console.log(packer.bins[2].width, packer.bins[2].height); // 1000 1020
-console.log("%j", packer.bins[2].rects); // [{"width":1000,"height":1000,"x":0,"y":0,"data":{"name":"overlay"}},{"width":600,"height":20,"x":0,"y":1000,"data":{"name":"flower"}}]
+packer.addArray(input); // Start packing with input array
+packer.bins.forEach(bin => {
+    console.log(bin.rects);
+});
+
+// Reuse packer 
+let bins = packer.save();
+packer.load(bins);
+packer.addArray(input);
+
+
 ```
 
 ## Test
@@ -46,8 +57,11 @@ npm test
 
 Note: maxrects-packer requires node >= 4.0.0
 
-#### ```new MaxRectsPacker(maxWidth, maxHeight[, padding])```
+#### ```new MaxRectsPacker(maxWidth, maxHeight[, padding, options])```
 Creates a new Packer. maxWidth and maxHeight are passed on to all bins. If ```padding``` is supplied all rects will be kept at least ```padding``` pixels apart.
+- `options.smart` packing with smallest possible size. (default is `true`)
+- `options.pot` bin size round up to smallest power of 2. (defalt is `true`)
+- `options.square` bin size shall alway be square. (defaut is `false`) 
 
 #### ```packer.add(width, height, data)```
 Adds a rect to an existing bin or creates a new one to accomodate it. ```data``` can be anything, it will be stored along with the position data of each rect.
