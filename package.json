@@ -4,6 +4,7 @@
   "description": "A max rectangle 2d bin packer for packing glyphs or images into multiple sprite-sheet/atlas",
   "main": "lib/maxrects_packer.js",
   "scripts": {
+    "build": "tsc",
     "test": "mocha --reporter spec",
     "cover": "node_modules/istanbul/lib/cli.js cover node_modules/mocha/bin/_mocha -- -R spec --timeout 30000 test/*"
   },
@@ -26,6 +27,7 @@
   },
   "homepage": "https://github.com/soimy/maxrects-packer#readme",
   "devDependencies": {
+    "typescript": "^2.5.3",
     "ascii-table": "0.0.9",
     "chai": "^4.1.1",
     "coveralls": "^2.13.1",
