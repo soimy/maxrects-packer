@@ -33,6 +33,5 @@ export class MaxRectsPacker {
         if (this.options.smart) this.options.smart = true;
         if (this.options.pot) this.options.pot = true;
         if (this.options.square) this.options.square = true;
-
     }
 }
