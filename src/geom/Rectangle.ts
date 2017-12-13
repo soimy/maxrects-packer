@@ -1,27 +1,28 @@
 export interface IRectangle {
-    x:number,
-    y:number,
-    width:number,
-    height:number
+    x: number;
+    y: number;
+    width: number;
+    height: number;
 }
 
 export class Rectangle {
-    public data:any;
-    constructor(public x:number = 0, public y:number = 0, public width:number = 0, public height:number = 0) {
+    public data: any;
+    constructor (public x: number = 0, public y: number = 0, public width: number = 0, public height: number = 0) {
         this.data = {};
     }
+    public static Collide (first: Rectangle, second: Rectangle) { return first.collide(second); }
+    public static Contain (first: Rectangle, second: Rectangle) { return first.contain(second); }
 
-    public area():number { return this.width * this.height; }
+    public area (): number { return this.width * this.height; }
 
-    public collide(rect:Rectangle):boolean {
+    public collide (rect: Rectangle): boolean {
         return (rect.x >= this.x + this.width || rect.x + rect.width <= this.x ||
                 rect.y >= this.y + this.height || rect.y + rect.height <= this.y);
     }
-    
-    public contain(rect:Rectangle):boolean {
-        return (rect.x >= this.x && rect.y >= this.y && 
+
+    public contain (rect: Rectangle): boolean {
+        return (rect.x >= this.x && rect.y >= this.y &&
                 rect.x + rect.width <= this.x + this.width && rect.y + rect.height <= this.y + this.width);
     }
 
-    public static Collide(rect1:Rectangle, rect2:Rectangle) { return rect1.collide(rect2); }
 }

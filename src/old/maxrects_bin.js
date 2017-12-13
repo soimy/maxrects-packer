@@ -119,7 +119,7 @@ module.exports = class MaxRectsBin {
         newNode.width = freeRect.width;
         newNode.height = usedNode.y - freeRect.y;
         this.freeRects.push(newNode);
-    }
+      }
       // New node at the bottom side of the used node.
       if (usedNode.y + usedNode.height < freeRect.y + freeRect.height) {
         let newNode = {};

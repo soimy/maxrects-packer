@@ -28,12 +28,14 @@
   },
   "homepage": "https://github.com/soimy/maxrects-packer#readme",
   "devDependencies": {
-    "typescript": "^2.5.3",
     "ascii-table": "0.0.9",
     "chai": "^4.1.1",
     "coveralls": "^2.13.1",
     "istanbul": "^0.4.5",
-    "mocha": "^3.5.0"
+    "mocha": "^3.5.0",
+    "tslint": "^5.8.0",
+    "tslint-config-standard": "^7.0.0",
+    "typescript": "^2.6.2"
   },
   "dependencies": {}
 }
