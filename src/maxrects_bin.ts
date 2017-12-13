@@ -14,7 +14,7 @@ export class MaxRectsBin {
         this.freeRects.push(new Rectangle(0, 0, this.width + this.padding, this.height + this.padding));
     }
 
-    public add (width: number, height: number, data: any): Rectangle {
+    public add (width: number, height: number, data: any): Rectangle | undefined {
         let node: Rectangle = this.findNode(width + this.padding, height + this.padding);
         if (node) {
             this.updateBinSize(node);
@@ -40,7 +40,7 @@ export class MaxRectsBin {
                 return this.add(width, height, data);
             }
         }
-        return null;
+        return undefined;
     }
 
     private findNode (width: number, height: number): any {
