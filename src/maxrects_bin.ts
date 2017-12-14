@@ -2,16 +2,21 @@ import { EDGE_MAX_VALUE, Option } from "./maxrects_packer";
 import { Rectangle, IRectangle } from "./geom/Rectangle";
 
 export class MaxRectsBin {
+    public width: number;
+    public height: number;
     public freeRects: Rectangle[];
     public rects: Rectangle[];
     public verticalExpand: boolean = false;
 
     constructor (
-        private width: number = EDGE_MAX_VALUE,
-        private height: number = EDGE_MAX_VALUE,
-        private padding: number = 0,
-        private options: Option = { smart: true, pot: true, square: true }) {
-        this.freeRects.push(new Rectangle(0, 0, this.width + this.padding, this.height + this.padding));
+        public maxWidth: number = EDGE_MAX_VALUE,
+        public maxHeight: number = EDGE_MAX_VALUE,
+        public padding: number = 0,
+        public options: Option = { smart: true, pot: true, square: true }
+    ) {
+        this.width = this.options.smart ? 0 : maxWidth;
+        this.height = this.options.smart ? 0 : maxHeight;
+        this.freeRects.push(new Rectangle(0, 0, this.maxWidth + this.padding, this.maxHeight + this.padding));
     }
 
     public add (width: number, height: number, data: any): Rectangle | undefined {
@@ -37,6 +42,16 @@ export class MaxRectsBin {
         } else if (!this.verticalExpand) {
             if (this.updateBinSize(new Rectangle(this.width + this.padding, 0, width + this.padding, height + this.padding))
                 || this.updateBinSize(new Rectangle(0, this.height + this.padding, width + this.padding, height + this.padding))) {
+                return this.add(width, height, data);
+            }
+        } else {
+            if (this.updateBinSize(new Rectangle(
+                0, this.height + this.padding,
+                width + this.padding, height + this.padding
+            )) || this.updateBinSize(new Rectangle(
+                this.width + this.padding, 0,
+                width + this.padding, height + this.padding
+            ))) {
                 return this.add(width, height, data);
             }
         }
@@ -138,9 +153,9 @@ export class MaxRectsBin {
 
     private updateBinSize (node: Rectangle): boolean {
         if (!this.options.smart) return false;
-        if (!new Rectangle(0, 0, this.width, this.height).contain(node)) return false;
-        let tmpWidth: number = Math.max(this.width, node.x + node.width - this.padding);
-        let tmpHeight: number = Math.max(this.height, node.y + node.height - this.padding);
+        if (!new Rectangle(0, 0, this.width , this.height).contain(node)) return false;
+        let tmpWidth: number = Math.max(this.maxWidth, node.x + node.width - this.padding);
+        let tmpHeight: number = Math.max(this.maxHeight, node.y + node.height - this.padding);
         if (this.options.pot) {
             tmpWidth = Math.pow(2, Math.ceil(Math.log(tmpWidth) * Math.LOG2E));
             tmpHeight = Math.pow(2, Math.ceil(Math.log(tmpHeight) * Math.LOG2E));
@@ -148,7 +163,7 @@ export class MaxRectsBin {
         if (this.options.square) {
             tmpWidth = tmpHeight = Math.max(tmpWidth, tmpHeight);
         }
-        if (tmpWidth > this.width + this.padding || tmpHeight > this.height + this.padding) {
+        if (tmpWidth > this.maxWidth + this.padding || tmpHeight > this.maxHeight + this.padding) {
             return false;
         }
         this.expandFreeRects(tmpWidth + this.padding, tmpHeight + this.padding);

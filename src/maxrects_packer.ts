@@ -60,6 +60,37 @@ export class MaxRectsPacker {
         }
     }
 
+    /**
+     * Load bins to the packer, overwrite exist bins
+     * @param {MaxRectsBin[]} bins MaxRectsBin objects
+     * @memberof MaxRectsPacker
+     */
+    public load (bins: MaxRectsBin[]) {
+        bins.forEach((bin, index) => {
+            if (bin.maxWidth > this.width || bin.maxHeight > this.height) {
+                // TODO: push to oversizedElementBin
+            } else {
+                let newBin = new MaxRectsBin(this.width, this.height, this.padding, bin.options);
+                newBin.freeRects = bin.freeRects;
+                newBin.width = bin.width;
+                newBin.height = bin.height;
+                this.bins[index] = newBin;
+            }
+        }, this);
+    }
+
+    /**
+     * Output current bins to save
+     * @memberof MaxRectsPacker
+     */
+    public save () {
+        let saveBins: MaxRectsBin[];
+        this.bins.forEach((bin => {
+            let saveBin: MaxRectsBin;
+
+        }))
+    }
+
     private sort (rects: Rectangle[]) {
         return rects.slice().sort((a, b) => Math.max(b.width, b.height) - Math.max(a.width, a.height));
     }
