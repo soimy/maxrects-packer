@@ -3,9 +3,10 @@ export interface IRectangle {
     y: number;
     width: number;
     height: number;
+    data?: any;
 }
 
-export class Rectangle {
+export class Rectangle implements IRectangle {
     public data: any;
     constructor (public x: number = 0, public y: number = 0, public width: number = 0, public height: number = 0) {
         this.data = {};

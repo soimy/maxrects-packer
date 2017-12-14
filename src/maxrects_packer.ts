@@ -1,5 +1,5 @@
 import { Rectangle } from "./geom/Rectangle";
-import { MaxRectsBin } from "./maxrects_bin";
+import { MaxRectsBin, IMaxRectsBin } from "./maxrects_bin";
 
 export const EDGE_MAX_VALUE: number = 4096;
 export const EDGE_MIN_VALUE: number = 128;
@@ -12,7 +12,7 @@ export const EDGE_MIN_VALUE: number = 128;
  * @export
  * @interface Option
  */
-export interface Option {
+export interface IOption {
     smart?: boolean;
     pot?: boolean;
     square?: boolean;
@@ -26,14 +26,14 @@ export class MaxRectsPacker {
      * @param {number} width of the output atlas (default is 4096)
      * @param {number} height of the output atlas (default is 4096)
      * @param {number} padding between glyphs/images (default is 0)
-     * @param {Option} [options={}] (Optional) packing options
+     * @param {IOption} [options={}] (Optional) packing options
      * @memberof MaxRectsPacker
      */
     constructor (
         public width: number = EDGE_MAX_VALUE,
         public height: number = EDGE_MAX_VALUE,
         public padding: number = 0,
-        public options: Option = { smart: true, pot: true, square: true }
+        public options: IOption = { smart: true, pot: true, square: true }
     ) {
         if (this.options.smart) this.options.smart = true;
         if (this.options.pot) this.options.pot = true;
@@ -65,7 +65,7 @@ export class MaxRectsPacker {
      * @param {MaxRectsBin[]} bins MaxRectsBin objects
      * @memberof MaxRectsPacker
      */
-    public load (bins: MaxRectsBin[]) {
+    public load (bins: IMaxRectsBin[]) {
         bins.forEach((bin, index) => {
             if (bin.maxWidth > this.width || bin.maxHeight > this.height) {
                 // TODO: push to oversizedElementBin
@@ -83,12 +83,12 @@ export class MaxRectsPacker {
      * Output current bins to save
      * @memberof MaxRectsPacker
      */
-    public save () {
-        let saveBins: MaxRectsBin[];
+    public save (): object {
+        let saveBins: IMaxRectsBin[];
         this.bins.forEach((bin => {
-            let saveBin: MaxRectsBin;
+            let saveBin: IMaxRectsBin;
 
-        }))
+        }));
     }
 
     private sort (rects: Rectangle[]) {
