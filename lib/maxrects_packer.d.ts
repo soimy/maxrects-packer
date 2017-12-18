@@ -15,7 +15,7 @@ export interface IOption {
     pot?: boolean;
     square?: boolean;
 }
-export declare class MaxRectsPacker {
+export default class MaxRectsPacker {
     width: number;
     height: number;
     padding: number;
