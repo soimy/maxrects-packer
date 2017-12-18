@@ -1,5 +1,7 @@
-import { Rectangle } from "./geom/Rectangle";
-import { MaxRectsBin, IMaxRectsBin } from "./maxrects_bin";
+import { Rectangle, IRectangle } from "./geom/Rectangle";
+import { MaxRectsBin } from "./maxrects_bin";
+import { OversizedElementBin } from "./oversized_element_bin";
+import { Bin, IBin } from "./abstract_bin";
 
 export const EDGE_MAX_VALUE: number = 4096;
 export const EDGE_MIN_VALUE: number = 128;
@@ -19,7 +21,7 @@ export interface IOption {
 }
 
 export class MaxRectsPacker {
-    public bins: MaxRectsBin[];
+    public bins: Bin[];
 
     /**
      * Creates an instance of MaxRectsPacker.
@@ -50,6 +52,7 @@ export class MaxRectsPacker {
     public add (width: number, height: number, data: any) {
         if (width > this.width || height > this.height) {
             // TODO: OversizedElementBin
+            this.bins.push(new OversizedElementBin(width, height, data));
         } else {
             let added = this.bins.find(bin => bin.add(width, height, data) !== undefined);
             if (!added) {
@@ -61,17 +64,30 @@ export class MaxRectsPacker {
     }
 
     /**
+     * Add an Array of bins/rectangles to the packer.
+     * Object structure: { width, height, data }
+     * @param {IRectangle[]} rects Array of bin/rectangles
+     * @memberof MaxRectsPacker
+     */
+    public addArray (rects: IRectangle[]) {
+        this.sort(rects).forEach(r => this.add(r.width, r.height, r.data));
+    }
+
+    /**
      * Load bins to the packer, overwrite exist bins
      * @param {MaxRectsBin[]} bins MaxRectsBin objects
      * @memberof MaxRectsPacker
      */
-    public load (bins: IMaxRectsBin[]) {
+    public load (bins: IBin[]) {
         bins.forEach((bin, index) => {
             if (bin.maxWidth > this.width || bin.maxHeight > this.height) {
                 // TODO: push to oversizedElementBin
             } else {
                 let newBin = new MaxRectsBin(this.width, this.height, this.padding, bin.options);
-                newBin.freeRects = bin.freeRects;
+                // newBin.freeRects = bin.freeRects;
+                bin.freeRects.forEach(r => {
+                    newBin.freeRects.push(new Rectangle(r.x, r.y, r.width, r.height));
+                });
                 newBin.width = bin.width;
                 newBin.height = bin.height;
                 this.bins[index] = newBin;
@@ -83,15 +99,32 @@ export class MaxRectsPacker {
      * Output current bins to save
      * @memberof MaxRectsPacker
      */
-    public save (): object {
-        let saveBins: IMaxRectsBin[];
+    public save (): IBin[] {
+        let saveBins: IBin[] = [];
         this.bins.forEach((bin => {
-            let saveBin: IMaxRectsBin;
-
+            let saveBin: IBin = {
+                width: bin.width,
+                height: bin.height,
+                maxWidth: bin.maxWidth,
+                maxHeight: bin.maxHeight,
+                freeRects: [],
+                rects: [],
+                options: bin.options
+            };
+            bin.freeRects.forEach(r => {
+                saveBin.freeRects.push({
+                    x: r.x,
+                    y: r.y,
+                    width: r.width,
+                    height: r.height
+                });
+            });
+            saveBins.push(saveBin);
         }));
+        return saveBins;
     }
 
-    private sort (rects: Rectangle[]) {
+    private sort (rects: IRectangle[]) {
         return rects.slice().sort((a, b) => Math.max(b.width, b.height) - Math.max(a.width, a.height));
     }
 }

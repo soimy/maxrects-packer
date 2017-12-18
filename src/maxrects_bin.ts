@@ -1,16 +1,8 @@
 import { EDGE_MAX_VALUE, IOption } from "./maxrects_packer";
 import { Rectangle, IRectangle } from "./geom/Rectangle";
+import { Bin } from "./abstract_bin";
 
-export interface IMaxRectsBin {
-    width: number;
-    height: number;
-    maxWidth: number;
-    maxHeight: number;
-    options: IOption;
-    freeRects: IRectangle[];
-}
-
-export class MaxRectsBin implements IMaxRectsBin {
+export class MaxRectsBin extends Bin {
     public width: number;
     public height: number;
     public freeRects: Rectangle[];
@@ -23,6 +15,7 @@ export class MaxRectsBin implements IMaxRectsBin {
         public padding: number = 0,
         public options: IOption = { smart: true, pot: true, square: true }
     ) {
+        super();
         this.width = this.options.smart ? 0 : maxWidth;
         this.height = this.options.smart ? 0 : maxHeight;
         this.freeRects.push(new Rectangle(0, 0, this.maxWidth + this.padding, this.maxHeight + this.padding));

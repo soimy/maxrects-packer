@@ -3,7 +3,7 @@ export interface IRectangle {
     y: number;
     width: number;
     height: number;
-    data?: any;
+    [propName: string]: any;
 }
 
 export class Rectangle implements IRectangle {

@@ -28,6 +28,7 @@
   },
   "homepage": "https://github.com/soimy/maxrects-packer#readme",
   "devDependencies": {
+    "@types/node": "^8.5.1",
     "ascii-table": "0.0.9",
     "chai": "^4.1.1",
     "coveralls": "^2.13.1",
