@@ -17,7 +17,7 @@ export class Rectangle implements IRectangle {
     public area (): number { return this.width * this.height; }
 
     public collide (rect: Rectangle): boolean {
-        return (rect.x >= this.x + this.width || rect.x + rect.width <= this.x ||
+        return !(rect.x >= this.x + this.width || rect.x + rect.width <= this.x ||
                 rect.y >= this.y + this.height || rect.y + rect.height <= this.y);
     }
 

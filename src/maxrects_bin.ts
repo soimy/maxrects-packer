@@ -5,8 +5,8 @@ import { Bin } from "./abstract_bin";
 export class MaxRectsBin extends Bin {
     public width: number;
     public height: number;
-    public freeRects: Rectangle[];
-    public rects: Rectangle[];
+    public freeRects: Rectangle[] = [];
+    public rects: Rectangle[] = [];
     private verticalExpand: boolean = false;
 
     constructor (
@@ -83,7 +83,7 @@ export class MaxRectsBin extends Bin {
 
     private splitNode (freeRect: Rectangle, usedNode: Rectangle): boolean {
         // Test if usedNode intersect with freeRect
-        if (freeRect.collide(usedNode)) return false;
+        if (!freeRect.collide(usedNode)) return false;
 
         // Do vertical split
         if (usedNode.x < freeRect.x + freeRect.width && usedNode.x + usedNode.width > freeRect.x) {
@@ -155,9 +155,9 @@ export class MaxRectsBin extends Bin {
 
     private updateBinSize (node: Rectangle): boolean {
         if (!this.options.smart) return false;
-        if (!new Rectangle(0, 0, this.width , this.height).contain(node)) return false;
-        let tmpWidth: number = Math.max(this.maxWidth, node.x + node.width - this.padding);
-        let tmpHeight: number = Math.max(this.maxHeight, node.y + node.height - this.padding);
+        if (!new Rectangle(0, 0, this.maxWidth, this.maxHeight).contain(node)) return false;
+        let tmpWidth: number = Math.max(this.width, node.x + node.width - this.padding);
+        let tmpHeight: number = Math.max(this.height, node.y + node.height - this.padding);
         if (this.options.pot) {
             tmpWidth = Math.pow(2, Math.ceil(Math.log(tmpWidth) * Math.LOG2E));
             tmpHeight = Math.pow(2, Math.ceil(Math.log(tmpHeight) * Math.LOG2E));

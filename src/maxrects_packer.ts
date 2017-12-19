@@ -37,9 +37,7 @@ export class MaxRectsPacker {
         public padding: number = 0,
         public options: IOption = { smart: true, pot: true, square: true }
     ) {
-        if (this.options.smart) this.options.smart = true;
-        if (this.options.pot) this.options.pot = true;
-        if (this.options.square) this.options.square = true;
+        this.bins = [];
     }
 
     /**
@@ -51,7 +49,6 @@ export class MaxRectsPacker {
      */
     public add (width: number, height: number, data: any) {
         if (width > this.width || height > this.height) {
-            // TODO: OversizedElementBin
             this.bins.push(new OversizedElementBin(width, height, data));
         } else {
             let added = this.bins.find(bin => bin.add(width, height, data) !== undefined);
@@ -81,7 +78,7 @@ export class MaxRectsPacker {
     public load (bins: IBin[]) {
         bins.forEach((bin, index) => {
             if (bin.maxWidth > this.width || bin.maxHeight > this.height) {
-                // TODO: push to oversizedElementBin
+                this.bins.push(new OversizedElementBin(bin.width, bin.height, {}));
             } else {
                 let newBin = new MaxRectsBin(this.width, this.height, this.padding, bin.options);
                 // newBin.freeRects = bin.freeRects;
