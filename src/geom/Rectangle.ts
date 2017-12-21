@@ -23,7 +23,7 @@ export class Rectangle implements IRectangle {
 
     public contain (rect: Rectangle): boolean {
         return (rect.x >= this.x && rect.y >= this.y &&
-                rect.x + rect.width <= this.x + this.width && rect.y + rect.height <= this.y + this.width);
+                rect.x + rect.width <= this.x + this.width && rect.y + rect.height <= this.y + this.height);
     }
 
 }
