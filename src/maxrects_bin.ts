@@ -22,7 +22,7 @@ export class MaxRectsBin extends Bin {
     }
 
     public add (width: number, height: number, data: any): Rectangle | undefined {
-        let node: Rectangle = this.findNode(width + this.padding, height + this.padding);
+        let node: Rectangle | undefined = this.findNode(width + this.padding, height + this.padding);
         if (node) {
             this.updateBinSize(node);
             let numRectToProcess = this.freeRects.length;
@@ -60,20 +60,21 @@ export class MaxRectsBin extends Bin {
         return undefined;
     }
 
-    private findNode (width: number, height: number): any {
+    private findNode (width: number, height: number): Rectangle | undefined {
         let score: number = Number.MAX_VALUE;
         let areaFit: number;
         let r: Rectangle;
-        let bestNode: Rectangle = new Rectangle();
+        let bestNode: Rectangle | undefined;
         for (let i in this.freeRects) {
             r = this.freeRects[i];
             if (r.width >= width && r.height >= height) {
                 areaFit = r.width * r.height - width * height;
                 if (areaFit < score) {
-                    bestNode.x = r.x;
-                    bestNode.y = r.y;
-                    bestNode.width = width;
-                    bestNode.height = height;
+                    // bestNode.x = r.x;
+                    // bestNode.y = r.y;
+                    // bestNode.width = width;
+                    // bestNode.height = height;
+                    bestNode = new Rectangle(r.x, r.y, width, height);
                     score = areaFit;
                 }
             }
