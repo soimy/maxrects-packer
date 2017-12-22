@@ -7,7 +7,7 @@
   "typings": "definitions/index",
   "scripts": {
     "build": "tsc",
-    "test": "mocha --compilers ts:ts-node/register ./test/*.spec.ts",
+    "test": "mocha --reporter spec",
     "cover": "node_modules/istanbul/lib/cli.js cover node_modules/mocha/bin/_mocha -- -R spec --timeout 30000 test/*"
   },
   "repository": {
