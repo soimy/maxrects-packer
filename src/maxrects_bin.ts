@@ -8,6 +8,7 @@ export class MaxRectsBin extends Bin {
     public freeRects: Rectangle[] = [];
     public rects: Rectangle[] = [];
     private verticalExpand: boolean = false;
+    private stage: Rectangle;
 
     constructor (
         public maxWidth: number = EDGE_MAX_VALUE,
@@ -19,6 +20,7 @@ export class MaxRectsBin extends Bin {
         this.width = this.options.smart ? 0 : maxWidth;
         this.height = this.options.smart ? 0 : maxHeight;
         this.freeRects.push(new Rectangle(0, 0, this.maxWidth + this.padding, this.maxHeight + this.padding));
+        this.stage = new Rectangle(0, 0, this.width, this.height);
     }
 
     public add (width: number, height: number, data: any): Rectangle | undefined {
@@ -132,7 +134,7 @@ export class MaxRectsBin extends Bin {
         let i: number = 0;
         let j: number = 0;
         let len: number = this.freeRects.length;
-        while (j < len) {
+        while (i < len) {
             j = i + 1;
             let tmpRect1 = this.freeRects[i];
             while (j < len) {
@@ -156,7 +158,7 @@ export class MaxRectsBin extends Bin {
 
     private updateBinSize (node: Rectangle): boolean {
         if (!this.options.smart) return false;
-        if (!new Rectangle(0, 0, this.maxWidth, this.maxHeight).contain(node)) return false;
+        if (this.stage.contain(node)) return false;
         let tmpWidth: number = Math.max(this.width, node.x + node.width - this.padding);
         let tmpHeight: number = Math.max(this.height, node.y + node.height - this.padding);
         if (this.options.pot) {
@@ -170,8 +172,8 @@ export class MaxRectsBin extends Bin {
             return false;
         }
         this.expandFreeRects(tmpWidth + this.padding, tmpHeight + this.padding);
-        this.width = tmpWidth;
-        this.height = tmpHeight;
+        this.width = this.stage.width = tmpWidth;
+        this.height = this.stage.height = tmpHeight;
         return true;
     }
 

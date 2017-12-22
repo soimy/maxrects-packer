@@ -80,9 +80,9 @@ export class MaxRectsPacker {
             if (bin.maxWidth > this.width || bin.maxHeight > this.height) {
                 this.bins.push(new OversizedElementBin(bin.width, bin.height, {}));
             } else {
-                let newBin = new MaxRectsBin(this.width, this.height, this.padding, bin.options);
-                // newBin.freeRects = bin.freeRects;
-                bin.freeRects.forEach(r => {
+                let newBin: MaxRectsBin = new MaxRectsBin(this.width, this.height, this.padding, bin.options);
+                newBin.freeRects.splice(0);
+                bin.freeRects.forEach((r, i) => {
                     newBin.freeRects.push(new Rectangle(r.x, r.y, r.width, r.height));
                 });
                 newBin.width = bin.width;

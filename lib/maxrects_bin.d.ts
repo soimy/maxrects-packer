@@ -11,6 +11,7 @@ export declare class MaxRectsBin extends Bin {
     freeRects: Rectangle[];
     rects: Rectangle[];
     private verticalExpand;
+    private stage;
     constructor(maxWidth?: number, maxHeight?: number, padding?: number, options?: IOption);
     add(width: number, height: number, data: any): Rectangle | undefined;
     private findNode(width, height);
