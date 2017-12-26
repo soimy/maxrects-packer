@@ -8,14 +8,29 @@
             "type": "node",
             "request": "launch",
             "name": "Mocha Tests",
-            "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
+            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "args": [
                 "-u",
                 "tdd",
                 "--timeout",
-                "999999",
+                "10000",
                 "--colors",
-                "${workspaceRoot}/test/"
+                "${workspaceFolder}/test"
+            ],
+            "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "TS:Mocha Tests",
+            "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
+            "args": [
+                "--compilers",
+                "ts:ts-node/register",
+                "--timeout",
+                "10000",
+                "--colors",
+                "${workspaceRoot}/test/*.spec.ts"
                 // "${workspaceRoot}/test/maxrects_bin.spec.js"
             ],
             "internalConsoleOptions": "openOnSessionStart"

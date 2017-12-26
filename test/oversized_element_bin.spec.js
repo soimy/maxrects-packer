@@ -1,6 +1,6 @@
 "use strict";
 
-let OversizedElementBin = require("../lib/oversized_element_bin");
+let OversizedElementBin = require("../lib/oversized_element_bin").OversizedElementBin;
 let expect = require("chai").expect;
 
 describe("OversizedElementBin", () => {

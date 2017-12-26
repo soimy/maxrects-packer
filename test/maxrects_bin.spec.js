@@ -1,6 +1,6 @@
 "use strict";
 
-let MaxRectBin = require("../lib/maxrects_bin");
+let MaxRectBin = require("../lib/maxrects_bin").MaxRectsBin;
 let expect = require("chai").expect;
 
 const EDGE_MAX_VALUE = 4096;
