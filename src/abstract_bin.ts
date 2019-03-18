@@ -12,12 +12,12 @@ export interface IBin {
 }
 
 export abstract class Bin implements IBin {
-    public width: number;
-    public height: number;
-    public maxWidth: number;
-    public maxHeight: number;
-    public freeRects: IRectangle[];
-    public rects: IRectangle[];
-    public options: IOption;
+    public width!: number;
+    public height!: number;
+    public maxWidth!: number;
+    public maxHeight!: number;
+    public freeRects!: IRectangle[];
+    public rects!: IRectangle[];
+    public options!: IOption;
     public abstract add (width: number, height: number, data: any): IRectangle | undefined;
 }

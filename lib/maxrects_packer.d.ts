@@ -56,5 +56,5 @@ export declare class MaxRectsPacker {
      * @memberof MaxRectsPacker
      */
     save(): IBin[];
-    private sort(rects);
+    private sort;
 }
