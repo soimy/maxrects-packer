@@ -11,12 +11,13 @@
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "args": [
                 "-u",
-                "tdd",
+                "bdd",
                 "--timeout",
                 "10000",
                 "--colors",
                 "${workspaceFolder}/test"
             ],
+            "preLaunchTask": "build",
             "internalConsoleOptions": "openOnSessionStart"
         },
         {
