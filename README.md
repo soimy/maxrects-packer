@@ -25,7 +25,8 @@ let MaxRectsPacker = require("maxrects-packer").MaxRectsPacker;
 const options = {
     smart: true,
     pot: true,
-    square: false
+    square: false,
+    allowRotation: true
 }; // Set packing options
 let packer = new MaxRectsPacker(1024, 1024, 2, options); // width, height, padding, options
 
@@ -64,6 +65,7 @@ Creates a new Packer. maxWidth and maxHeight are passed on to all bins. If ```pa
 - `options.smart` packing with smallest possible size. (default is `true`)
 - `options.pot` bin size round up to smallest power of 2. (defalt is `true`)
 - `options.square` bin size shall alway be square. (defaut is `false`) 
+- `options.allowRotation` allow 90-degree rotation while packing. (defaut is `false`) 
 
 #### ```packer.add(width, height, data)```
 Adds a rect to an existing bin or creates a new one to accomodate it. ```data``` can be anything, it will be stored along with the position data of each rect.
@@ -81,10 +83,13 @@ Restore previous saved `let bins = JSON.parse(fs.readFileSync(savedFile, 'utf8')
 Array of bins. Every bin has a ```width``` and ```height``` parameter as well as an array ```rects```.
 
 #### ```packer.bins[n].rects```
-Array of rects for a specific bin. Every rect has ```x```, ```y```, ```width```, ```height``` and ```data```. In case of an rect exceeding ```maxWidth```/```maxHeight``` there will also be an ```oversized``` flag set to ```true```.
+Array of rects for a specific bin. Every rect has ```x```, ```y```, ```width```, ```height```, ```rot``` and ```data```. In case of an rect exceeding ```maxWidth```/```maxHeight``` there will also be an ```oversized``` flag set to ```true```.
+
+## Support for 90-degree rotation packing
+If `options.allowRotation` is set to `true`, packer will attempt to do an extra test in `findNode()` on rotated `Rectangle`. If the rotated one gives the best score, the given `Rectangle` will be rotated in the `Rectangle.rot` set to `true`.
 
 ## Support for oversized rectangles
-Nornally all bins are of equal size or smaller than ```maxWidth```/```maxHeight```. If a rect is added that individually does not fit into those constraints a special bin will be created. This bin will only contain a single rect with a special "oversized" flag. This can be handled further on in the chain by displaying an error/warning or by simply ignoring it.
+Normally all bins are of equal size or smaller than ```maxWidth```/```maxHeight```. If a rect is added that individually does not fit into those constraints a special bin will be created. This bin will only contain a single rect with a special "oversized" flag. This can be handled further on in the chain by displaying an error/warning or by simply ignoring it.
 
 ## Packing algorithm
 Use Max Rectangle Algorithm for packing, same as famous **Texture Packer**
