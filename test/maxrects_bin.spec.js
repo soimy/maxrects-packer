@@ -8,7 +8,8 @@ const EDGE_MIN_VALUE = 128;
 const opt = {
     smart: true,
     pot: true,
-    square: false
+    square: false,
+    allowRotation: false
 }
 
 describe("MaxRectBin", () => {
@@ -19,7 +20,7 @@ describe("MaxRectBin", () => {
             bin = new MaxRectBin(1024, 1024, 0, opt);
         });
 
-        it("is initially fit 1k", () => {
+        it("is initially empty", () => {
             expect(bin.width).to.equal(0);
             expect(bin.height).to.equal(0);
         })
