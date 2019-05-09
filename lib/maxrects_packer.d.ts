@@ -14,6 +14,7 @@ export interface IOption {
     smart?: boolean;
     pot?: boolean;
     square?: boolean;
+    allowRotation?: boolean;
 }
 export declare class MaxRectsPacker {
     width: number;

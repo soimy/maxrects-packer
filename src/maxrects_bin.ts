@@ -14,7 +14,7 @@ export class MaxRectsBin extends Bin {
         public maxWidth: number = EDGE_MAX_VALUE,
         public maxHeight: number = EDGE_MAX_VALUE,
         public padding: number = 0,
-        public options: IOption = { smart: true, pot: true, square: true }
+        public options: IOption = { smart: true, pot: true, square: true, allowRotation: false }
     ) {
         super();
         this.width = this.options.smart ? 0 : maxWidth;
@@ -39,7 +39,7 @@ export class MaxRectsBin extends Bin {
             }
             this.pruneFreeList();
             this.verticalExpand = this.width > this.height ? true : false;
-            let rect: Rectangle = new Rectangle(node.x, node.y, width, height);
+            let rect: Rectangle = new Rectangle(node.x, node.y, width, height, node.rot);
             rect.data = data;
             this.rects.push(rect);
             return rect;
@@ -72,11 +72,16 @@ export class MaxRectsBin extends Bin {
             if (r.width >= width && r.height >= height) {
                 areaFit = r.width * r.height - width * height;
                 if (areaFit < score) {
-                    // bestNode.x = r.x;
-                    // bestNode.y = r.y;
-                    // bestNode.width = width;
-                    // bestNode.height = height;
                     bestNode = new Rectangle(r.x, r.y, width, height);
+                    score = areaFit;
+                }
+            }
+            if (!this.options.allowRotation) continue;
+            // Continue to test 90-degree rotated rectangle
+            if (r.width >= height && r.height >= width) {
+                areaFit = r.width * r.height - height * width;
+                if (areaFit < score) {
+                    bestNode = new Rectangle(r.x, r.y, height, width, true); // Rotated node
                     score = areaFit;
                 }
             }

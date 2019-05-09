@@ -8,7 +8,7 @@ export interface IRectangle {
 
 export class Rectangle implements IRectangle {
     public data: any;
-    constructor (public x: number = 0, public y: number = 0, public width: number = 0, public height: number = 0) {
+    constructor (public x: number = 0, public y: number = 0, public width: number = 0, public height: number = 0, public rot: boolean = false) {
         this.data = {};
     }
     public static Collide (first: Rectangle, second: Rectangle) { return first.collide(second); }

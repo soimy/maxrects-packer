@@ -18,6 +18,7 @@ export interface IOption {
     smart?: boolean;
     pot?: boolean;
     square?: boolean;
+    allowRotation?: boolean;
 }
 
 export class MaxRectsPacker {
@@ -35,7 +36,7 @@ export class MaxRectsPacker {
         public width: number = EDGE_MAX_VALUE,
         public height: number = EDGE_MAX_VALUE,
         public padding: number = 0,
-        public options: IOption = { smart: true, pot: true, square: true }
+        public options: IOption = { smart: true, pot: true, square: true, allowRotation: false }
     ) {
         this.bins = [];
     }
