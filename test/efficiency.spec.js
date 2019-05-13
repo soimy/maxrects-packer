@@ -18,12 +18,12 @@ describe("Efficiency", () => {
         const CANDIDATES = [
             {name: "1024x2048:0", factory: () => new MaxRectsPacker(1024, 2048, 0)},
             {name: "1024x2048:1", factory: () => new MaxRectsPacker(1024, 2048, 1)},
-            {name: "1024x2048:1:allowRotation", factory: () => new MaxRectsPacker(1024, 2048, 1, { smart: true, pot: true, square: true, allowRotation: true})},
+            {name: "1024x2048:1:Rot", factory: () => new MaxRectsPacker(1024, 2048, 1, { smart: true, pot: true, square: true, allowRotation: true})},
             {name: "1024x1024:0", factory: () => new MaxRectsPacker(1024, 1024, 0)},
             {name: "1024x1024:1", factory: () => new MaxRectsPacker(1024, 1024, 1)},
-            {name: "1024x1024:1:allowRotation", factory: () => new MaxRectsPacker(1024, 1024, 1, { smart: true, pot: true, square: true, allowRotation: true})},
+            {name: "1024x1024:1:Rot", factory: () => new MaxRectsPacker(1024, 1024, 1, { smart: true, pot: true, square: true, allowRotation: true})},
             {name: "2048:2048:1", factory: () => new MaxRectsPacker(2048, 2048, 1)},
-            {name: "2048:2048:1:allowRotation", factory: () => new MaxRectsPacker(2048, 2048, 1, { smart: true, pot: true, square: true, allowRotation: true})}
+            {name: "2048:2048:1:Rot", factory: () => new MaxRectsPacker(2048, 2048, 1, { smart: true, pot: true, square: true, allowRotation: true})}
         ];
 
 
