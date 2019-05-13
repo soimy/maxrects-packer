@@ -29,6 +29,7 @@
   "homepage": "https://github.com/soimy/maxrects-packer#readme",
   "devDependencies": {
     "@types/chai": "^4.1.7",
+    "@types/glob": "^7.1.1",
     "@types/mocha": "^5.2.6",
     "@types/node": "^11.11.3",
     "ascii-table": "0.0.9",
@@ -41,5 +42,8 @@
     "tslint-config-standard": "^8.0.1",
     "typescript": "^3.3.3333"
   },
-  "dependencies": {}
+  "dependencies": {
+    "commander": "^2.20.0",
+    "jimp": "^0.6.4"
+  }
 }
