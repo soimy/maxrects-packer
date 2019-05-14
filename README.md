@@ -2,6 +2,7 @@
 [![Build Status](https://travis-ci.org/soimy/maxrects-packer.svg?branch=master)](https://travis-ci.org/soimy/maxrects-packer)
 [![Coverage Status](https://coveralls.io/repos/github/soimy/maxrects-packer/badge.svg?branch=master)](https://coveralls.io/github/soimy/maxrects-packer?branch=master)
 [![npm version](https://badge.fury.io/js/maxrects-packer.svg)](https://badge.fury.io/js/maxrects-packer)
+![npm](https://img.shields.io/npm/dm/maxrects-packer.svg)
 
 A simple max rectangle 2d bin packing algorithm for packing glyphs or images into multiple sprite-sheet/atlas. Minimalist with no module dependency.
 
