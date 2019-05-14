@@ -4,6 +4,7 @@
   "description": "A max rectangle 2d bin packer for packing glyphs or images into multiple sprite-sheet/atlas",
   "main": "lib/maxrects_packer.js",
   "types": "lib/maxrects_packer.d.ts",
+  "bin": "cli.js",
   "scripts": {
     "build": "tsc",
     "test": "mocha --reporter spec",
