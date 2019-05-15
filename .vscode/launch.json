@@ -35,6 +35,18 @@
                 // "${workspaceRoot}/test/maxrects_bin.spec.js"
             ],
             "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch via NPM",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run-script",
+                "cli"
+            ],
+            "port": 9229,
+            "protocol": "inspector"
         }
     ]
 }
