@@ -100,7 +100,7 @@ Promise.all(loading).then(() => {
     };
     const packer = new MaxRectsPacker(options.size[0], options.size[1], options.padding, packerOptions);
     packer.addArray(rects);
-    const bins = packer.bins.map(async (bin, index) => {
+    packer.bins.forEach((bin, index) => {
         const ext = path.extname(options.output);
         const basename = path.basename(options.output, ext);
         const binName = packer.bins.length > 1 ? `${basename}.${index}${ext}` : `${basename}${ext}`;
@@ -110,6 +110,8 @@ Promise.all(loading).then(() => {
             if (rect.rot) rect.data.rotate(90);
             image.composite(rect.data, rect.x, rect.y);
         });
-        
+        image.write(binName, () => {
+            console.log('Wrote atlas : ' + binName);
+        });
     });
 })
