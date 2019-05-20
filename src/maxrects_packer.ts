@@ -61,13 +61,26 @@ export class MaxRectsPacker {
         }
     }
 
+    public add<T extends Rectangle> (rect: T) {
+        if (rect.width > this.width || rect.height > this.height) {
+            this.bins.push(new OversizedElementBin(rect.width, rect.height, rect.data));
+        } else {
+            let added = this.bins.find(bin => bin.add(rect) !== undefined);
+            if (!added) {
+                let bin = new MaxRectsBin(this.width, this.height, this.padding, this.options);
+                bin.add(rect);
+                this.bins.push(bin);
+            }
+        }
+    }
+
     /**
      * Add an Array of bins/rectangles to the packer.
      * Object structure: { width, height, data }
      * @param {IRectangle[]} rects Array of bin/rectangles
      * @memberof MaxRectsPacker
      */
-    public addArray (rects: IRectangle[]) {
+    public addArray<T extends Rectangle> (rects: T[]) {
         this.sort(rects).forEach(r => this.add(r.width, r.height, r.data));
     }
 
