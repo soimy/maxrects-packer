@@ -43,7 +43,7 @@
             "runtimeExecutable": "npm",
             "runtimeArgs": [
                 "run-script",
-                "cli"
+                "cli-test"
             ],
             "port": 9229,
             "protocol": "inspector"
