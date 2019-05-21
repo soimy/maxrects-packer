@@ -11,7 +11,7 @@ export interface IBin {
     options: IOption;
 }
 
-export abstract class Bin<T extends IRectangle = Rectangle> implements IBin {
+export abstract class Bin<T extends IRectangle> implements IBin {
     public width!: number;
     public height!: number;
     public maxWidth!: number;

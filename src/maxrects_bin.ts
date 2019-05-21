@@ -2,7 +2,7 @@ import { EDGE_MAX_VALUE, IOption } from "./maxrects_packer";
 import { Rectangle, IRectangle } from "./geom/Rectangle";
 import { Bin } from "./abstract_bin";
 
-export class MaxRectsBin<T extends Rectangle = Rectangle> extends Bin {
+export class MaxRectsBin<T extends Rectangle = Rectangle> extends Bin<T> {
     public width: number;
     public height: number;
     public freeRects: Rectangle[] = [];
@@ -29,9 +29,10 @@ export class MaxRectsBin<T extends Rectangle = Rectangle> extends Bin {
         let width: number;
         let height: number;
         let data: any;
-        let rect: any;
-        if (args.length === 1 && typeof args[0] === 'object') {
-            rect = args[0];
+        let rect: T | undefined;
+        if (args.length === 1) {
+            if (typeof args[0] !== 'object') throw new Error("MacrectsBin.add(): Wrong parameters");
+            rect = args[0] as T;
             width = rect.width;
             height = rect.height;
         } else {

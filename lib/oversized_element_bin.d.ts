@@ -1,7 +1,7 @@
 import { IRectangle, Rectangle } from "./geom/Rectangle";
 import { IOption } from "./maxrects_packer";
 import { Bin } from "./abstract_bin";
-export declare class OversizedElementBin<T extends Rectangle = Rectangle> extends Bin {
+export declare class OversizedElementBin<T extends Rectangle> extends Bin {
     width: number;
     height: number;
     data: any;

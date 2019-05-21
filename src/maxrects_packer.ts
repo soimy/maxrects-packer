@@ -60,7 +60,8 @@ export class MaxRectsPacker<T extends Rectangle = Rectangle> {
         let width: number;
         let height: number;
         let data: any;
-        if (args.length === 1 && typeof args[0] === 'object') {
+        if (args.length === 1) {
+            if (typeof args[0] !== 'object') throw new Error("MacrectsPacker.add(): Wrong parameters");
             const rect: T = args[0];
             if (rect.width > this.width || rect.height > this.height) {
                 this.bins.push(new OversizedElementBin<T>(rect));
@@ -77,7 +78,7 @@ export class MaxRectsPacker<T extends Rectangle = Rectangle> {
             height = args[1];
             data = args.length > 2 ? args[2] : null;
             if (width > this.width || height > this.height) {
-                this.bins.push(new OversizedElementBin(width, height, data));
+                this.bins.push(new OversizedElementBin<T>(width, height, data));
             } else {
                 let added = this.bins.find(bin => bin.add(width, height, data) !== undefined);
                 if (!added) {

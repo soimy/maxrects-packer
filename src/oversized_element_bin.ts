@@ -2,7 +2,7 @@ import { IRectangle, Rectangle } from "./geom/Rectangle";
 import { IOption } from "./maxrects_packer";
 import { Bin } from "./abstract_bin";
 
-export class OversizedElementBin<T extends Rectangle = Rectangle> extends Bin {
+export class OversizedElementBin<T extends Rectangle = Rectangle> extends Bin<T> {
     public width: number;
     public height: number;
     public data: any;
@@ -12,11 +12,12 @@ export class OversizedElementBin<T extends Rectangle = Rectangle> extends Bin {
     public rects: T[] = [];
     public freeRects: IRectangle[];
 
-    constructor (rect: IRectangle);
+    constructor (rect: T);
     constructor (width: number, height: number, data: any);
     constructor (...args: any[]) {
         super();
-        if (args.length === 1 && typeof args[0] === 'object') {
+        if (args.length === 1) {
+            if (typeof args[0] !== 'object') throw new Error("OversizedElementBin: Wrong parameters");
             const rect = args[0];
             this.rects = [rect];
             this.width = rect.width;
