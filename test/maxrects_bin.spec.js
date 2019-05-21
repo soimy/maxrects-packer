@@ -1,6 +1,7 @@
 "use strict";
 
-let MaxRectBin = require("../lib/maxrects_bin").MaxRectsBin;
+let MaxRectsBin = require("../lib/maxrects_bin").MaxRectsBin;
+let Rectangle = require("../lib/geom/Rectangle").Rectangle;
 let expect = require("chai").expect;
 
 const EDGE_MAX_VALUE = 4096;
@@ -12,12 +13,12 @@ const opt = {
     allowRotation: false
 }
 
-describe("MaxRectBin", () => {
+describe("MaxRectsBin", () => {
     let bin;
 
     context("no padding", () => {
         beforeEach(() => {
-            bin = new MaxRectBin(1024, 1024, 0, opt);
+            bin = new MaxRectsBin(1024, 1024, 0, opt);
         });
 
         it("is initially empty", () => {
@@ -65,8 +66,9 @@ describe("MaxRectBin", () => {
             while (true) {
                 let width = Math.floor(Math.random() * 200);
                 let height = Math.floor(Math.random() * 200);
+                let rect = new Rectangle(0, 0, width, height);
 
-                let position = bin.add(width, height);
+                let position = bin.add(rect);
                 if (position) {
                     expect(position.width).to.equal(width);
                     expect(position.height).to.equal(height);
@@ -83,12 +85,7 @@ describe("MaxRectBin", () => {
                 // Make sure rects are not overlapping
                 rects.forEach(rect2 => {
                     if (rect1 !== rect2) {
-                        let intersect =
-                         (rect1.x < rect2.x + rect2.width &&
-                          rect2.x < rect1.x + rect1.width &&
-                          rect1.y < rect2.y + rect2.height &&
-                          rect2.y < rect1.y + rect1.height);
-                        expect(intersect).to.equal(false, "intersection detected: " + JSON.stringify(rect1) + " " + JSON.stringify(rect2));
+                        expect(rect1.collide(rect2)).to.equal(false, "intersection detected: " + JSON.stringify(rect1) + " " + JSON.stringify(rect2));
                     }
                 });
 
@@ -101,7 +98,7 @@ describe("MaxRectBin", () => {
 
     context("padding", () => {
         beforeEach(() => {
-            bin = new MaxRectBin(1024, 1024, 4, opt);
+            bin = new MaxRectsBin(1024, 1024, 4, opt);
         });
 
         it("is initially empty", () => {
@@ -124,13 +121,14 @@ describe("MaxRectBin", () => {
         });
 
         it("monkey testing", () => {
-            bin = new MaxRectBin(1024, 1024, 40);
+            bin = new MaxRectsBin(1024, 1024, 40);
             let rects = [];
             while (true) {
                 let width = Math.floor(Math.random() * 200);
                 let height = Math.floor(Math.random() * 200);
+                let rect = new Rectangle(0, 0, width, height);
 
-                let position = bin.add(width, height);
+                let position = bin.add(rect);
                 if (position) {
                     expect(position.width).to.equal(width);
                     expect(position.height).to.equal(height);
@@ -147,12 +145,7 @@ describe("MaxRectBin", () => {
                 // Make sure rects are not overlapping
                 rects.forEach(rect2 => {
                     if (rect1 !== rect2) {
-                        let intersect =
-                         (rect1.x < rect2.x + rect2.width &&
-                          rect2.x < rect1.x + rect1.width &&
-                          rect1.y < rect2.y + rect2.height &&
-                          rect2.y < rect1.y + rect1.height);
-                        expect(intersect).to.equal(false, "intersection detected: " + JSON.stringify(rect1) + " " + JSON.stringify(rect2));
+                        expect(rect1.collide(rect2)).to.equal(false, "intersection detected: " + JSON.stringify(rect1) + " " + JSON.stringify(rect2));
                     }
                 });
 

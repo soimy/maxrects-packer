@@ -8,6 +8,7 @@ export interface IRectangle {
 
 export class Rectangle implements IRectangle {
     public data: any;
+    public oversized: boolean = false;
     constructor (public x: number = 0, public y: number = 0, public width: number = 0, public height: number = 0, public rot: boolean = false) {
         this.data = {};
     }
@@ -17,8 +18,12 @@ export class Rectangle implements IRectangle {
     public area (): number { return this.width * this.height; }
 
     public collide (rect: Rectangle): boolean {
-        return !(rect.x >= this.x + this.width || rect.x + rect.width <= this.x ||
-                rect.y >= this.y + this.height || rect.y + rect.height <= this.y);
+        return (
+            rect.x < this.x + this.width &&
+            rect.x + rect.width > this.x &&
+            rect.y < this.y + this.height &&
+            rect.y + rect.height > this.y
+        );
     }
 
     public contain (rect: Rectangle): boolean {

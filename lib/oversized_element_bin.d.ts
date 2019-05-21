@@ -1,15 +1,16 @@
-import { IRectangle } from "./geom/Rectangle";
+import { IRectangle, Rectangle } from "./geom/Rectangle";
 import { IOption } from "./maxrects_packer";
 import { Bin } from "./abstract_bin";
-export declare class OversizedElementBin extends Bin {
+export declare class OversizedElementBin<T extends Rectangle = Rectangle> extends Bin {
     width: number;
     height: number;
     data: any;
     maxWidth: number;
     maxHeight: number;
     options: IOption;
-    rects: IRectangle[];
+    rects: T[];
     freeRects: IRectangle[];
+    constructor(rect: IRectangle);
     constructor(width: number, height: number, data: any);
     add(): undefined;
 }

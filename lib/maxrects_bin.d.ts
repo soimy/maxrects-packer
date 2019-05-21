@@ -1,7 +1,7 @@
 import { IOption } from "./maxrects_packer";
 import { Rectangle } from "./geom/Rectangle";
 import { Bin } from "./abstract_bin";
-export declare class MaxRectsBin extends Bin {
+export declare class MaxRectsBin<T extends Rectangle = Rectangle> extends Bin {
     maxWidth: number;
     maxHeight: number;
     padding: number;
@@ -9,10 +9,11 @@ export declare class MaxRectsBin extends Bin {
     width: number;
     height: number;
     freeRects: Rectangle[];
-    rects: Rectangle[];
+    rects: T[];
     private verticalExpand;
     private stage;
     constructor(maxWidth?: number, maxHeight?: number, padding?: number, options?: IOption);
+    add(rect: T): T | undefined;
     add(width: number, height: number, data: any): Rectangle | undefined;
     private findNode;
     private splitNode;

@@ -12,6 +12,7 @@ export declare class Rectangle implements IRectangle {
     height: number;
     rot: boolean;
     data: any;
+    oversized: boolean;
     constructor(x?: number, y?: number, width?: number, height?: number, rot?: boolean);
     static Collide(first: Rectangle, second: Rectangle): boolean;
     static Contain(first: Rectangle, second: Rectangle): boolean;
