@@ -11,14 +11,14 @@ export interface IBin {
     options: IOption;
 }
 
-export abstract class Bin<T extends IRectangle> implements IBin {
+export abstract class Bin implements IBin {
     public width!: number;
     public height!: number;
     public maxWidth!: number;
     public maxHeight!: number;
     public freeRects!: IRectangle[];
-    public rects!: T[];
+    public rects!: IRectangle[];
     public options!: IOption;
-    public abstract add (rect: T): T | undefined;
+    public abstract add (rect: IRectangle): IRectangle | undefined;
     public abstract add (width: number, height: number, data: any): IRectangle | undefined;
 }

@@ -2,11 +2,11 @@ import { EDGE_MAX_VALUE, IOption } from "./maxrects_packer";
 import { Rectangle, IRectangle } from "./geom/Rectangle";
 import { Bin } from "./abstract_bin";
 
-export class MaxRectsBin<T extends Rectangle = Rectangle> extends Bin<T> {
+export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin {
     public width: number;
     public height: number;
     public freeRects: Rectangle[] = [];
-    public rects: T[] = [];
+    public rects: IRectangle[] = [];
     private verticalExpand: boolean = false;
     private stage: Rectangle;
 
@@ -29,7 +29,7 @@ export class MaxRectsBin<T extends Rectangle = Rectangle> extends Bin<T> {
         let width: number;
         let height: number;
         let data: any;
-        let rect: T | undefined;
+        let rect: IRectangle | undefined;
         if (args.length === 1) {
             if (typeof args[0] !== 'object') throw new Error("MacrectsBin.add(): Wrong parameters");
             rect = args[0] as T;
@@ -68,7 +68,7 @@ export class MaxRectsBin<T extends Rectangle = Rectangle> extends Bin<T> {
         } else if (!this.verticalExpand) {
             if (this.updateBinSize(new Rectangle(this.width + this.padding, 0, width + this.padding, height + this.padding))
                 || this.updateBinSize(new Rectangle(0, this.height + this.padding, width + this.padding, height + this.padding))) {
-                return rect ? this.add(rect) : this.add(width, height, data);
+                return rect ? this.add(rect as T) : this.add(width, height, data);
             }
         } else {
             if (this.updateBinSize(new Rectangle(
@@ -78,7 +78,7 @@ export class MaxRectsBin<T extends Rectangle = Rectangle> extends Bin<T> {
                 this.width + this.padding, 0,
                 width + this.padding, height + this.padding
             ))) {
-                return rect ? this.add(rect) : this.add(width, height, data);
+                return rect ? this.add(rect as T) : this.add(width, height, data);
             }
         }
         return undefined;

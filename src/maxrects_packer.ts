@@ -21,8 +21,8 @@ export interface IOption {
     allowRotation?: boolean;
 }
 
-export class MaxRectsPacker<T extends Rectangle = Rectangle> {
-    public bins: Bin<T>[];
+export class MaxRectsPacker<T extends IRectangle = Rectangle> {
+    public bins: Bin[];
 
     /**
      * Creates an instance of MaxRectsPacker.
@@ -96,8 +96,8 @@ export class MaxRectsPacker<T extends Rectangle = Rectangle> {
      * @param {IRectangle[]} rects Array of bin/rectangles
      * @memberof MaxRectsPacker
      */
-    public addArray<T extends IRectangle = Rectangle> (rects: T[]) {
-        this.sort(rects).forEach(r => this.add(r.width, r.height, r.data));
+    public addArray (rects: T[]) {
+        this.sort(rects).forEach(rect => this.add(rect));
     }
 
     /**
@@ -105,7 +105,7 @@ export class MaxRectsPacker<T extends Rectangle = Rectangle> {
      * @param {MaxRectsBin[]} bins MaxRectsBin objects
      * @memberof MaxRectsPacker
      */
-    public load (bins: Bin<T>[]) {
+    public load (bins: Bin[]) {
         bins.forEach((bin, index) => {
             if (bin.maxWidth > this.width || bin.maxHeight > this.height) {
                 this.bins.push(new OversizedElementBin(bin.width, bin.height, {}));
@@ -151,7 +151,7 @@ export class MaxRectsPacker<T extends Rectangle = Rectangle> {
         return saveBins;
     }
 
-    private sort<T extends IRectangle> (rects: T[]) {
+    private sort (rects: T[]) {
         return rects.slice().sort((a, b) => Math.max(b.width, b.height) - Math.max(a.width, a.height));
     }
 }

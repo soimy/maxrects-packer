@@ -16,12 +16,12 @@ export interface IOption {
     square?: boolean;
     allowRotation?: boolean;
 }
-export declare class MaxRectsPacker<T extends Rectangle = Rectangle> {
+export declare class MaxRectsPacker<T extends IRectangle = Rectangle> {
     width: number;
     height: number;
     padding: number;
     options: IOption;
-    bins: Bin<T>[];
+    bins: Bin[];
     /**
      * Creates an instance of MaxRectsPacker.
      * @param {number} width of the output atlas (default is 4096)
@@ -52,13 +52,13 @@ export declare class MaxRectsPacker<T extends Rectangle = Rectangle> {
      * @param {IRectangle[]} rects Array of bin/rectangles
      * @memberof MaxRectsPacker
      */
-    addArray<T extends IRectangle = Rectangle>(rects: T[]): void;
+    addArray(rects: T[]): void;
     /**
      * Load bins to the packer, overwrite exist bins
      * @param {MaxRectsBin[]} bins MaxRectsBin objects
      * @memberof MaxRectsPacker
      */
-    load(bins: Bin<T>[]): void;
+    load(bins: Bin[]): void;
     /**
      * Output current bins to save
      * @memberof MaxRectsPacker
