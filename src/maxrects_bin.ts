@@ -62,6 +62,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin {
             } else {
                 rect.x = node.x;
                 rect.y = node.y;
+                rect.rot = node.rot;
             }
             this.rects.push(rect);
             return rect;
