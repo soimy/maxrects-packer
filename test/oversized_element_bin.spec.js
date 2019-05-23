@@ -4,7 +4,7 @@ let OversizedElementBin = require("../lib/oversized_element_bin").OversizedEleme
 let expect = require("chai").expect;
 let Rectangle = require("../lib/geom/Rectangle").Rectangle;
 
-const oversizedRect = new Rectangle(0, 0, 2000, 2000);
+const oversizedRect = new Rectangle(2000, 2000);
 oversizedRect.data = {foo: "bar"};
 
 describe("OversizedElementBin", () => {

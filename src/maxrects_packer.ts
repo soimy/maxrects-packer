@@ -113,7 +113,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 let newBin = new MaxRectsBin<T>(this.width, this.height, this.padding, bin.options);
                 newBin.freeRects.splice(0);
                 bin.freeRects.forEach((r, i) => {
-                    newBin.freeRects.push(new Rectangle(r.x, r.y, r.width, r.height));
+                    newBin.freeRects.push(new Rectangle(r.width, r.height, r.x, r.y));
                 });
                 newBin.width = bin.width;
                 newBin.height = bin.height;

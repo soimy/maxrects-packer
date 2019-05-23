@@ -28,7 +28,7 @@ export class OversizedElementBin<T extends IRectangle = Rectangle> extends Bin {
             this.width = args[0];
             this.height = args[1];
             this.data = args.length > 2 ? args[2] : null;
-            const rect: any = new Rectangle(0, 0, this.width, this.height);
+            const rect: any = new Rectangle(this.width, this.height);
             rect.oversized = true;
             rect.data = this.data;
             this.rects.push(rect);

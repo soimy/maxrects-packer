@@ -66,7 +66,7 @@ describe("MaxRectsBin", () => {
             while (true) {
                 let width = Math.floor(Math.random() * 200);
                 let height = Math.floor(Math.random() * 200);
-                let rect = new Rectangle(0, 0, width, height);
+                let rect = new Rectangle(width, height);
 
                 let position = bin.add(rect);
                 if (position) {
@@ -126,7 +126,7 @@ describe("MaxRectsBin", () => {
             while (true) {
                 let width = Math.floor(Math.random() * 200);
                 let height = Math.floor(Math.random() * 200);
-                let rect = new Rectangle(0, 0, width, height);
+                let rect = new Rectangle(width, height);
 
                 let position = bin.add(rect);
                 if (position) {
