@@ -1,6 +1,6 @@
-import { IOption } from "./maxrects_packer";
+import { IOption } from "./maxrects-packer";
 import { Rectangle, IRectangle } from "./geom/Rectangle";
-import { Bin } from "./abstract_bin";
+import { Bin } from "./abstract-bin";
 export declare class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin {
     maxWidth: number;
     maxHeight: number;

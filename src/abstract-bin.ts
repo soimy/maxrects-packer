@@ -1,5 +1,5 @@
 import { IRectangle, Rectangle } from "./geom/Rectangle";
-import { IOption } from "./maxrects_packer";
+import { IOption } from "./maxrects-packer";
 
 export interface IBin {
     width: number;

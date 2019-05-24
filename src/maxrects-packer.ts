@@ -1,10 +1,12 @@
 import { Rectangle, IRectangle } from "./geom/Rectangle";
-import { MaxRectsBin } from "./maxrects_bin";
-import { OversizedElementBin } from "./oversized_element_bin";
-import { Bin, IBin } from "./abstract_bin";
+import { MaxRectsBin } from "./maxrects-bin";
+import { OversizedElementBin } from "./oversized-element-bin";
+import { Bin, IBin } from "./abstract-bin";
 
 export const EDGE_MAX_VALUE: number = 4096;
 export const EDGE_MIN_VALUE: number = 128;
+
+export { Rectangle, IRectangle } from "./geom/Rectangle";
 
 /**
  * Options for MaxRect Packer

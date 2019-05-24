@@ -1,6 +1,6 @@
 "use strict";
 
-let MaxRectsBin = require("../lib/maxrects_bin").MaxRectsBin;
+let MaxRectsBin = require("../lib/maxrects-bin").MaxRectsBin;
 let Rectangle = require("../lib/geom/Rectangle").Rectangle;
 let expect = require("chai").expect;
 

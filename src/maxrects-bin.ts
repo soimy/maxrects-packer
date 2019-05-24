@@ -1,6 +1,6 @@
-import { EDGE_MAX_VALUE, IOption } from "./maxrects_packer";
+import { EDGE_MAX_VALUE, IOption } from "./maxrects-packer";
 import { Rectangle, IRectangle } from "./geom/Rectangle";
-import { Bin } from "./abstract_bin";
+import { Bin } from "./abstract-bin";
 
 export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin {
     public width: number;
@@ -140,7 +140,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin {
             usedNode.y + usedNode.height > freeRect.y) {
             // New node at the left side of the used node.
             if (usedNode.x > freeRect.x && usedNode.x < freeRect.x + freeRect.width) {
-                let newNode = new Rectangle(usedNode.x - freeRect.x, freeRect.height, freeRect.x, freeRect.y, );
+                let newNode = new Rectangle(usedNode.x - freeRect.x, freeRect.height, freeRect.x, freeRect.y);
                 this.freeRects.push(newNode);
             }
             // New node at the right side of the used node.

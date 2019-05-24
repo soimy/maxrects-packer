@@ -1,6 +1,6 @@
 "use strict";
 
-let OversizedElementBin = require("../lib/oversized_element_bin").OversizedElementBin;
+let OversizedElementBin = require("../lib/oversized-element-bin").OversizedElementBin;
 let expect = require("chai").expect;
 let Rectangle = require("../lib/geom/Rectangle").Rectangle;
 
