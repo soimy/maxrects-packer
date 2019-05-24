@@ -46,8 +46,6 @@ declare abstract class Bin implements IBin {
     abstract add(width: number, height: number, data: any): IRectangle | undefined;
 }
 
-declare const EDGE_MAX_VALUE: number;
-declare const EDGE_MIN_VALUE: number;
 /**
  * Options for MaxRect Packer
  * @property {boolean} options.smart Smart sizing packer (default is true)
@@ -113,4 +111,39 @@ declare class MaxRectsPacker<T extends IRectangle = Rectangle> {
     private sort;
 }
 
-export { EDGE_MAX_VALUE, EDGE_MIN_VALUE, IOption, IRectangle, MaxRectsPacker, Rectangle };
+declare class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin {
+    maxWidth: number;
+    maxHeight: number;
+    padding: number;
+    options: IOption;
+    width: number;
+    height: number;
+    freeRects: Rectangle[];
+    rects: IRectangle[];
+    private verticalExpand;
+    private stage;
+    constructor(maxWidth?: number, maxHeight?: number, padding?: number, options?: IOption);
+    add(rect: T): T | undefined;
+    add(width: number, height: number, data: any): Rectangle | undefined;
+    private findNode;
+    private splitNode;
+    private pruneFreeList;
+    private updateBinSize;
+    private expandFreeRects;
+}
+
+declare class OversizedElementBin<T extends IRectangle = Rectangle> extends Bin {
+    width: number;
+    height: number;
+    data: any;
+    maxWidth: number;
+    maxHeight: number;
+    options: IOption;
+    rects: T[];
+    freeRects: IRectangle[];
+    constructor(rect: T);
+    constructor(width: number, height: number, data: any);
+    add(): undefined;
+}
+
+export { Bin, IOption, IRectangle, MaxRectsBin, MaxRectsPacker, OversizedElementBin, Rectangle };

@@ -1,7 +1,7 @@
 "use strict";
 
-let MaxRectsBin = require("../lib/maxrects-bin").MaxRectsBin;
-let Rectangle = require("../lib/geom/Rectangle").Rectangle;
+let MaxRectsBin = require("../dist/maxrects-packer").MaxRectsBin;
+let Rectangle = require("../dist/maxrects-packer").Rectangle;
 let expect = require("chai").expect;
 
 const EDGE_MAX_VALUE = 4096;

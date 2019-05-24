@@ -1,6 +1,6 @@
 "use strict";
 
-let MaxRectsPacker = require("../dist/maxrects-packer").MaxRectsPacker;
+let MaxRectsPacker = require("../dist/maxrects-packer.min").MaxRectsPacker;
 let expect = require("chai").expect;
 let AsciiTable = require("ascii-table")
 

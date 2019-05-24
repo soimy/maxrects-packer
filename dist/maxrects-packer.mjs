@@ -258,7 +258,6 @@ class OversizedElementBin extends Bin {
 }
 
 const EDGE_MAX_VALUE = 4096;
-const EDGE_MIN_VALUE = 128;
 class MaxRectsPacker {
     /**
      * Creates an instance of MaxRectsPacker.
@@ -376,5 +375,5 @@ class MaxRectsPacker {
     }
 }
 
-export { EDGE_MAX_VALUE, EDGE_MIN_VALUE, MaxRectsPacker, Rectangle };
+export { Bin, MaxRectsBin, MaxRectsPacker, OversizedElementBin, Rectangle };
 //# sourceMappingURL=maxrects-packer.mjs.map

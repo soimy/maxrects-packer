@@ -264,7 +264,6 @@
     }
 
     const EDGE_MAX_VALUE = 4096;
-    const EDGE_MIN_VALUE = 128;
     class MaxRectsPacker {
         /**
          * Creates an instance of MaxRectsPacker.
@@ -382,9 +381,10 @@
         }
     }
 
-    exports.EDGE_MAX_VALUE = EDGE_MAX_VALUE;
-    exports.EDGE_MIN_VALUE = EDGE_MIN_VALUE;
+    exports.Bin = Bin;
+    exports.MaxRectsBin = MaxRectsBin;
     exports.MaxRectsPacker = MaxRectsPacker;
+    exports.OversizedElementBin = OversizedElementBin;
     exports.Rectangle = Rectangle;
 
     Object.defineProperty(exports, '__esModule', { value: true });

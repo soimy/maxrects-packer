@@ -1,8 +1,8 @@
 "use strict";
 
-let OversizedElementBin = require("../lib/oversized-element-bin").OversizedElementBin;
+let OversizedElementBin = require("../dist/maxrects-packer").OversizedElementBin;
 let expect = require("chai").expect;
-let Rectangle = require("../lib/geom/Rectangle").Rectangle;
+let Rectangle = require("../dist/maxrects-packer").Rectangle;
 
 const oversizedRect = new Rectangle(2000, 2000);
 oversizedRect.data = {foo: "bar"};

@@ -6,8 +6,6 @@ import { Bin, IBin } from "./abstract-bin";
 export const EDGE_MAX_VALUE: number = 4096;
 export const EDGE_MIN_VALUE: number = 128;
 
-export { Rectangle, IRectangle } from "./geom/Rectangle";
-
 /**
  * Options for MaxRect Packer
  * @property {boolean} options.smart Smart sizing packer (default is true)
