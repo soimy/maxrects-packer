@@ -2,7 +2,6 @@
 
 let MaxRectsBin = require("../dist/maxrects-packer").MaxRectsBin;
 let Rectangle = require("../dist/maxrects-packer").Rectangle;
-let expect = require("chai").expect;
 
 const EDGE_MAX_VALUE = 4096;
 const EDGE_MIN_VALUE = 128;
@@ -13,146 +12,149 @@ const opt = {
     allowRotation: false
 }
 
-describe("MaxRectsBin", () => {
-    let bin;
+let bin;
 
-    context("no padding", () => {
-        beforeEach(() => {
-            bin = new MaxRectsBin(1024, 1024, 0, opt);
-        });
+beforeEach(() => {
+    bin = new MaxRectsBin(1024, 1024, 0, opt);
+});
 
-        it("is initially empty", () => {
-            expect(bin.width).to.equal(0);
-            expect(bin.height).to.equal(0);
-        })
+describe("no padding", () => {
 
-        it("adds rects correctly", () => {
-            let position = bin.add(200, 100, {});
-            expect(position.x).to.equal(0);
-            expect(position.y).to.equal(0);
-        });
-
-        it("updates size correctly", () => {
-            let position = bin.add(200, 100, {});
-            expect(bin.width).to.equal(256);
-            expect(bin.height).to.equal(128);
-        });
-
-        it("stores data correctly", () => {
-            let position = bin.add(200, 100, {foo: "bar"});
-            expect(bin.rects[0].data.foo).to.equal("bar");
-        });
-
-        it("fits squares correctly", () => {
-            let i = 0;
-            while(bin.add(100, 100, {number: i})) {
-                // circuit breaker
-                if (i++ === 1000) {
-                    break;
-                }
-            }
-            expect(i).to.equal(100);
-            expect(bin.rects.length).to.equal(100);
-            expect(bin.width).to.equal(1024);
-            expect(bin.height).to.equal(1024);
-
-            bin.rects.forEach((rect, i) => {
-                expect(rect.data.number).to.equal(i);
-            })
-        });
-
-        it("monkey testing", () => {
-            let rects = [];
-            while (true) {
-                let width = Math.floor(Math.random() * 200);
-                let height = Math.floor(Math.random() * 200);
-                let rect = new Rectangle(width, height);
-
-                let position = bin.add(rect);
-                if (position) {
-                    expect(position.width).to.equal(width);
-                    expect(position.height).to.equal(height);
-                    rects.push(position);
-                } else {
-                    break;
-                }
-            }
-
-            expect(bin.width).to.not.be.above(1024);
-            expect(bin.height).to.not.be.above(1024);
-
-            rects.forEach(rect1 => {
-                // Make sure rects are not overlapping
-                rects.forEach(rect2 => {
-                    if (rect1 !== rect2) {
-                        expect(rect1.collide(rect2)).to.equal(false, "intersection detected: " + JSON.stringify(rect1) + " " + JSON.stringify(rect2));
-                    }
-                });
-
-                // Make sure no rect is outside bounds
-                expect(rect1.x + rect1.width).to.not.be.above(bin.width);
-                expect(rect1.y + rect1.height).to.not.be.above(bin.height);
-            });
-        });
+    test("is initially empty", () => {
+        expect(bin.width).toBe(0);
+        expect(bin.height).toBe(0);
     })
 
-    context("padding", () => {
-        beforeEach(() => {
-            bin = new MaxRectsBin(1024, 1024, 4, opt);
-        });
+    test("adds rects correctly", () => {
+        let position = bin.add(200, 100, {});
+        expect(position.x).toBe(0);
+        expect(position.y).toBe(0);
+    });
 
-        it("is initially empty", () => {
-            expect(bin.width).to.equal(0);
-            expect(bin.height).to.equal(0);
-        })
+    test("updates size correctly", () => {
+        let position = bin.add(200, 100, {});
+        expect(bin.width).toBe(256);
+        expect(bin.height).toBe(128);
+    });
 
-        it("handles padding correctly", () => {
-            bin.add(512, 512, {});
-            bin.add(508, 512, {});
-            bin.add(512, 508, {});
-            expect(bin.width).to.equal(1024);
-            expect(bin.height).to.equal(1024);
-            expect(bin.rects.length).to.equal(3);
-        });
+    test("stores data correctly", () => {
+        let position = bin.add(200, 100, {foo: "bar"});
+        expect(bin.rects[0].data.foo).toBe("bar");
+    });
 
-        it("adds rects with sizes close to the max", () => {
-            expect(bin.add(1024, 1024)).to.not.equal(undefined);
-            expect(bin.rects.length).to.equal(1);
-        });
-
-        it("monkey testing", () => {
-            bin = new MaxRectsBin(1024, 1024, 40);
-            let rects = [];
-            while (true) {
-                let width = Math.floor(Math.random() * 200);
-                let height = Math.floor(Math.random() * 200);
-                let rect = new Rectangle(width, height);
-
-                let position = bin.add(rect);
-                if (position) {
-                    expect(position.width).to.equal(width);
-                    expect(position.height).to.equal(height);
-                    rects.push(position);
-                } else {
-                    break;
-                }
+    test("fits squares correctly", () => {
+        let i = 0;
+        while(bin.add(100, 100, {number: i})) {
+            // circuit breaker
+            if (i++ === 1000) {
+                break;
             }
+        }
+        expect(i).toBe(100);
+        expect(bin.rects.length).toBe(100);
+        expect(bin.width).toBe(1024);
+        expect(bin.height).toBe(1024);
 
-            expect(bin.width).to.not.be.above(1024);
-            expect(bin.height).to.not.be.above(1024);
+        bin.rects.forEach((rect, i) => {
+            expect(rect.data.number).toBe(i);
+        })
+    });
 
-            rects.forEach(rect1 => {
-                // Make sure rects are not overlapping
-                rects.forEach(rect2 => {
-                    if (rect1 !== rect2) {
-                        expect(rect1.collide(rect2)).to.equal(false, "intersection detected: " + JSON.stringify(rect1) + " " + JSON.stringify(rect2));
-                    }
-                });
+    test("monkey testing", () => {
+        let rects = [];
+        while (true) {
+            let width = Math.floor(Math.random() * 200);
+            let height = Math.floor(Math.random() * 200);
+            let rect = new Rectangle(width, height);
 
-                // Make sure no rect is outside bounds
-                expect(rect1.x + rect1.width).to.not.be.above(bin.width);
-                expect(rect1.y + rect1.height).to.not.be.above(bin.height);
+            let position = bin.add(rect);
+            if (position) {
+                expect(position.width).toBe(width);
+                expect(position.height).toBe(height);
+                rects.push(position);
+            } else {
+                break;
+            }
+        }
+
+        expect(bin.width).toBeLessThanOrEqual(1024);
+        expect(bin.height).toBeLessThanOrEqual(1024);
+
+        rects.forEach(rect1 => {
+            // Make sure rects are not overlapping
+            rects.forEach(rect2 => {
+                if (rect1 !== rect2) {
+                    expect(rect1.collide(rect2)).toBe(false, "intersection detected: " + JSON.stringify(rect1) + " " + JSON.stringify(rect2));
+                }
             });
+
+            // Make sure no rect is outside bounds
+            expect(rect1.x + rect1.width).toBeLessThanOrEqual(bin.width);
+            expect(rect1.y + rect1.height).toBeLessThanOrEqual(bin.height);
+        });
+    });
+})
+
+describe("padding", () => {
+    beforeEach(() => {
+        bin = new MaxRectsBin(1024, 1024, 4, opt);
+    });
+
+    test("is initially empty", () => {
+        expect(bin.width).toBe(0);
+        expect(bin.height).toBe(0);
+    })
+
+    test("handles padding correctly", () => {
+        bin.add(512, 512, {});
+        bin.add(508, 512, {});
+        bin.add(512, 508, {});
+        expect(bin.width).toBe(1024);
+        expect(bin.height).toBe(1024);
+        expect(bin.rects.length).toBe(3);
+    });
+
+    test("adds rects with sizes close to the max", () => {
+        expect(bin.add(1024, 1024)).toBeDefined();
+        expect(bin.rects.length).toBe(1);
+    });
+
+    test("monkey testing", () => {
+        bin = new MaxRectsBin(1024, 1024, 40);
+        let rects = [];
+        while (true) {
+            let width = Math.floor(Math.random() * 200);
+            let height = Math.floor(Math.random() * 200);
+            let rect = new Rectangle(width, height);
+
+            let position = bin.add(rect);
+            if (position) {
+                expect(position.width).toBe(width);
+                expect(position.height).toBe(height);
+                rects.push(position);
+            } else {
+                break;
+            }
+        }
+
+        expect(bin.width).toBeLessThanOrEqual(1024);
+        expect(bin.height).toBeLessThanOrEqual(1024);
+
+        rects.forEach(rect1 => {
+            // Make sure rects are not overlapping
+            rects.forEach(rect2 => {
+                if (rect1 !== rect2) {
+                    try {
+                        expect(rect1.collide(rect2)).toBe(false); 
+                    } catch (e) {
+                        throw new Error("intersection detected: " + JSON.stringify(rect1) + " " + JSON.stringify(rect2));
+                    }
+                }
+            });
+
+            // Make sure no rect is outside bounds
+            expect(rect1.x + rect1.width).toBeLessThanOrEqual(bin.width);
+            expect(rect1.y + rect1.height).toBeLessThanOrEqual(bin.height);
         });
     });
 });
