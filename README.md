@@ -74,8 +74,8 @@ Creates a new Packer. maxWidth and maxHeight are passed on to all bins. If ```pa
 
 - `options.smart` packing with smallest possible size. (default is `true`)
 - `options.pot` bin size round up to smallest power of 2. (defalt is `true`)
-- `options.square` bin size shall alway be square. (defaut is `false`) 
-- `options.allowRotation` allow 90-degree rotation while packing. (defaut is `false`) 
+- `options.square` bin size shall alway be square. (defaut is `false`)
+- `options.allowRotation` allow 90-degree rotation while packing. (defaut is `false`)
 
 #### ```packer.add(width, height, data)``` +1 overload
 
