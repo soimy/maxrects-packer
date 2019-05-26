@@ -1,5 +1,5 @@
-import { IRectangle } from "./geom/Rectangle";
-import { Bin, IBin } from "./abstract_bin";
+import { Rectangle, IRectangle } from "./geom/Rectangle";
+import { Bin, IBin } from "./abstract-bin";
 export declare const EDGE_MAX_VALUE: number;
 export declare const EDGE_MIN_VALUE: number;
 /**
@@ -16,7 +16,7 @@ export interface IOption {
     square?: boolean;
     allowRotation?: boolean;
 }
-export declare class MaxRectsPacker {
+export declare class MaxRectsPacker<T extends IRectangle = Rectangle> {
     width: number;
     height: number;
     padding: number;
@@ -38,20 +38,27 @@ export declare class MaxRectsPacker {
      * @param {*} data custom data object
      * @memberof MaxRectsPacker
      */
-    add(width: number, height: number, data: any): void;
+    add(width: number, height: number, data: any): IRectangle;
+    /**
+     * Add a bin/rectangle object extends IRectangle to packer
+     * @template T Generic type extends IRectangle interface
+     * @param {T} rect the rect object add to the packer bin
+     * @memberof MaxRectsPacker
+     */
+    add(rect: T): T;
     /**
      * Add an Array of bins/rectangles to the packer.
      * Object structure: { width, height, data }
      * @param {IRectangle[]} rects Array of bin/rectangles
      * @memberof MaxRectsPacker
      */
-    addArray(rects: IRectangle[]): void;
+    addArray(rects: T[]): void;
     /**
      * Load bins to the packer, overwrite exist bins
      * @param {MaxRectsBin[]} bins MaxRectsBin objects
      * @memberof MaxRectsPacker
      */
-    load(bins: IBin[]): void;
+    load(bins: Bin[]): void;
     /**
      * Output current bins to save
      * @memberof MaxRectsPacker

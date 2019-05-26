@@ -1,0 +1,7 @@
+✔ 用Rollup一体化打包 @done(19-05-26 14:45)
+✔ 测试引擎Mocha->Jest @done(19-05-26 14:45)
+✔ 更新Covers 从Istanble->Jest @done(19-05-26 14:45)
+✔ 更新README.md @done(19-05-26 17:34)
+✔ Test增加Generic type部分 @done(19-05-26 17:04)
+☐ 发布2.1.0版
+☐ 增加Bin.border控制参数

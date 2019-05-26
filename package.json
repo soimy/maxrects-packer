@@ -2,12 +2,15 @@
   "name": "maxrects-packer",
   "version": "2.0.3",
   "description": "A max rectangle 2d bin packer for packing glyphs or images into multiple sprite-sheet/atlas",
-  "main": "lib/maxrects_packer.js",
-  "types": "lib/maxrects_packer.d.ts",
+  "main": "dist/maxrects-packer.js",
+  "module": "dist/maxrects-packer.mjs",
+  "types": "dist/maxrects-packer.d.ts",
   "scripts": {
-    "build": "tsc",
-    "test": "mocha --reporter spec",
-    "cover": "node_modules/istanbul/lib/cli.js cover node_modules/mocha/bin/_mocha -- -R spec --timeout 30000 test/*"
+    "clean": "rimraf ./lib && rimraf ./dist",
+    "build": "tsc && rollup -c rollup.config.ts",
+    "build:clean": "npm run clean && npm run build",
+    "test": "jest",
+    "cover": "jest --coverage"
   },
   "repository": {
     "type": "git",
@@ -28,18 +31,22 @@
   },
   "homepage": "https://github.com/soimy/maxrects-packer#readme",
   "devDependencies": {
-    "@types/chai": "^4.1.7",
-    "@types/mocha": "^5.2.6",
-    "@types/node": "^11.11.3",
+    "@types/jest": "^24.0.13",
+    "@types/node": "^12.0.2",
     "ascii-table": "0.0.9",
-    "chai": "^4.2.0",
     "coveralls": "^3.0.3",
-    "istanbul": "^0.4.5",
-    "mocha": "^6.1.4",
-    "ts-node": "^8.0.3",
-    "tslint": "^5.14.0",
+    "jest": "^24.8.0",
+    "rimraf": "^2.6.3",
+    "rollup": "^1.12.3",
+    "rollup-plugin-dts": "^0.15.1",
+    "rollup-plugin-uglify": "^6.0.2",
+    "rollup-plugin-uglify-es": "0.0.1",
+    "ts-jest": "^24.0.2",
+    "ts-node": "^8.1.0",
+    "tslib": "^1.9.3",
+    "tslint": "^5.16.0",
     "tslint-config-standard": "^8.0.1",
-    "typescript": "^3.3.3333"
+    "typescript": "^3.4.5"
   },
   "dependencies": {}
 }

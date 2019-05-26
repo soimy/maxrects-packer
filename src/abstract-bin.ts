@@ -1,5 +1,5 @@
-import { IRectangle } from "./geom/Rectangle";
-import { IOption } from "./maxrects_packer";
+import { IRectangle, Rectangle } from "./geom/Rectangle";
+import { IOption } from "./maxrects-packer";
 
 export interface IBin {
     width: number;
@@ -19,5 +19,6 @@ export abstract class Bin implements IBin {
     public freeRects!: IRectangle[];
     public rects!: IRectangle[];
     public options!: IOption;
+    public abstract add (rect: IRectangle): IRectangle | undefined;
     public abstract add (width: number, height: number, data: any): IRectangle | undefined;
 }

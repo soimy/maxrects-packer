@@ -1,18 +1,19 @@
 export interface IRectangle {
-    x: number;
-    y: number;
     width: number;
     height: number;
+    x: number;
+    y: number;
     [propName: string]: any;
 }
 export declare class Rectangle implements IRectangle {
-    x: number;
-    y: number;
     width: number;
     height: number;
+    x: number;
+    y: number;
     rot: boolean;
     data: any;
-    constructor(x?: number, y?: number, width?: number, height?: number, rot?: boolean);
+    oversized: boolean;
+    constructor(width?: number, height?: number, x?: number, y?: number, rot?: boolean);
     static Collide(first: Rectangle, second: Rectangle): boolean;
     static Contain(first: Rectangle, second: Rectangle): boolean;
     area(): number;

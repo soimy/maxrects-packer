@@ -7,33 +7,12 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Mocha Tests",
-            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+            "name": "Jest Tests",
+            "program": "${workspaceFolder}/node_modules/jest/bin/jest",
             "args": [
-                "-u",
-                "bdd",
-                "--timeout",
-                "10000",
-                "--colors",
-                "${workspaceFolder}/test"
+                "--runInBand",
             ],
             "preLaunchTask": "build",
-            "internalConsoleOptions": "openOnSessionStart"
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "TS:Mocha Tests",
-            "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
-            "args": [
-                "--compilers",
-                "ts:ts-node/register",
-                "--timeout",
-                "10000",
-                "--colors",
-                "${workspaceRoot}/test/*.spec.ts"
-                // "${workspaceRoot}/test/maxrects_bin.spec.js"
-            ],
             "internalConsoleOptions": "openOnSessionStart"
         }
     ]
