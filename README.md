@@ -28,6 +28,8 @@ npm install maxrects-packer --save
 
 **Note:** *Since version 2.1.0 packer can be fed with any object with `width & height` members, no need to follow `{ width: number, height: number, data: any }` pattern, if you are using `typescript`, that also mean any class extending `MaxRectsPacker.IRectangle`*
 
+**Note:** *Since version 2.1.0 Rectangle class constructor API is changed from `new Rectangle(x, y, width, height, rotated)` to `new Rectangle(width, height, x, y, rotated)`, cos most cases you only need to feed w/h and omit the rest like `new Rectangle(100, 100)` and left `x,y,rotated` to default value.
+
 ```javascript
 let MaxRectsPacker = require("maxrects-packer").MaxRectsPacker;
 const options = {
