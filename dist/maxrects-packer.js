@@ -5,30 +5,97 @@
 }(this, function (exports) { 'use strict';
 
     class Rectangle {
+        /**
+         * Creates an instance of Rectangle.
+         *
+         * @param {number} [width=0]
+         * @param {number} [height=0]
+         * @param {number} [x=0]
+         * @param {number} [y=0]
+         * @param {boolean} [rot=false]
+         * @memberof Rectangle
+         */
         constructor(width = 0, height = 0, x = 0, y = 0, rot = false) {
             this.width = width;
             this.height = height;
             this.x = x;
             this.y = y;
+            /**
+             * Oversized tag on rectangle which is bigger than packer itself.
+             *
+             * @type {boolean}
+             * @memberof Rectangle
+             */
             this.oversized = false;
             this._rot = false;
             this.data = {};
             this.rot = rot;
         }
+        /**
+         * Test if two given rectangle collide each other
+         *
+         * @static
+         * @param {Rectangle} first
+         * @param {Rectangle} second
+         * @returns
+         * @memberof Rectangle
+         */
         static Collide(first, second) { return first.collide(second); }
+        /**
+         * Test if the first rectangle contains the second one
+         *
+         * @static
+         * @param {Rectangle} first
+         * @param {Rectangle} second
+         * @returns
+         * @memberof Rectangle
+         */
         static Contain(first, second) { return first.contain(second); }
+        /**
+         * Get the area (w * h) of the rectangle
+         *
+         * @returns {number}
+         * @memberof Rectangle
+         */
         area() { return this.width * this.height; }
+        /**
+         * Test if the given rectangle collide with this rectangle.
+         *
+         * @param {Rectangle} rect
+         * @returns {boolean}
+         * @memberof Rectangle
+         */
         collide(rect) {
             return (rect.x < this.x + this.width &&
                 rect.x + rect.width > this.x &&
                 rect.y < this.y + this.height &&
                 rect.y + rect.height > this.y);
         }
+        /**
+         * Test if this rectangle contains the given rectangle.
+         *
+         * @param {Rectangle} rect
+         * @returns {boolean}
+         * @memberof Rectangle
+         */
         contain(rect) {
             return (rect.x >= this.x && rect.y >= this.y &&
                 rect.x + rect.width <= this.x + this.width && rect.y + rect.height <= this.y + this.height);
         }
+        /**
+         * If the rectangle is rotated
+         *
+         * @type {boolean}
+         * @memberof Rectangle
+         */
         get rot() { return this._rot; }
+        /**
+         * Set the rotate tag of the rectangle.
+         *
+         * note: after `rot` is set, `width/height` of this rectangle is swaped.
+         *
+         * @memberof Rectangle
+         */
         set rot(value) {
             if (this._rot && value)
                 return;
@@ -333,7 +400,13 @@
         }
         /**
          * Add an Array of bins/rectangles to the packer.
-         * Object structure: { width, height, data }
+         *
+         * `Javascript`: Any object has property: { width, height, ... } is accepted.
+         *
+         * `Typescript`: object shall extends `MaxrectsPacker.IRectangle`.
+         *
+         * note: object has `hash` property will have more stable packing result
+         *
          * @param {IRectangle[]} rects Array of bin/rectangles
          * @memberof MaxRectsPacker
          */
@@ -390,6 +463,16 @@
             }));
             return saveBins;
         }
+        /**
+         * Sort the given rects based on longest edge
+         *
+         * If having same long edge, will sort second key `hash` if presented.
+         *
+         * @private
+         * @param {T[]} rects
+         * @returns
+         * @memberof MaxRectsPacker
+         */
         sort(rects) {
             return rects.slice().sort((a, b) => {
                 const result = Math.max(b.width, b.height) - Math.max(a.width, a.height);

@@ -14,14 +14,81 @@ declare class Rectangle implements IRectangle {
     height: number;
     x: number;
     y: number;
+    /**
+     * Oversized tag on rectangle which is bigger than packer itself.
+     *
+     * @type {boolean}
+     * @memberof Rectangle
+     */
     oversized: boolean;
+    /**
+     * Creates an instance of Rectangle.
+     *
+     * @param {number} [width=0]
+     * @param {number} [height=0]
+     * @param {number} [x=0]
+     * @param {number} [y=0]
+     * @param {boolean} [rot=false]
+     * @memberof Rectangle
+     */
     constructor(width?: number, height?: number, x?: number, y?: number, rot?: boolean);
+    /**
+     * Test if two given rectangle collide each other
+     *
+     * @static
+     * @param {Rectangle} first
+     * @param {Rectangle} second
+     * @returns
+     * @memberof Rectangle
+     */
     static Collide(first: Rectangle, second: Rectangle): boolean;
+    /**
+     * Test if the first rectangle contains the second one
+     *
+     * @static
+     * @param {Rectangle} first
+     * @param {Rectangle} second
+     * @returns
+     * @memberof Rectangle
+     */
     static Contain(first: Rectangle, second: Rectangle): boolean;
+    /**
+     * Get the area (w * h) of the rectangle
+     *
+     * @returns {number}
+     * @memberof Rectangle
+     */
     area(): number;
+    /**
+     * Test if the given rectangle collide with this rectangle.
+     *
+     * @param {Rectangle} rect
+     * @returns {boolean}
+     * @memberof Rectangle
+     */
     collide(rect: Rectangle): boolean;
+    /**
+     * Test if this rectangle contains the given rectangle.
+     *
+     * @param {Rectangle} rect
+     * @returns {boolean}
+     * @memberof Rectangle
+     */
     contain(rect: Rectangle): boolean;
     private _rot;
+    /**
+     * If the rectangle is rotated
+     *
+     * @type {boolean}
+     * @memberof Rectangle
+     */
+    /**
+    * Set the rotate tag of the rectangle.
+    *
+    * note: after `rot` is set, `width/height` of this rectangle is swaped.
+    *
+    * @memberof Rectangle
+    */
     rot: boolean;
     private _data;
     data: any;
@@ -67,6 +134,12 @@ declare class MaxRectsPacker<T extends IRectangle = Rectangle> {
     height: number;
     padding: number;
     options: IOption;
+    /**
+     * The Bin array added to the packer
+     *
+     * @type {Bin[]}
+     * @memberof MaxRectsPacker
+     */
     bins: Bin[];
     /**
      * Creates an instance of MaxRectsPacker.
@@ -94,7 +167,13 @@ declare class MaxRectsPacker<T extends IRectangle = Rectangle> {
     add(rect: T): T;
     /**
      * Add an Array of bins/rectangles to the packer.
-     * Object structure: { width, height, data }
+     *
+     * `Javascript`: Any object has property: { width, height, ... } is accepted.
+     *
+     * `Typescript`: object shall extends `MaxrectsPacker.IRectangle`.
+     *
+     * note: object has `hash` property will have more stable packing result
+     *
      * @param {IRectangle[]} rects Array of bin/rectangles
      * @memberof MaxRectsPacker
      */
@@ -110,6 +189,16 @@ declare class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * @memberof MaxRectsPacker
      */
     save(): IBin[];
+    /**
+     * Sort the given rects based on longest edge
+     *
+     * If having same long edge, will sort second key `hash` if presented.
+     *
+     * @private
+     * @param {T[]} rects
+     * @returns
+     * @memberof MaxRectsPacker
+     */
     private sort;
 }
 

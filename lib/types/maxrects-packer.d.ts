@@ -21,6 +21,12 @@ export declare class MaxRectsPacker<T extends IRectangle = Rectangle> {
     height: number;
     padding: number;
     options: IOption;
+    /**
+     * The Bin array added to the packer
+     *
+     * @type {Bin[]}
+     * @memberof MaxRectsPacker
+     */
     bins: Bin[];
     /**
      * Creates an instance of MaxRectsPacker.
@@ -48,7 +54,13 @@ export declare class MaxRectsPacker<T extends IRectangle = Rectangle> {
     add(rect: T): T;
     /**
      * Add an Array of bins/rectangles to the packer.
-     * Object structure: { width, height, data }
+     *
+     * `Javascript`: Any object has property: { width, height, ... } is accepted.
+     *
+     * `Typescript`: object shall extends `MaxrectsPacker.IRectangle`.
+     *
+     * note: object has `hash` property will have more stable packing result
+     *
      * @param {IRectangle[]} rects Array of bin/rectangles
      * @memberof MaxRectsPacker
      */
@@ -64,5 +76,15 @@ export declare class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * @memberof MaxRectsPacker
      */
     save(): IBin[];
+    /**
+     * Sort the given rects based on longest edge
+     *
+     * If having same long edge, will sort second key `hash` if presented.
+     *
+     * @private
+     * @param {T[]} rects
+     * @returns
+     * @memberof MaxRectsPacker
+     */
     private sort;
 }
