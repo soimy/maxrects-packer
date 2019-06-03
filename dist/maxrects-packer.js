@@ -10,9 +10,10 @@
             this.height = height;
             this.x = x;
             this.y = y;
-            this.rot = rot;
             this.oversized = false;
+            this._rot = false;
             this.data = {};
+            this.rot = rot;
         }
         static Collide(first, second) { return first.collide(second); }
         static Contain(first, second) { return first.contain(second); }
@@ -27,6 +28,19 @@
             return (rect.x >= this.x && rect.y >= this.y &&
                 rect.x + rect.width <= this.x + this.width && rect.y + rect.height <= this.y + this.height);
         }
+        get rot() { return this._rot; }
+        set rot(value) {
+            if (this._rot && value)
+                return;
+            if (this._rot !== value) {
+                const tmp = this.width;
+                this.width = this.height;
+                this.height = tmp;
+                this._rot = value;
+            }
+        }
+        get data() { return this._data; }
+        set data(value) { this._data = value; }
     }
 
     class Bin {
@@ -124,7 +138,7 @@
                 if (r.width >= height && r.height >= width) {
                     areaFit = r.width * r.height - height * width;
                     if (areaFit < score) {
-                        bestNode = new Rectangle(height, width, r.x, r.y, true); // Rotated node
+                        bestNode = new Rectangle(width, height, r.x, r.y, true); // Rotated node
                         score = areaFit;
                     }
                 }
@@ -377,7 +391,14 @@
             return saveBins;
         }
         sort(rects) {
-            return rects.slice().sort((a, b) => Math.max(b.width, b.height) - Math.max(a.width, a.height));
+            return rects.slice().sort((a, b) => {
+                const result = Math.max(b.width, b.height) - Math.max(a.width, a.height);
+                if (result === 0 && a.hash && b.hash) {
+                    return a.hash > b.hash ? 1 : -1;
+                }
+                else
+                    return result;
+            });
         }
     }
 

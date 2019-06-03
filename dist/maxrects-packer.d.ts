@@ -14,8 +14,6 @@ declare class Rectangle implements IRectangle {
     height: number;
     x: number;
     y: number;
-    rot: boolean;
-    data: any;
     oversized: boolean;
     constructor(width?: number, height?: number, x?: number, y?: number, rot?: boolean);
     static Collide(first: Rectangle, second: Rectangle): boolean;
@@ -23,6 +21,10 @@ declare class Rectangle implements IRectangle {
     area(): number;
     collide(rect: Rectangle): boolean;
     contain(rect: Rectangle): boolean;
+    private _rot;
+    rot: boolean;
+    private _data;
+    data: any;
 }
 
 interface IBin {
