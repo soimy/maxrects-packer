@@ -178,7 +178,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
         return rects.slice().sort((a, b) => {
             const result = Math.max(b.width, b.height) - Math.max(a.width, a.height);
             if (result === 0 && a.hash && b.hash) {
-                return a.hash > b.hash ? 1 : -1;
+                return a.hash > b.hash ? -1 : 1;
             } else return result;
         });
     }
