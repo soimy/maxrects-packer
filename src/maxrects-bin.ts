@@ -104,7 +104,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin {
             if (r.width >= height && r.height >= width) {
                 areaFit = r.width * r.height - height * width;
                 if (areaFit < score) {
-                    bestNode = new Rectangle(height, width, r.x, r.y, true); // Rotated node
+                    bestNode = new Rectangle(width, height, r.x, r.y, true); // Rotated node
                     score = areaFit;
                 }
             }
