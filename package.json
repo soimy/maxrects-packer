@@ -9,8 +9,13 @@
     "clean": "rimraf ./lib && rimraf ./dist",
     "build": "tsc && rollup -c rollup.config.ts",
     "build:clean": "npm run clean && npm run build",
+    "doc": "typedoc",
+    "doc:json": "typedoc --json docs/typedoc.json",
+    "doc:publish": "gh-pages -m \"[ci skip] Updates\" -d docs",
     "test": "jest",
-    "cover": "jest --coverage"
+    "cover": "jest --coverage",
+    "version": "standard-version",
+    "prepare-release": "npm run build:clean && npm run doc && npm run test && npm run version"
   },
   "repository": {
     "type": "git",
@@ -35,18 +40,27 @@
     "@types/node": "^12.0.2",
     "ascii-table": "0.0.9",
     "coveralls": "^3.0.3",
+    "cz-conventional-changelog": "^2.1.0",
+    "gh-pages": "^2.0.1",
     "jest": "^24.8.0",
     "rimraf": "^2.6.3",
     "rollup": "^1.12.3",
     "rollup-plugin-dts": "^0.15.1",
     "rollup-plugin-uglify": "^6.0.2",
     "rollup-plugin-uglify-es": "0.0.1",
+    "standard-version": "^6.0.1",
     "ts-jest": "^24.0.2",
     "ts-node": "^8.1.0",
     "tslib": "^1.9.3",
     "tslint": "^5.16.0",
     "tslint-config-standard": "^8.0.1",
+    "typedoc": "^0.14.2",
     "typescript": "^3.4.5"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  }
 }

@@ -58,6 +58,9 @@ typings/
 # dotenv environment variables file
 .env
 
+# Typedocs
+docs
+
 # Mac stuff
 # General
 .DS_Store
