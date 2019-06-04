@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.2.0](https://github.com/soimy/maxrects-packer/compare/v2.1.2...v2.2.0) (2019-06-04)
+
+
+### Features
+
+* Add `.next()` method to enclose and start a new bin ([9dbe754](https://github.com/soimy/maxrects-packer/commit/9dbe754))
+
+
+
 ### [2.1.2](https://github.com/soimy/maxrects-packer/compare/v2.1.1...v2.1.2) (2019-06-03)
 
 
