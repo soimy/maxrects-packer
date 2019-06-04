@@ -359,6 +359,7 @@
             this.height = height;
             this.padding = padding;
             this.options = options;
+            this._currentBinIndex = 0;
             this.bins = [];
         }
         add(...args) {
@@ -373,7 +374,7 @@
                     this.bins.push(new OversizedElementBin(rect));
                 }
                 else {
-                    let added = this.bins.find(bin => bin.add(rect) !== undefined);
+                    let added = this.bins.slice(this._currentBinIndex).find(bin => bin.add(rect) !== undefined);
                     if (!added) {
                         let bin = new MaxRectsBin(this.width, this.height, this.padding, this.options);
                         bin.add(rect);
@@ -389,7 +390,7 @@
                     this.bins.push(new OversizedElementBin(width, height, data));
                 }
                 else {
-                    let added = this.bins.find(bin => bin.add(width, height, data) !== undefined);
+                    let added = this.bins.slice(this._currentBinIndex).find(bin => bin.add(width, height, data) !== undefined);
                     if (!added) {
                         let bin = new MaxRectsBin(this.width, this.height, this.padding, this.options);
                         bin.add(width, height, data);
@@ -412,6 +413,20 @@
          */
         addArray(rects) {
             this.sort(rects).forEach(rect => this.add(rect));
+        }
+        /**
+         * Stop adding new element to the current bin and return a new bin.
+         *
+         * note: After calling `next()` all elements will no longer added to previous bins.
+         *
+         * @returns {Bin}
+         * @memberof MaxRectsPacker
+         */
+        next() {
+            this._currentBinIndex = this.bins.length;
+            let bin = new MaxRectsBin(this.width, this.height, this.padding, this.options);
+            this.bins.push(bin);
+            return bin;
         }
         /**
          * Load bins to the packer, overwrite exist bins
@@ -483,6 +498,7 @@
                     return result;
             });
         }
+        get currentBinIndex() { return this._currentBinIndex; }
     }
 
     exports.Bin = Bin;

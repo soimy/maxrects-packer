@@ -34,6 +34,16 @@ describe("#add", () => {
         expect(packer.bins.length).toBe(2);
     });
 
+    test("adds to new bins after next() is called", () => {
+        packer.add(1000, 1000, {number: 1});
+        packer.add(1000, 1000, {number: 2});
+        packer.next();
+        packer.add(10, 10, {number: 3});
+        packer.add(10, 10, {number: 4});
+        expect(packer.bins.length).toBe(3);
+        expect(packer.bins[packer.bins.length - 1].rects.length).toBe(2);
+    });
+
     test("allows oversized elements to be added", () => {
         packer.add(1000, 1000, {number: 1});
         packer.add(2000, 2000, {number: 2});

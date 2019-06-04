@@ -49,6 +49,8 @@ let input = [ // any object with width & height is OK since v2.1.0
 ];
 
 packer.addArray(input); // Start packing with input array
+packer.next(); // Start a new packer bin
+packer.addArray(input.slice(2)); // Adding to the new bin
 packer.bins.forEach(bin => {
     console.log(bin.rects);
 });
@@ -90,6 +92,10 @@ Adds a rect to an existing bin or creates a new one to accomodate it. Accept any
 #### ```packer.addArray([{width: number, height: number, ...}, ...])```
 
 Adds multiple rects. Since the input is automatically sorted before adding this approach usually leads to fewer bins created than separate calls to ```.add()```
+
+#### ```packer.next()```
+
+Stop adding new element to the current bin and return a new bin. After calling `next()` all elements will no longer added to previous bins.
 
 #### ```let bins = packer.save()```
 

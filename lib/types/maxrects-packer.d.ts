@@ -66,6 +66,15 @@ export declare class MaxRectsPacker<T extends IRectangle = Rectangle> {
      */
     addArray(rects: T[]): void;
     /**
+     * Stop adding new element to the current bin and return a new bin.
+     *
+     * note: After calling `next()` all elements will no longer added to previous bins.
+     *
+     * @returns {Bin}
+     * @memberof MaxRectsPacker
+     */
+    next(): Bin;
+    /**
      * Load bins to the packer, overwrite exist bins
      * @param {MaxRectsBin[]} bins MaxRectsBin objects
      * @memberof MaxRectsPacker
@@ -87,4 +96,6 @@ export declare class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * @memberof MaxRectsPacker
      */
     private sort;
+    private _currentBinIndex;
+    readonly currentBinIndex: number;
 }

@@ -73,7 +73,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
             if (rect.width > this.width || rect.height > this.height) {
                 this.bins.push(new OversizedElementBin<T>(rect));
             } else {
-                let added = this.bins.find(bin => bin.add(rect) !== undefined);
+                let added = this.bins.slice(this._currentBinIndex).find(bin => bin.add(rect) !== undefined);
                 if (!added) {
                     let bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
                     bin.add(rect);
@@ -87,7 +87,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
             if (width > this.width || height > this.height) {
                 this.bins.push(new OversizedElementBin<T>(width, height, data));
             } else {
-                let added = this.bins.find(bin => bin.add(width, height, data) !== undefined);
+                let added = this.bins.slice(this._currentBinIndex).find(bin => bin.add(width, height, data) !== undefined);
                 if (!added) {
                     let bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
                     bin.add(width, height, data);
@@ -111,6 +111,21 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      */
     public addArray (rects: T[]) {
         this.sort(rects).forEach(rect => this.add(rect));
+    }
+
+    /**
+     * Stop adding new element to the current bin and return a new bin.
+     *
+     * note: After calling `next()` all elements will no longer added to previous bins.
+     *
+     * @returns {Bin}
+     * @memberof MaxRectsPacker
+     */
+    public next (): Bin {
+        this._currentBinIndex = this.bins.length;
+        let bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
+        this.bins.push(bin);
+        return bin;
     }
 
     /**
@@ -182,4 +197,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
             } else return result;
         });
     }
+
+    private _currentBinIndex: number = 0;
+    get currentBinIndex (): number { return this._currentBinIndex; }
 }
