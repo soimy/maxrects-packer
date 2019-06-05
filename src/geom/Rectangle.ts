@@ -17,7 +17,7 @@ export class Rectangle implements IRectangle {
 
     /**
      * Creates an instance of Rectangle.
-     * 
+     *
      * @param {number} [width=0]
      * @param {number} [height=0]
      * @param {number} [x=0]

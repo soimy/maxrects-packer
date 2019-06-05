@@ -35,10 +35,14 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin {
             rect = args[0] as T;
             width = rect.width;
             height = rect.height;
+            // Check if rect.tag match bin.tag, if bin.tag not defined, it will accept any rect
+            if (this.tag && this.tag !== rect.tag) return undefined;
         } else {
             width = args[0];
             height = args[1];
             data = args.length > 2 ? args[2] : null;
+            // Check if data.tag match bin.tag, if bin.tag not defined, it will accept any rect
+            if (this.tag && this.tag !== data.tag) return undefined;
         }
 
         let node: Rectangle | undefined = this.findNode(width + this.padding, height + this.padding);

@@ -8,6 +8,7 @@ export interface IBin {
     freeRects: IRectangle[];
     rects: IRectangle[];
     options: IOption;
+    [propName: string]: any;
 }
 export declare abstract class Bin implements IBin {
     width: number;
@@ -19,4 +20,6 @@ export declare abstract class Bin implements IBin {
     options: IOption;
     abstract add(rect: IRectangle): IRectangle | undefined;
     abstract add(width: number, height: number, data: any): IRectangle | undefined;
+    data?: any;
+    tag?: string;
 }

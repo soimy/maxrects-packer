@@ -32,14 +32,36 @@ describe("no padding", () => {
     });
 
     test("updates size correctly", () => {
-        let position = bin.add(200, 100, {});
+        bin.add(200, 100, {});
         expect(bin.width).toBe(256);
         expect(bin.height).toBe(128);
     });
 
     test("stores data correctly", () => {
-        let position = bin.add(200, 100, {foo: "bar"});
+        bin.add(200, 100, {foo: "bar"});
         expect(bin.rects[0].data.foo).toBe("bar");
+    });
+
+    test("stores custom rect correctly", () => {
+        bin.add({width: 200, height: 100, foo: "bar"});
+        expect(bin.rects[0].foo).toBe("bar");
+    });
+
+    test("none tag bin accept all tagged rects", () => {
+        bin.add({width: 200, height: 100, tag: "foo"});
+        bin.add({width: 200, height: 100, tag: "bar"});
+        expect(bin.rects.length).toBe(2);
+        expect(bin.rects[0].tag).toBe("foo");
+        expect(bin.rects[1].tag).toBe("bar");
+    });
+
+    test("tagged bin reject different tagged rects", () => {
+        bin.tag = "foo";
+        let one = bin.add({width: 200, height: 100, tag: "foo"});
+        let two = bin.add({width: 200, height: 100, tag: "bar"});
+        expect(bin.rects.length).toBe(1);
+        expect(bin.rects[0].tag).toBe("foo");
+        expect(two).toBeUndefined();
     });
 
     test("fits squares correctly", () => {
