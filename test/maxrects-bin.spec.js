@@ -47,12 +47,11 @@ describe("no padding", () => {
         expect(bin.rects[0].foo).toBe("bar");
     });
 
-    test("none tag bin accept all tagged rects", () => {
+    test("none tag bin reject all tagged rects", () => {
+        bin.add({width: 200, height: 100});
         bin.add({width: 200, height: 100, tag: "foo"});
         bin.add({width: 200, height: 100, tag: "bar"});
-        expect(bin.rects.length).toBe(2);
-        expect(bin.rects[0].tag).toBe("foo");
-        expect(bin.rects[1].tag).toBe("bar");
+        expect(bin.rects.length).toBe(1);
     });
 
     test("tagged bin reject different tagged rects", () => {

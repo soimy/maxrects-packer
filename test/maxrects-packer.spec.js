@@ -45,21 +45,23 @@ describe("#add", () => {
     });
 
     test("adds to bins with tag matching", () => {
-        packer.add(1000, 1000, {number: 1, tag: "one"});
-        packer.add(1000, 1000, {number: 2, tag: "two"});
-        packer.add(10, 10, {number: 3, tag: "one"});
-        packer.add(10, 10, {number: 4, tag: "two"});
+        packer.add(1000, 1000, {number: 1});
+        packer.add(10, 10, {number: 2});
+        packer.add(1000, 1000, {number: 3, tag: "one"});
+        packer.add(1000, 1000, {number: 4, tag: "one"});
         packer.add(10, 10, {number: 5, tag: "one"});
-        packer.add(10, 10, {number: 6});
-        packer.add(10, 10, {number: 7});
+        packer.add(10, 10, {number: 6, tag: "one"});
+        packer.add(10, 10, {number: 7, tag: "two"});
         packer.add(10, 10, {number: 8, tag: "two"});
-        expect(packer.bins.length).toBe(3);
-        expect(packer.bins[0].rects.length).toBe(3);
-        expect(packer.bins[0].tag).toBe("one");
+        expect(packer.bins.length).toBe(4);
+        expect(packer.bins[0].rects.length).toBe(2);
+        expect(packer.bins[0].tag).toBeUndefined();
         expect(packer.bins[1].rects.length).toBe(3);
-        expect(packer.bins[1].tag).toBe("two");
+        expect(packer.bins[1].tag).toBe("one");
+        expect(packer.bins[2].rects.length).toBe(1);
+        expect(packer.bins[2].tag).toBe("one");
         expect(packer.bins[packer.bins.length - 1].rects.length).toBe(2);
-        expect(packer.bins[packer.bins.length - 1].tag).toBeUndefined();
+        expect(packer.bins[packer.bins.length - 1].tag).toBe("two");
     });
 
     test("allows oversized elements to be added", () => {
