@@ -9,7 +9,8 @@ const opt = {
     smart: true,
     pot: true,
     square: false,
-    allowRotation: false
+    allowRotation: false,
+    tag: true
 }
 
 let bin;

@@ -5,7 +5,9 @@ let MaxRectsPacker = require("../dist/maxrects-packer").MaxRectsPacker;
 const opt = {
     smart: true,
     pot: false,
-    square: false
+    square: false,
+    allowRotation: false,
+    tag: false
 }
 
 let packer;
@@ -44,7 +46,8 @@ describe("#add", () => {
         expect(packer.bins[packer.bins.length - 1].rects.length).toBe(2);
     });
 
-    test("adds to bins with tag matching", () => {
+    test("adds to bins with tag matching on", () => {
+        packer.options.tag = true;
         packer.add(1000, 1000, {number: 1});
         packer.add(10, 10, {number: 2});
         packer.add(1000, 1000, {number: 3, tag: "one"});
@@ -52,16 +55,32 @@ describe("#add", () => {
         packer.add(10, 10, {number: 5, tag: "one"});
         packer.add(10, 10, {number: 6, tag: "one"});
         packer.add(10, 10, {number: 7, tag: "two"});
+        packer.next();
         packer.add(10, 10, {number: 8, tag: "two"});
-        expect(packer.bins.length).toBe(4);
+        expect(packer.bins.length).toBe(5);
         expect(packer.bins[0].rects.length).toBe(2);
         expect(packer.bins[0].tag).toBeUndefined();
         expect(packer.bins[1].rects.length).toBe(3);
         expect(packer.bins[1].tag).toBe("one");
         expect(packer.bins[2].rects.length).toBe(1);
         expect(packer.bins[2].tag).toBe("one");
-        expect(packer.bins[packer.bins.length - 1].rects.length).toBe(2);
+        expect(packer.bins[packer.bins.length - 1].rects.length).toBe(1);
         expect(packer.bins[packer.bins.length - 1].tag).toBe("two");
+    });
+
+    test("adds to bins with tag matching disable", () => {
+        packer.options.tag = false;
+        packer.add(1000, 1000, {number: 1});
+        packer.add(10, 10, {number: 2});
+        packer.add(1000, 1000, {number: 3, tag: "one"});
+        packer.add(10, 10, {number: 4, tag: "two"});
+        packer.next();
+        packer.add(10, 10, {number: 8, tag: "two"});
+        expect(packer.bins.length).toBe(3);
+        expect(packer.bins[0].tag).toBeUndefined();
+        expect(packer.bins[1].tag).toBeUndefined();
+        expect(packer.bins[packer.bins.length - 1].rects.length).toBe(1);
+        expect(packer.bins[packer.bins.length - 1].tag).toBeUndefined();
     });
 
     test("allows oversized elements to be added", () => {

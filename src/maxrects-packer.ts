@@ -11,6 +11,8 @@ export const EDGE_MIN_VALUE: number = 128;
  * @property {boolean} options.smart Smart sizing packer (default is true)
  * @property {boolean} options.pot use power of 2 sizing (default is true)
  * @property {boolean} options.square use square size (default is false)
+ * @property {boolean} options.allowRotation allow rotation packing (default is false)
+ * @property {boolean} options.tag allow auto grouping based on `rect.tag` (default is false)
  * @export
  * @interface Option
  */
@@ -19,6 +21,7 @@ export interface IOption {
     pot?: boolean;
     square?: boolean;
     allowRotation?: boolean;
+    tag?: boolean;
 }
 
 export class MaxRectsPacker<T extends IRectangle = Rectangle> {
@@ -43,7 +46,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
         public width: number = EDGE_MAX_VALUE,
         public height: number = EDGE_MAX_VALUE,
         public padding: number = 0,
-        public options: IOption = { smart: true, pot: true, square: true, allowRotation: false }
+        public options: IOption = { smart: true, pot: true, square: false, allowRotation: false, tag: false }
     ) {
         this.bins = [];
     }
@@ -76,7 +79,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 let added = this.bins.slice(this._currentBinIndex).find(bin => bin.add(rect) !== undefined);
                 if (!added) {
                     let bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
-                    if (rect.tag) bin.tag = rect.tag;
+                    if (this.options.tag && rect.tag) bin.tag = rect.tag;
                     bin.add(rect);
                     this.bins.push(bin);
                 }
@@ -91,7 +94,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 let added = this.bins.slice(this._currentBinIndex).find(bin => bin.add(width, height, data) !== undefined);
                 if (!added) {
                     let bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
-                    if (data.tag) bin.tag = data.tag;
+                    if (this.options.tag && data.tag) bin.tag = data.tag;
                     bin.add(width, height, data);
                     this.bins.push(bin);
                 }
@@ -123,11 +126,9 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * @returns {Bin}
      * @memberof MaxRectsPacker
      */
-    public next (): Bin {
+    public next (): number {
         this._currentBinIndex = this.bins.length;
-        let bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
-        this.bins.push(bin);
-        return bin;
+        return this._currentBinIndex;
     }
 
     /**
