@@ -80,6 +80,7 @@ Creates a new Packer. maxWidth and maxHeight are passed on to all bins. If ```pa
 - `options.pot` bin size round up to smallest power of 2. (defalt is `true`)
 - `options.square` bin size shall alway be square. (defaut is `false`)
 - `options.allowRotation` allow 90-degree rotation while packing. (defaut is `false`)
+- `options.tag` allow tag based group packing. (defaut is `false`)
 
 #### ```packer.add(width, height, data)``` +1 overload
 
@@ -116,6 +117,10 @@ Array of rects for a specific bin. Every rect has ```x```, ```y```, ```width```,
 ## Support for 90-degree rotation packing
 
 If `options.allowRotation` is set to `true`, packer will attempt to do an extra test in `findNode()` on rotated `Rectangle`. If the rotated one gives the best score, the given `Rectangle` will be rotated in the `Rectangle.rot` set to `true`.
+
+## Support for tag based group packing
+
+If `options.tag` is set to `true`, packer will check if the input object has `tag: string` property, all input with same `tag` will be packed in the same bin.
 
 ## Support for oversized rectangles
 
