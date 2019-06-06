@@ -14,7 +14,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin {
         public maxWidth: number = EDGE_MAX_VALUE,
         public maxHeight: number = EDGE_MAX_VALUE,
         public padding: number = 0,
-        public options: IOption = { smart: true, pot: true, square: true, allowRotation: false }
+        public options: IOption = { smart: true, pot: true, square: true, allowRotation: false, tag: false }
     ) {
         super();
         this.width = this.options.smart ? 0 : maxWidth;
@@ -35,10 +35,17 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin {
             rect = args[0] as T;
             width = rect.width;
             height = rect.height;
+            // Check if rect.tag match bin.tag, if bin.tag not defined, it will accept any rect
+            if (this.options.tag && this.tag !== rect.tag) return undefined;
         } else {
             width = args[0];
             height = args[1];
             data = args.length > 2 ? args[2] : null;
+            // Check if data.tag match bin.tag, if bin.tag not defined, it will accept any rect
+            if (this.options.tag) {
+                if (data && this.tag !== data.tag) return undefined;
+                if (!data && this.tag) return undefined;
+            }
         }
 
         let node: Rectangle | undefined = this.findNode(width + this.padding, height + this.padding);

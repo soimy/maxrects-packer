@@ -7,6 +7,8 @@ export declare const EDGE_MIN_VALUE: number;
  * @property {boolean} options.smart Smart sizing packer (default is true)
  * @property {boolean} options.pot use power of 2 sizing (default is true)
  * @property {boolean} options.square use square size (default is false)
+ * @property {boolean} options.allowRotation allow rotation packing (default is false)
+ * @property {boolean} options.tag allow auto grouping based on `rect.tag` (default is false)
  * @export
  * @interface Option
  */
@@ -15,6 +17,7 @@ export interface IOption {
     pot?: boolean;
     square?: boolean;
     allowRotation?: boolean;
+    tag?: boolean;
 }
 export declare class MaxRectsPacker<T extends IRectangle = Rectangle> {
     width: number;
@@ -73,7 +76,7 @@ export declare class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * @returns {Bin}
      * @memberof MaxRectsPacker
      */
-    next(): Bin;
+    next(): number;
     /**
      * Load bins to the packer, overwrite exist bins
      * @param {MaxRectsBin[]} bins MaxRectsBin objects

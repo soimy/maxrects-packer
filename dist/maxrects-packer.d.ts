@@ -102,6 +102,7 @@ interface IBin {
     freeRects: IRectangle[];
     rects: IRectangle[];
     options: IOption;
+    [propName: string]: any;
 }
 declare abstract class Bin implements IBin {
     width: number;
@@ -113,6 +114,8 @@ declare abstract class Bin implements IBin {
     options: IOption;
     abstract add(rect: IRectangle): IRectangle | undefined;
     abstract add(width: number, height: number, data: any): IRectangle | undefined;
+    data?: any;
+    tag?: string;
 }
 
 /**
@@ -120,6 +123,8 @@ declare abstract class Bin implements IBin {
  * @property {boolean} options.smart Smart sizing packer (default is true)
  * @property {boolean} options.pot use power of 2 sizing (default is true)
  * @property {boolean} options.square use square size (default is false)
+ * @property {boolean} options.allowRotation allow rotation packing (default is false)
+ * @property {boolean} options.tag allow auto grouping based on `rect.tag` (default is false)
  * @export
  * @interface Option
  */
@@ -128,6 +133,7 @@ interface IOption {
     pot?: boolean;
     square?: boolean;
     allowRotation?: boolean;
+    tag?: boolean;
 }
 declare class MaxRectsPacker<T extends IRectangle = Rectangle> {
     width: number;
@@ -186,7 +192,7 @@ declare class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * @returns {Bin}
      * @memberof MaxRectsPacker
      */
-    next(): Bin;
+    next(): number;
     /**
      * Load bins to the packer, overwrite exist bins
      * @param {MaxRectsBin[]} bins MaxRectsBin objects

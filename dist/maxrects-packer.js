@@ -114,7 +114,7 @@
     }
 
     class MaxRectsBin extends Bin {
-        constructor(maxWidth = EDGE_MAX_VALUE, maxHeight = EDGE_MAX_VALUE, padding = 0, options = { smart: true, pot: true, square: true, allowRotation: false }) {
+        constructor(maxWidth = EDGE_MAX_VALUE, maxHeight = EDGE_MAX_VALUE, padding = 0, options = { smart: true, pot: true, square: true, allowRotation: false, tag: false }) {
             super();
             this.maxWidth = maxWidth;
             this.maxHeight = maxHeight;
@@ -139,11 +139,21 @@
                 rect = args[0];
                 width = rect.width;
                 height = rect.height;
+                // Check if rect.tag match bin.tag, if bin.tag not defined, it will accept any rect
+                if (this.options.tag && this.tag !== rect.tag)
+                    return undefined;
             }
             else {
                 width = args[0];
                 height = args[1];
                 data = args.length > 2 ? args[2] : null;
+                // Check if data.tag match bin.tag, if bin.tag not defined, it will accept any rect
+                if (this.options.tag) {
+                    if (data && this.tag !== data.tag)
+                        return undefined;
+                    if (!data && this.tag)
+                        return undefined;
+                }
             }
             let node = this.findNode(width + this.padding, height + this.padding);
             if (node) {
@@ -354,7 +364,7 @@
          * @param {IOption} [options={}] (Optional) packing options
          * @memberof MaxRectsPacker
          */
-        constructor(width = EDGE_MAX_VALUE, height = EDGE_MAX_VALUE, padding = 0, options = { smart: true, pot: true, square: true, allowRotation: false }) {
+        constructor(width = EDGE_MAX_VALUE, height = EDGE_MAX_VALUE, padding = 0, options = { smart: true, pot: true, square: false, allowRotation: false, tag: false }) {
             this.width = width;
             this.height = height;
             this.padding = padding;
@@ -377,6 +387,8 @@
                     let added = this.bins.slice(this._currentBinIndex).find(bin => bin.add(rect) !== undefined);
                     if (!added) {
                         let bin = new MaxRectsBin(this.width, this.height, this.padding, this.options);
+                        if (this.options.tag && rect.tag)
+                            bin.tag = rect.tag;
                         bin.add(rect);
                         this.bins.push(bin);
                     }
@@ -393,6 +405,8 @@
                     let added = this.bins.slice(this._currentBinIndex).find(bin => bin.add(width, height, data) !== undefined);
                     if (!added) {
                         let bin = new MaxRectsBin(this.width, this.height, this.padding, this.options);
+                        if (this.options.tag && data.tag)
+                            bin.tag = data.tag;
                         bin.add(width, height, data);
                         this.bins.push(bin);
                     }
@@ -424,9 +438,7 @@
          */
         next() {
             this._currentBinIndex = this.bins.length;
-            let bin = new MaxRectsBin(this.width, this.height, this.padding, this.options);
-            this.bins.push(bin);
-            return bin;
+            return this._currentBinIndex;
         }
         /**
          * Load bins to the packer, overwrite exist bins

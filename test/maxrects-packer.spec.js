@@ -5,7 +5,9 @@ let MaxRectsPacker = require("../dist/maxrects-packer").MaxRectsPacker;
 const opt = {
     smart: true,
     pot: false,
-    square: false
+    square: false,
+    allowRotation: false,
+    tag: false
 }
 
 let packer;
@@ -42,6 +44,43 @@ describe("#add", () => {
         packer.add(10, 10, {number: 4});
         expect(packer.bins.length).toBe(3);
         expect(packer.bins[packer.bins.length - 1].rects.length).toBe(2);
+    });
+
+    test("adds to bins with tag matching on", () => {
+        packer.options.tag = true;
+        packer.add(1000, 1000, {number: 1});
+        packer.add(10, 10, {number: 2});
+        packer.add(1000, 1000, {number: 3, tag: "one"});
+        packer.add(1000, 1000, {number: 4, tag: "one"});
+        packer.add(10, 10, {number: 5, tag: "one"});
+        packer.add(10, 10, {number: 6, tag: "one"});
+        packer.add(10, 10, {number: 7, tag: "two"});
+        packer.next();
+        packer.add(10, 10, {number: 8, tag: "two"});
+        expect(packer.bins.length).toBe(5);
+        expect(packer.bins[0].rects.length).toBe(2);
+        expect(packer.bins[0].tag).toBeUndefined();
+        expect(packer.bins[1].rects.length).toBe(3);
+        expect(packer.bins[1].tag).toBe("one");
+        expect(packer.bins[2].rects.length).toBe(1);
+        expect(packer.bins[2].tag).toBe("one");
+        expect(packer.bins[packer.bins.length - 1].rects.length).toBe(1);
+        expect(packer.bins[packer.bins.length - 1].tag).toBe("two");
+    });
+
+    test("adds to bins with tag matching disable", () => {
+        packer.options.tag = false;
+        packer.add(1000, 1000, {number: 1});
+        packer.add(10, 10, {number: 2});
+        packer.add(1000, 1000, {number: 3, tag: "one"});
+        packer.add(10, 10, {number: 4, tag: "two"});
+        packer.next();
+        packer.add(10, 10, {number: 8, tag: "two"});
+        expect(packer.bins.length).toBe(3);
+        expect(packer.bins[0].tag).toBeUndefined();
+        expect(packer.bins[1].tag).toBeUndefined();
+        expect(packer.bins[packer.bins.length - 1].rects.length).toBe(1);
+        expect(packer.bins[packer.bins.length - 1].tag).toBeUndefined();
     });
 
     test("allows oversized elements to be added", () => {
@@ -95,6 +134,19 @@ describe("#addArray", () => {
         ];
         packer.addArray(input);
         expect(packer.bins.length).toBe(2);
+    });
+
+    test("adds the big rects & big hash first", () => {
+        let input = [
+            {width: 600, height: 20, data: {number: 1}, hash: "aaa"},
+            {width: 600, height: 20, data: {number: 2}, hash: "bbb"},
+            {width: 1000, height: 1000, data: {number: 3}, hash: "ccc"},
+            {width: 1000, height: 1000, data: {number: 4}, hash: "ddd"}
+        ];
+        packer.addArray(input);
+        expect(packer.bins.length).toBe(2);
+        expect(packer.bins[0].rects[0].hash).toBe("ddd");
+        expect(packer.bins[0].rects[1].hash).toBe("bbb");
     });
 });
 
