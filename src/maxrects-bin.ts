@@ -9,17 +9,23 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin {
     public rects: IRectangle[] = [];
     private verticalExpand: boolean = false;
     private stage: Rectangle;
+    private border: number;
 
     constructor (
         public maxWidth: number = EDGE_MAX_VALUE,
         public maxHeight: number = EDGE_MAX_VALUE,
         public padding: number = 0,
-        public options: IOption = { smart: true, pot: true, square: true, allowRotation: false, tag: false }
+        public options: IOption = { smart: true, pot: true, square: true, allowRotation: false, tag: false, border: 0 }
     ) {
         super();
         this.width = this.options.smart ? 0 : maxWidth;
         this.height = this.options.smart ? 0 : maxHeight;
-        this.freeRects.push(new Rectangle(this.maxWidth + this.padding, this.maxHeight + this.padding));
+        this.border = this.options.border ? this.options.border : 0;
+        this.freeRects.push(new Rectangle(
+            this.maxWidth + this.padding - this.border * 2,
+            this.maxHeight + this.padding - this.border * 2,
+            this.border,
+            this.border));
         this.stage = new Rectangle(this.width, this.height);
     }
 
@@ -75,8 +81,8 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin {
             this._dirty ++;
             return rect;
         } else if (!this.verticalExpand) {
-            if (this.updateBinSize(new Rectangle(width + this.padding, height + this.padding, this.width + this.padding, 0))
-                || this.updateBinSize(new Rectangle(width + this.padding, height + this.padding, 0, this.height + this.padding))) {
+            if (this.updateBinSize(new Rectangle(width + this.padding, height + this.padding, this.width + this.padding - this.border, this.border))
+                || this.updateBinSize(new Rectangle(width + this.padding, height + this.padding, this.border, this.height + this.padding - this.border))) {
                 return rect ? this.add(rect as T) : this.add(width, height, data);
             }
         } else {
@@ -195,8 +201,8 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin {
     private updateBinSize (node: Rectangle): boolean {
         if (!this.options.smart) return false;
         if (this.stage.contain(node)) return false;
-        let tmpWidth: number = Math.max(this.width, node.x + node.width - this.padding);
-        let tmpHeight: number = Math.max(this.height, node.y + node.height - this.padding);
+        let tmpWidth: number = Math.max(this.width, node.x + node.width - this.padding + this.border);
+        let tmpHeight: number = Math.max(this.height, node.y + node.height - this.padding + this.border);
         if (this.options.pot) {
             tmpWidth = Math.pow(2, Math.ceil(Math.log(tmpWidth) * Math.LOG2E));
             tmpHeight = Math.pow(2, Math.ceil(Math.log(tmpHeight) * Math.LOG2E));
@@ -215,20 +221,26 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin {
 
     private expandFreeRects (width: number, height: number) {
         this.freeRects.forEach((freeRect, index) => {
-            if (freeRect.x + freeRect.width >= Math.min(this.width + this.padding, width)) {
-                freeRect.width = width - freeRect.x;
+            if (freeRect.x + freeRect.width >= Math.min(this.width + this.padding - this.border, width)) {
+                freeRect.width = width - freeRect.x - this.border;
             }
-            if (freeRect.y + freeRect.height >= Math.min(this.height + this.padding, height)) {
-                freeRect.height = height - freeRect.y;
-            }
-        }, this);
-        this.freeRects.push(new Rectangle(width - this.width - this.padding, height, this.width + this.padding, 0));
-        this.freeRects.push(new Rectangle(width, height - this.height - this.padding, 0, this.height + this.padding));
-        this.freeRects.forEach((freeRect, index) => {
-            if (freeRect.width <= 0 || freeRect.height <= 0) {
-                this.freeRects.splice(index, 1);
+            if (freeRect.y + freeRect.height >= Math.min(this.height + this.padding - this.border, height)) {
+                freeRect.height = height - freeRect.y - this.border;
             }
         }, this);
+        this.freeRects.push(new Rectangle(
+            width - this.width - this.padding,
+            height - this.border * 2,
+            this.width + this.padding - this.border,
+            this.border));
+        this.freeRects.push(new Rectangle(
+            width - this.border * 2,
+            height - this.height - this.padding,
+            this.border,
+            this.height + this.padding - this.border));
+        this.freeRects = this.freeRects.filter(freeRect => {
+            return !(freeRect.width <= 0 || freeRect.height <= 0 || freeRect.x < this.border || freeRect.y < this.border);
+        });
         this.pruneFreeList();
     }
 }

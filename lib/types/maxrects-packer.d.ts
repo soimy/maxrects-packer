@@ -18,6 +18,7 @@ export interface IOption {
     square?: boolean;
     allowRotation?: boolean;
     tag?: boolean;
+    border?: number;
 }
 export declare class MaxRectsPacker<T extends IRectangle = Rectangle> {
     width: number;

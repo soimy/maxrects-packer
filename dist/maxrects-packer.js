@@ -142,7 +142,7 @@
     }
 
     class MaxRectsBin extends Bin {
-        constructor(maxWidth = EDGE_MAX_VALUE, maxHeight = EDGE_MAX_VALUE, padding = 0, options = { smart: true, pot: true, square: true, allowRotation: false, tag: false }) {
+        constructor(maxWidth = EDGE_MAX_VALUE, maxHeight = EDGE_MAX_VALUE, padding = 0, options = { smart: true, pot: true, square: true, allowRotation: false, tag: false, border: 0 }) {
             super();
             this.maxWidth = maxWidth;
             this.maxHeight = maxHeight;
@@ -153,7 +153,8 @@
             this.verticalExpand = false;
             this.width = this.options.smart ? 0 : maxWidth;
             this.height = this.options.smart ? 0 : maxHeight;
-            this.freeRects.push(new Rectangle(this.maxWidth + this.padding, this.maxHeight + this.padding));
+            this.border = this.options.border ? this.options.border : 0;
+            this.freeRects.push(new Rectangle(this.maxWidth + this.padding - this.border * 2, this.maxHeight + this.padding - this.border * 2, this.border, this.border));
             this.stage = new Rectangle(this.width, this.height);
         }
         add(...args) {
@@ -212,8 +213,8 @@
                 return rect;
             }
             else if (!this.verticalExpand) {
-                if (this.updateBinSize(new Rectangle(width + this.padding, height + this.padding, this.width + this.padding, 0))
-                    || this.updateBinSize(new Rectangle(width + this.padding, height + this.padding, 0, this.height + this.padding))) {
+                if (this.updateBinSize(new Rectangle(width + this.padding, height + this.padding, this.width + this.padding - this.border, this.border))
+                    || this.updateBinSize(new Rectangle(width + this.padding, height + this.padding, this.border, this.height + this.padding - this.border))) {
                     return rect ? this.add(rect) : this.add(width, height, data);
                 }
             }
@@ -315,8 +316,8 @@
                 return false;
             if (this.stage.contain(node))
                 return false;
-            let tmpWidth = Math.max(this.width, node.x + node.width - this.padding);
-            let tmpHeight = Math.max(this.height, node.y + node.height - this.padding);
+            let tmpWidth = Math.max(this.width, node.x + node.width - this.padding + this.border);
+            let tmpHeight = Math.max(this.height, node.y + node.height - this.padding + this.border);
             if (this.options.pot) {
                 tmpWidth = Math.pow(2, Math.ceil(Math.log(tmpWidth) * Math.LOG2E));
                 tmpHeight = Math.pow(2, Math.ceil(Math.log(tmpHeight) * Math.LOG2E));
@@ -334,20 +335,18 @@
         }
         expandFreeRects(width, height) {
             this.freeRects.forEach((freeRect, index) => {
-                if (freeRect.x + freeRect.width >= Math.min(this.width + this.padding, width)) {
-                    freeRect.width = width - freeRect.x;
+                if (freeRect.x + freeRect.width >= Math.min(this.width + this.padding - this.border, width)) {
+                    freeRect.width = width - freeRect.x - this.border;
                 }
-                if (freeRect.y + freeRect.height >= Math.min(this.height + this.padding, height)) {
-                    freeRect.height = height - freeRect.y;
-                }
-            }, this);
-            this.freeRects.push(new Rectangle(width - this.width - this.padding, height, this.width + this.padding, 0));
-            this.freeRects.push(new Rectangle(width, height - this.height - this.padding, 0, this.height + this.padding));
-            this.freeRects.forEach((freeRect, index) => {
-                if (freeRect.width <= 0 || freeRect.height <= 0) {
-                    this.freeRects.splice(index, 1);
+                if (freeRect.y + freeRect.height >= Math.min(this.height + this.padding - this.border, height)) {
+                    freeRect.height = height - freeRect.y - this.border;
                 }
             }, this);
+            this.freeRects.push(new Rectangle(width - this.width - this.padding, height - this.border * 2, this.width + this.padding - this.border, this.border));
+            this.freeRects.push(new Rectangle(width - this.border * 2, height - this.height - this.padding, this.border, this.height + this.padding - this.border));
+            this.freeRects = this.freeRects.filter(freeRect => {
+                return !(freeRect.width <= 0 || freeRect.height <= 0 || freeRect.x < this.border || freeRect.y < this.border);
+            });
             this.pruneFreeList();
         }
     }
@@ -393,7 +392,7 @@
          * @param {IOption} [options={}] (Optional) packing options
          * @memberof MaxRectsPacker
          */
-        constructor(width = EDGE_MAX_VALUE, height = EDGE_MAX_VALUE, padding = 0, options = { smart: true, pot: true, square: false, allowRotation: false, tag: false }) {
+        constructor(width = EDGE_MAX_VALUE, height = EDGE_MAX_VALUE, padding = 0, options = { smart: true, pot: true, square: false, allowRotation: false, tag: false, border: 0 }) {
             this.width = width;
             this.height = height;
             this.padding = padding;

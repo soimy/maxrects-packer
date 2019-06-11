@@ -154,6 +154,7 @@ interface IOption {
     square?: boolean;
     allowRotation?: boolean;
     tag?: boolean;
+    border?: number;
 }
 declare class MaxRectsPacker<T extends IRectangle = Rectangle> {
     width: number;
@@ -250,6 +251,7 @@ declare class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin {
     rects: IRectangle[];
     private verticalExpand;
     private stage;
+    private border;
     constructor(maxWidth?: number, maxHeight?: number, padding?: number, options?: IOption);
     add(rect: T): T | undefined;
     add(width: number, height: number, data: any): Rectangle | undefined;

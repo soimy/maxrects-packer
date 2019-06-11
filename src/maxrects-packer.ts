@@ -22,6 +22,7 @@ export interface IOption {
     square?: boolean;
     allowRotation?: boolean;
     tag?: boolean;
+    border?: number;
 }
 
 export class MaxRectsPacker<T extends IRectangle = Rectangle> {
@@ -46,7 +47,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
         public width: number = EDGE_MAX_VALUE,
         public height: number = EDGE_MAX_VALUE,
         public padding: number = 0,
-        public options: IOption = { smart: true, pot: true, square: false, allowRotation: false, tag: false }
+        public options: IOption = { smart: true, pot: true, square: false, allowRotation: false, tag: false, border: 0 }
     ) {
         this.bins = [];
     }
