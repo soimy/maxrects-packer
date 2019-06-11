@@ -32,6 +32,19 @@ describe("no padding", () => {
         expect(position.y).toBe(0);
     });
 
+    test("report/set bin dirty status correctly", () => {
+        bin.add(200, 100, {});
+        expect(bin.isDirty()).toBe(true);
+        bin.resetDirty();
+        expect(bin.isDirty()).toBe(false);
+        bin.add(200, 100, {});
+        expect(bin.isDirty()).toBe(true);
+        bin.resetDirty();
+        bin.setDirty();
+        expect(bin.isDirty()).toBe(true);
+    });
+
+
     test("updates size correctly", () => {
         bin.add(200, 100, {});
         expect(bin.width).toBe(256);

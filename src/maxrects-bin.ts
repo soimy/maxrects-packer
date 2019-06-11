@@ -72,6 +72,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin {
                 rect.rot = node.rot;
             }
             this.rects.push(rect);
+            this._dirty ++;
             return rect;
         } else if (!this.verticalExpand) {
             if (this.updateBinSize(new Rectangle(width + this.padding, height + this.padding, this.width + this.padding, 0))

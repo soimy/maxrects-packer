@@ -114,8 +114,28 @@ declare abstract class Bin implements IBin {
     options: IOption;
     abstract add(rect: IRectangle): IRectangle | undefined;
     abstract add(width: number, height: number, data: any): IRectangle | undefined;
+    /**
+     * Check if the bin is dirty/changed
+     *
+     * @returns {boolean}
+     * @memberof Bin
+     */
+    isDirty(): boolean;
+    /**
+     * Set bin dirty
+     *
+     * @memberof Bin
+     */
+    setDirty(): void;
+    /**
+     * Reset bin dirty status
+     *
+     * @memberof Bin
+     */
+    resetDirty(): void;
     data?: any;
     tag?: string;
+    protected _dirty: number;
 }
 
 /**
