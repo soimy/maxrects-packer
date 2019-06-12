@@ -33,7 +33,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * @type {Bin[]}
      * @memberof MaxRectsPacker
      */
-    public bins: Bin[];
+    public bins: Bin<T>[];
 
     /**
      * Creates an instance of MaxRectsPacker.
@@ -59,7 +59,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * @param {*} data custom data object
      * @memberof MaxRectsPacker
      */
-    public add (width: number, height: number, data: any): IRectangle;
+    public add (width: number, height: number, data: any): T;
     /**
      * Add a bin/rectangle object extends IRectangle to packer
      * @template T Generic type extends IRectangle interface
@@ -68,38 +68,38 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      */
     public add (rect: T): T;
     public add (...args: any[]): any {
-        let width: number;
-        let height: number;
-        let data: any;
         if (args.length === 1) {
             if (typeof args[0] !== 'object') throw new Error("MacrectsPacker.add(): Wrong parameters");
-            const rect: T = args[0];
+            const rect = args[0] as T;
             if (rect.width > this.width || rect.height > this.height) {
                 this.bins.push(new OversizedElementBin<T>(rect));
             } else {
                 let added = this.bins.slice(this._currentBinIndex).find(bin => bin.add(rect) !== undefined);
                 if (!added) {
                     let bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
-                    if (this.options.tag && rect.tag) bin.tag = rect.tag;
+                    let tag = (rect.data && rect.data.tag) ? rect.data.tag : rect.tag ? rect.tag : undefined;
+                    if (this.options.tag && tag) bin.tag = tag;
                     bin.add(rect);
                     this.bins.push(bin);
                 }
             }
+            return rect;
         } else {
-            width = args[0];
-            height = args[1];
-            data = args.length > 2 ? args[2] : null;
-            if (width > this.width || height > this.height) {
-                this.bins.push(new OversizedElementBin<T>(width, height, data));
+            const rect: IRectangle = new Rectangle(args[0], args[1]);
+            if (args.length > 2) rect.data = args[2];
+
+            if (rect.width > this.width || rect.height > this.height) {
+                this.bins.push(new OversizedElementBin<T>(rect as T));
             } else {
-                let added = this.bins.slice(this._currentBinIndex).find(bin => bin.add(width, height, data) !== undefined);
+                let added = this.bins.slice(this._currentBinIndex).find(bin => bin.add(rect as T) !== undefined);
                 if (!added) {
                     let bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
-                    if (this.options.tag && data.tag) bin.tag = data.tag;
-                    bin.add(width, height, data);
+                    if (this.options.tag && rect.data.tag) bin.tag = rect.data.tag;
+                    bin.add(rect as T);
                     this.bins.push(bin);
                 }
             }
+            return rect as T;
         }
     }
 
@@ -117,6 +117,27 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      */
     public addArray (rects: T[]) {
         this.sort(rects).forEach(rect => this.add(rect));
+    }
+
+    public repack (quick: boolean = true): void {
+        if (quick) {
+            let unpack: T[] = [];
+            for (let bin of this.bins) {
+                if (bin.dirty) {
+                    let up = bin.repack();
+                    if (up) unpack.push(...up);
+                }
+            }
+            this.addArray(unpack);
+            return;
+        }
+        if (!this.dirty) return;
+        let allRects: T[] = [];
+        for (let bin of this.bins) {
+            allRects.push(...bin.rects);
+        }
+        this.bins = [];
+        this.addArray(allRects);
     }
 
     /**
@@ -137,7 +158,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * @param {MaxRectsBin[]} bins MaxRectsBin objects
      * @memberof MaxRectsPacker
      */
-    public load (bins: Bin[]) {
+    public load (bins: IBin[]) {
         bins.forEach((bin, index) => {
             if (bin.maxWidth > this.width || bin.maxHeight > this.height) {
                 this.bins.push(new OversizedElementBin(bin.width, bin.height, {}));
@@ -204,4 +225,6 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
 
     private _currentBinIndex: number = 0;
     get currentBinIndex (): number { return this._currentBinIndex; }
+
+    get dirty (): boolean { return this.bins.some(bin => bin.dirty); }
 }

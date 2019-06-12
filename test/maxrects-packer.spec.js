@@ -1,6 +1,7 @@
 "use strict";
 
 let MaxRectsPacker = require("../dist/maxrects-packer").MaxRectsPacker;
+let Rectangle = require("../dist/maxrects-packer").Rectangle;
 
 const opt = {
     smart: true,
@@ -168,10 +169,51 @@ describe("#save & load", () => {
     });
 });
 
-test("passes padding through", () => {
-    packer = new MaxRectsPacker(1024, 1024, 4, opt);
-    packer.add(500, 500, {number: 1});
-    packer.add(500, 500, {number: 1});
-    packer.add(500, 500, {number: 1});
-    expect(packer.bins[0].width).toBe(1004);
+describe("misc functionalities", () => {
+    test("passes padding through", () => {
+        packer = new MaxRectsPacker(1024, 1024, 4, opt);
+        packer.add(500, 500, {number: 1});
+        packer.add(500, 500, {number: 1});
+        packer.add(500, 500, {number: 1});
+        expect(packer.bins[0].width).toBe(1004);
+    });
+
+    test("get bins dirty status", () => {
+        packer = new MaxRectsPacker(1024, 1024, 4, opt);
+        packer.add(508, 508, {number: 1});
+        let tester1 = packer.add(new Rectangle(508, 508));
+        let tester2 = packer.add(508, 508, {number: 3});
+        expect(packer.dirty).toBe(true);
+        for (let bin of packer.bins) bin.setDirty(false);
+        expect(packer.dirty).toBe(false);
+        tester1.height = 512;
+        expect(packer.dirty).toBe(true);
+        for (let bin of packer.bins) bin.setDirty(false);
+        tester2.height = 512;
+        expect(packer.dirty).toBe(true);
+    });
+    
+    test("quick repack & deep repack", () => {
+        packer = new MaxRectsPacker(1024, 1024, 0, {...opt, ...{tag: true}});
+        let rect = packer.add(1024, 512, {hash: "6"});
+        packer.add(512, 512, {hash: "5"});
+        packer.add(512, 512, {hash: "4"});
+        packer.add(512, 512, {hash: "3"});
+        packer.add({width: 512, height: 512, data: {hash: "2", tag: "one"}});
+        packer.add({width: 512, height: 512, data: {hash: "1"}, tag: "one"});
+        expect(packer.bins.length).toBe(3);
+        for (let bin of packer.bins) bin.setDirty(false); // clean dirty status
+        rect.width = 512; // shrink width 
+        packer.repack(); // quick repack
+        expect(packer.bins.length).toBe(3);
+        packer.repack(false); // deep repack
+        expect(packer.bins.length).toBe(2);
+        rect.height = 1024; // enlarge height
+        rect.tag = "one";
+        packer.repack(); // quick repack
+        expect(packer.bins.length).toBe(3);
+        expect(packer.bins[2].tag).toBe("one");
+        packer.repack(false); // deep repack
+        expect(packer.bins.length).toBe(2);
+    });
 });

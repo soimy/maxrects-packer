@@ -250,6 +250,9 @@ declare class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin {
     constructor(maxWidth?: number, maxHeight?: number, padding?: number, options?: IOption);
     add(rect: T): T | undefined;
     add(width: number, height: number, data: any): Rectangle | undefined;
+    repack(): IRectangle[] | undefined;
+    reset(deepReset?: boolean): void;
+    private process;
     private findNode;
     private splitNode;
     private pruneFreeList;

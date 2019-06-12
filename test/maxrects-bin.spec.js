@@ -31,16 +31,22 @@ describe("no padding", () => {
         expect(position.y).toBe(0);
     });
 
-    test("report/set bin dirty status correctly", () => {
+    test("report/set bin dirty status", () => {
         bin.add(200, 100, {});
-        expect(bin.dirty).toBe(true);
+        expect(bin.dirty).toBe(true); // add element to bin will render bin dirty
         bin.setDirty(false);
-        expect(bin.dirty).toBe(false);
+        expect(bin.dirty).toBe(false); // clean bin dirty
         bin.add(200, 100, {});
-        expect(bin.dirty).toBe(true);
+        expect(bin.dirty).toBe(true); // add new element is dirty
         bin.setDirty(false);
         bin.setDirty();
-        expect(bin.dirty).toBe(true);
+        expect(bin.dirty).toBe(true); // setDirty is dirty
+        bin.reset();    
+        expect(bin.dirty).toBe(false); // reset clean dirty
+        let rect = bin.add(new Rectangle(200, 100));
+        bin.setDirty(false);
+        rect.width = 256;
+        expect(bin.dirty).toBe(true); // modify rects is dirty
     });
 
 
@@ -92,6 +98,36 @@ describe("no padding", () => {
         bin.rects.forEach((rect, i) => {
             expect(rect.data.number).toBe(i);
         })
+    });
+
+    test("reset & deep reset", () => {
+        bin.add({width: 200, height: 100});
+        bin.add({width: 200, height: 100});
+        bin.add({width: 200, height: 100});
+        expect(bin.rects.length).toBe(3);
+        expect(bin.width).toBe(512);
+        bin.reset();
+        expect(bin.width).toBe(0);
+        expect(bin.freeRects.length).toBe(1);
+        let unpacked = bin.repack();
+        expect(unpacked).toBeUndefined();
+        expect(bin.width).toBe(512);
+        bin.reset(true);
+        expect(bin.width).toBe(0);
+        expect(bin.rects.length).toBe(0);
+    });
+
+    test("repack", () => {
+        let rect1 = bin.add({width: 512, height: 512, id: "one"});
+        let rect2 = bin.add({width: 512, height: 512, id: "two"});
+        let rect3 = bin.add({width: 512, height: 512, id: "three"});
+        rect2.width = 1024;
+        rect2.height = 513;
+        let unpacked = bin.repack();
+        expect(unpacked.length).toBe(2);
+        expect(unpacked[0].id).toBe("one");
+        expect(unpacked[1].id).toBe("three");
+        expect(bin.rects.length).toBe(1);
     });
 
     test("monkey testing", () => {

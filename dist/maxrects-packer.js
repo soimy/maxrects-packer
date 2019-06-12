@@ -151,13 +151,18 @@
         constructor() {
             this._dirty = 0;
         }
-        get dirty() { return this._dirty > 0; }
+        get dirty() { return this._dirty > 0 || this.rects.some(rect => rect.dirty); }
         /**
          * Set bin dirty status
          *
          * @memberof Bin
          */
-        setDirty(value = true) { this._dirty = value ? this._dirty + 1 : 0; }
+        setDirty(value = true) {
+            this._dirty = value ? this._dirty + 1 : 0;
+            if (!value)
+                for (let rect of this.rects)
+                    rect.setDirty(false);
+        }
     }
 
     class MaxRectsBin extends Bin {
@@ -177,23 +182,17 @@
             this.stage = new Rectangle(this.width, this.height);
         }
         add(...args) {
-            let width;
-            let height;
             let data;
             let rect;
             if (args.length === 1) {
                 if (typeof args[0] !== 'object')
                     throw new Error("MacrectsBin.add(): Wrong parameters");
                 rect = args[0];
-                width = rect.width;
-                height = rect.height;
                 // Check if rect.tag match bin.tag, if bin.tag not defined, it will accept any rect
                 if (this.options.tag && this.tag !== rect.tag)
                     return undefined;
             }
             else {
-                width = args[0];
-                height = args[1];
                 data = args.length > 2 ? args[2] : null;
                 // Check if data.tag match bin.tag, if bin.tag not defined, it will accept any rect
                 if (this.options.tag) {
@@ -202,8 +201,61 @@
                     if (!data && this.tag)
                         return undefined;
                 }
+                rect = new Rectangle(args[0], args[1]);
+                rect.data = data;
+                rect.setDirty(false);
             }
-            let node = this.findNode(width + this.padding, height + this.padding);
+            const result = this.process(rect);
+            if (result)
+                this.rects.push(result);
+            return result;
+        }
+        repack() {
+            let unpacked = [];
+            this.reset();
+            // re-sort rects from big to small
+            this.rects.sort((a, b) => {
+                const result = Math.max(b.width, b.height) - Math.max(a.width, a.height);
+                if (result === 0 && a.hash && b.hash) {
+                    return a.hash > b.hash ? -1 : 1;
+                }
+                else
+                    return result;
+            });
+            for (let rect of this.rects) {
+                if (!this.process(rect)) {
+                    unpacked.push(rect);
+                }
+            }
+            for (let rect of unpacked)
+                this.rects.splice(this.rects.indexOf(rect), 1);
+            return unpacked.length > 0 ? unpacked : undefined;
+        }
+        reset(deepReset = false) {
+            if (deepReset) {
+                if (this.data)
+                    delete this.data;
+                if (this.tag)
+                    delete this.tag;
+                this.rects = [];
+                this.options = {
+                    smart: true,
+                    pot: true,
+                    square: true,
+                    allowRotation: false,
+                    tag: false,
+                    border: 0
+                };
+            }
+            this.width = this.options.smart ? 0 : this.maxWidth;
+            this.height = this.options.smart ? 0 : this.maxHeight;
+            this.border = this.options.border ? this.options.border : 0;
+            this.freeRects = [new Rectangle(this.maxWidth + this.padding - this.border * 2, this.maxHeight + this.padding - this.border * 2, this.border, this.border)];
+            this.stage = new Rectangle(this.width, this.height);
+            this._dirty = 0;
+        }
+        process(rect) {
+            let node = this.findNode(rect.width + this.padding, rect.height + this.padding);
             if (node) {
                 this.updateBinSize(node);
                 let numRectToProcess = this.freeRects.length;
@@ -218,28 +270,21 @@
                 }
                 this.pruneFreeList();
                 this.verticalExpand = this.width > this.height ? true : false;
-                if (!rect) {
-                    rect = new Rectangle(width, height, node.x, node.y, node.rot);
-                    rect.data = data;
-                }
-                else {
-                    rect.x = node.x;
-                    rect.y = node.y;
-                    rect.rot = node.rot;
-                }
-                this.rects.push(rect);
+                rect.x = node.x;
+                rect.y = node.y;
+                rect.rot = node.rot;
                 this._dirty++;
                 return rect;
             }
             else if (!this.verticalExpand) {
-                if (this.updateBinSize(new Rectangle(width + this.padding, height + this.padding, this.width + this.padding - this.border, this.border))
-                    || this.updateBinSize(new Rectangle(width + this.padding, height + this.padding, this.border, this.height + this.padding - this.border))) {
-                    return rect ? this.add(rect) : this.add(width, height, data);
+                if (this.updateBinSize(new Rectangle(rect.width + this.padding, rect.height + this.padding, this.width + this.padding - this.border, this.border))
+                    || this.updateBinSize(new Rectangle(rect.width + this.padding, rect.height + this.padding, this.border, this.height + this.padding - this.border))) {
+                    return this.process(rect);
                 }
             }
             else {
-                if (this.updateBinSize(new Rectangle(width + this.padding, height + this.padding, 0, this.height + this.padding)) || this.updateBinSize(new Rectangle(width + this.padding, height + this.padding, this.width + this.padding, 0))) {
-                    return rect ? this.add(rect) : this.add(width, height, data);
+                if (this.updateBinSize(new Rectangle(rect.width + this.padding, rect.height + this.padding, 0, this.height + this.padding)) || this.updateBinSize(new Rectangle(rect.width + this.padding, rect.height + this.padding, this.width + this.padding, 0))) {
+                    return this.process(rect);
                 }
             }
             return undefined;
