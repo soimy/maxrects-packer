@@ -10,10 +10,6 @@ interface IRectangle {
     [propName: string]: any;
 }
 declare class Rectangle implements IRectangle {
-    width: number;
-    height: number;
-    x: number;
-    y: number;
     /**
      * Oversized tag on rectangle which is bigger than packer itself.
      *
@@ -75,7 +71,15 @@ declare class Rectangle implements IRectangle {
      * @memberof Rectangle
      */
     contain(rect: Rectangle): boolean;
-    private _rot;
+    protected _width: number;
+    width: number;
+    protected _height: number;
+    height: number;
+    protected _x: number;
+    x: number;
+    protected _y: number;
+    y: number;
+    protected _rot: boolean;
     /**
      * If the rectangle is rotated
      *
@@ -90,8 +94,11 @@ declare class Rectangle implements IRectangle {
     * @memberof Rectangle
     */
     rot: boolean;
-    private _data;
+    protected _data: any;
     data: any;
+    protected _dirty: number;
+    readonly dirty: boolean;
+    setDirty(value?: boolean): void;
 }
 
 interface IBin {
@@ -114,28 +121,16 @@ declare abstract class Bin implements IBin {
     options: IOption;
     abstract add(rect: IRectangle): IRectangle | undefined;
     abstract add(width: number, height: number, data: any): IRectangle | undefined;
-    /**
-     * Check if the bin is dirty/changed
-     *
-     * @returns {boolean}
-     * @memberof Bin
-     */
-    isDirty(): boolean;
-    /**
-     * Set bin dirty
-     *
-     * @memberof Bin
-     */
-    setDirty(): void;
-    /**
-     * Reset bin dirty status
-     *
-     * @memberof Bin
-     */
-    resetDirty(): void;
     data?: any;
     tag?: string;
     protected _dirty: number;
+    readonly dirty: boolean;
+    /**
+     * Set bin dirty status
+     *
+     * @memberof Bin
+     */
+    setDirty(value?: boolean): void;
 }
 
 /**

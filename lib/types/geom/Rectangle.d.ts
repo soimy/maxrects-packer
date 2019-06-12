@@ -6,10 +6,6 @@ export interface IRectangle {
     [propName: string]: any;
 }
 export declare class Rectangle implements IRectangle {
-    width: number;
-    height: number;
-    x: number;
-    y: number;
     /**
      * Oversized tag on rectangle which is bigger than packer itself.
      *
@@ -71,7 +67,15 @@ export declare class Rectangle implements IRectangle {
      * @memberof Rectangle
      */
     contain(rect: Rectangle): boolean;
-    private _rot;
+    protected _width: number;
+    width: number;
+    protected _height: number;
+    height: number;
+    protected _x: number;
+    x: number;
+    protected _y: number;
+    y: number;
+    protected _rot: boolean;
     /**
      * If the rectangle is rotated
      *
@@ -86,6 +90,9 @@ export declare class Rectangle implements IRectangle {
     * @memberof Rectangle
     */
     rot: boolean;
-    private _data;
+    protected _data: any;
     data: any;
+    protected _dirty: number;
+    readonly dirty: boolean;
+    setDirty(value?: boolean): void;
 }

@@ -26,14 +26,18 @@ export class Rectangle implements IRectangle {
      * @memberof Rectangle
      */
     constructor (
-        public width: number = 0,
-        public height: number = 0,
-        public x: number = 0,
-        public y: number = 0,
+        width: number = 0,
+        height: number = 0,
+        x: number = 0,
+        y: number = 0,
         rot: boolean = false
     ) {
-        this.data = {};
-        this.rot = rot;
+        this._width = width;
+        this._height = height;
+        this._x = x;
+        this._y = y;
+        this._data = {};
+        this._rot = rot;
     }
 
     /**
@@ -94,7 +98,39 @@ export class Rectangle implements IRectangle {
                 rect.x + rect.width <= this.x + this.width && rect.y + rect.height <= this.y + this.height);
     }
 
-    private _rot: boolean = false;
+    protected _width: number;
+    get width (): number { return this._width; }
+    set width (value: number) {
+        if (value === this._width) return;
+        this._width = value;
+        this._dirty ++;
+    }
+
+    protected _height: number;
+    get height (): number { return this._height; }
+    set height (value: number) {
+        if (value === this._height) return;
+        this._height = value;
+        this._dirty ++;
+    }
+
+    protected _x: number;
+    get x (): number { return this._x; }
+    set x (value: number) {
+        if (value === this._x) return;
+        this._x = value;
+        this._dirty ++;
+    }
+
+    protected _y: number;
+    get y (): number { return this._y; }
+    set y (value: number) {
+        if (value === this._y) return;
+        this._y = value;
+        this._dirty ++;
+    }
+
+    protected _rot: boolean = false;
 
     /**
      * If the rectangle is rotated
@@ -118,11 +154,19 @@ export class Rectangle implements IRectangle {
             this.width = this.height;
             this.height = tmp;
             this._rot = value;
+            this._dirty ++;
         }
     }
 
-    private _data: any;
+    protected _data: any;
     get data (): any { return this._data; }
-    set data (value: any) { this._data = value; }
+    set data (value: any) {
+        if (value === this._data) return;
+        this._data = value;
+        this._dirty ++;
+    }
 
+    protected _dirty: number = 0;
+    get dirty (): boolean { return this._dirty > 0; }
+    public setDirty (value: boolean = true): void { this._dirty = value ? this._dirty + 1 : 0; }
 }

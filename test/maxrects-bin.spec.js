@@ -33,14 +33,14 @@ describe("no padding", () => {
 
     test("report/set bin dirty status correctly", () => {
         bin.add(200, 100, {});
-        expect(bin.isDirty()).toBe(true);
-        bin.resetDirty();
-        expect(bin.isDirty()).toBe(false);
+        expect(bin.dirty).toBe(true);
+        bin.setDirty(false);
+        expect(bin.dirty).toBe(false);
         bin.add(200, 100, {});
-        expect(bin.isDirty()).toBe(true);
-        bin.resetDirty();
+        expect(bin.dirty).toBe(true);
+        bin.setDirty(false);
         bin.setDirty();
-        expect(bin.isDirty()).toBe(true);
+        expect(bin.dirty).toBe(true);
     });
 
 
