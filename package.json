@@ -12,10 +12,10 @@
     "doc": "typedoc && touch docs/.nojekyll",
     "doc:json": "typedoc --json docs/typedoc.json",
     "doc:publish": "gh-pages --dotfiles=true -m \"[ci skip] Updates\" -d docs",
-    "test": "jest",
-    "cover": "jest --coverage",
+    "test": "npm run build:clean && jest",
+    "cover": "npm run build:clean && jest --coverage",
     "version": "standard-version",
-    "prepare-release": "npm run build:clean && npm run doc && npm run test && npm run version"
+    "prepare-release": "npm run test && npm run version"
   },
   "repository": {
     "type": "git",
