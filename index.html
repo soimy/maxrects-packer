@@ -936,7 +936,9 @@ img { max-width: 100%; }
     <span class="hljs-attr">smart</span>: <span class="hljs-literal">true</span>,
     <span class="hljs-attr">pot</span>: <span class="hljs-literal">true</span>,
     <span class="hljs-attr">square</span>: <span class="hljs-literal">false</span>,
-    <span class="hljs-attr">allowRotation</span>: <span class="hljs-literal">true</span>
+    <span class="hljs-attr">allowRotation</span>: <span class="hljs-literal">true</span>,
+    <span class="hljs-attr">tag</span>: <span class="hljs-literal">false</span>,
+    <span class="hljs-attr">border</span>: <span class="hljs-number">5</span>
 }; <span class="hljs-comment">// Set packing options</span>
 <span class="hljs-keyword">let</span> packer = <span class="hljs-keyword">new</span> MaxRectsPacker(<span class="hljs-number">1024</span>, <span class="hljs-number">1024</span>, <span class="hljs-number">2</span>, options); <span class="hljs-comment">// width, height, padding, options</span>
 
@@ -949,6 +951,8 @@ img { max-width: 100%; }
 ];
 
 packer.addArray(input); <span class="hljs-comment">// Start packing with input array</span>
+packer.next(); <span class="hljs-comment">// Start a new packer bin</span>
+packer.addArray(input.slice(<span class="hljs-number">2</span>)); <span class="hljs-comment">// Adding to the new bin</span>
 packer.bins.forEach(<span class="hljs-function"><span class="hljs-params">bin</span> =&gt;</span> {
     <span class="hljs-built_in">console</span>.log(bin.rects);
 });
@@ -969,6 +973,8 @@ packer.addArray(input);
 				<li><code>options.pot</code> bin size round up to smallest power of 2. (defalt is <code>true</code>)</li>
 				<li><code>options.square</code> bin size shall alway be square. (defaut is <code>false</code>)</li>
 				<li><code>options.allowRotation</code> allow 90-degree rotation while packing. (defaut is <code>false</code>)</li>
+				<li><code>options.tag</code> allow tag based group packing. (defaut is <code>false</code>)</li>
+				<li><code>options.border</code> atlas edge spacing (default is 0)</li>
 			</ul>
 			<h4 id="packer-add-width-height-data-1-overload"><code>packer.add(width, height, data)</code> +1 overload</h4>
 			<p>Adds a rect to an existing bin or creates a new one to accomodate it. <code>data</code> can be anything, it will be stored along with the position data of each rect.</p>
@@ -976,6 +982,10 @@ packer.addArray(input);
 			<p>Adds a rect to an existing bin or creates a new one to accomodate it. Accept any object with <code>width &amp; height</code>. If you are using <code>typescript</code>, that means any class extends <code>MaxRectsPacker.IRectangle</code></p>
 			<h4 id="packer-addarray-width-number-height-number-"><code>packer.addArray([{width: number, height: number, ...}, ...])</code></h4>
 			<p>Adds multiple rects. Since the input is automatically sorted before adding this approach usually leads to fewer bins created than separate calls to <code>.add()</code></p>
+			<h4 id="packer-repack-quick-boolean-true-"><code>packer.repack(quick: boolean = true)</code></h4>
+			<p>Repack all elements inside bins. If <code>quick == true</code>, only bins with <code>dirty</code> flag will be repacked. If <code>false</code> is passed, all rects inside this packer will be re-sort and repacked, might result different bin number. Slower but high packing effeciency.</p>
+			<h4 id="packer-next-"><code>packer.next()</code></h4>
+			<p>Stop adding new element to the current bin and return a new bin. After calling <code>next()</code> all elements will no longer added to previous bins.</p>
 			<h4 id="let-bins-packer-save-"><code>let bins = packer.save()</code></h4>
 			<p>Save current bins settings and free area to an Array of objects for later use. Better to <code>JSON.stringify(bins)</code> and store in file.</p>
 			<h4 id="packer-load-bins-"><code>packer.load(bins)</code></h4>
@@ -986,6 +996,8 @@ packer.addArray(input);
 			<p>Array of rects for a specific bin. Every rect has <code>x</code>, <code>y</code>, <code>width</code>, <code>height</code>, <code>rot</code> and <code>data</code>. In case of an rect exceeding <code>maxWidth</code>/<code>maxHeight</code> there will also be an <code>oversized</code> flag set to <code>true</code>.</p>
 			<h2 id="support-for-90-degree-rotation-packing">Support for 90-degree rotation packing</h2>
 			<p>If <code>options.allowRotation</code> is set to <code>true</code>, packer will attempt to do an extra test in <code>findNode()</code> on rotated <code>Rectangle</code>. If the rotated one gives the best score, the given <code>Rectangle</code> will be rotated in the <code>Rectangle.rot</code> set to <code>true</code>.</p>
+			<h2 id="support-for-tag-based-group-packing">Support for tag based group packing</h2>
+			<p>If <code>options.tag</code> is set to <code>true</code>, packer will check if the input object has <code>tag: string</code> property, all input with same <code>tag</code> will be packed in the same bin.</p>
 			<h2 id="support-for-oversized-rectangles">Support for oversized rectangles</h2>
 			<p>Normally all bins are of equal size or smaller than <code>maxWidth</code>/<code>maxHeight</code>. If a rect is added that individually does not fit into those constraints a special bin will be created. This bin will only contain a single rect with a special &quot;oversized&quot; flag. This can be handled further on in the chain by displaying an error/warning or by simply ignoring it.</p>
 			<h2 id="packing-algorithm">Packing algorithm</h2>

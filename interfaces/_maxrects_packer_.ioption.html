@@ -919,6 +919,9 @@ img { max-width: 100%; }
 					<a href="_maxrects_packer_.ioption.html#allowrotation" class="tsd-kind-icon">allow<wbr>Rotation</a>
 				</li>
 				<li class=" tsd-kind-property tsd-parent-kind-interface">
+					<a href="_maxrects_packer_.ioption.html#border" class="tsd-kind-icon">border</a>
+				</li>
+				<li class=" tsd-kind-property tsd-parent-kind-interface">
 					<a href="_maxrects_packer_.ioption.html#pot" class="tsd-kind-icon">pot</a>
 				</li>
 				<li class=" tsd-kind-property tsd-parent-kind-interface">
@@ -926,6 +929,9 @@ img { max-width: 100%; }
 				</li>
 				<li class=" tsd-kind-property tsd-parent-kind-interface">
 					<a href="_maxrects_packer_.ioption.html#square" class="tsd-kind-icon">square</a>
+				</li>
+				<li class=" tsd-kind-property tsd-parent-kind-interface">
+					<a href="_maxrects_packer_.ioption.html#tag" class="tsd-kind-icon">tag</a>
 				</li>
 			</ul>
 		</li>
@@ -954,6 +960,15 @@ img { max-width: 100%; }
 					<dt>property</dt>
 					<dd><p>{boolean} options.square use square size (default is false)</p>
 					</dd>
+					<dt>property</dt>
+					<dd><p>{boolean} options.allowRotation allow rotation packing (default is false)</p>
+					</dd>
+					<dt>property</dt>
+					<dd><p>{boolean} options.tag allow auto grouping based on <code>rect.tag</code> (default is false)</p>
+					</dd>
+					<dt>property</dt>
+					<dd><p>{boolean} options.border atlas edge spacing (default is 0)</p>
+					</dd>
 					<dt>export</dt>
 					<dd></dd>
 					<dt>interface</dt>
@@ -978,9 +993,11 @@ img { max-width: 100%; }
 						<h3>Properties</h3>
 						<ul class="tsd-index-list">
 							<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_maxrects_packer_.ioption.html#allowrotation" class="tsd-kind-icon">allow<wbr>Rotation</a></li>
+							<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_maxrects_packer_.ioption.html#border" class="tsd-kind-icon">border</a></li>
 							<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_maxrects_packer_.ioption.html#pot" class="tsd-kind-icon">pot</a></li>
 							<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_maxrects_packer_.ioption.html#smart" class="tsd-kind-icon">smart</a></li>
 							<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_maxrects_packer_.ioption.html#square" class="tsd-kind-icon">square</a></li>
+							<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_maxrects_packer_.ioption.html#tag" class="tsd-kind-icon">tag</a></li>
 						</ul>
 					</section>
 				</div>
@@ -994,7 +1011,17 @@ img { max-width: 100%; }
 				<div class="tsd-signature tsd-kind-icon">allow<wbr>Rotation<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">false</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">true</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/soimy/maxrects-packer/blob/b117652/src/maxrects-packer.ts#L21">maxrects-packer.ts:21</a></li>
+						<li>Defined in <a href="https://github.com/soimy/maxrects-packer/blob/2f89299/src/maxrects-packer.ts#L24">maxrects-packer.ts:24</a></li>
+					</ul>
+				</aside>
+			</section>
+			<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+				<a name="border" class="tsd-anchor"></a>
+				<h3><span class="tsd-flag ts-flagOptional">Optional</span> border</h3>
+				<div class="tsd-signature tsd-kind-icon">border<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span></div>
+				<aside class="tsd-sources">
+					<ul>
+						<li>Defined in <a href="https://github.com/soimy/maxrects-packer/blob/2f89299/src/maxrects-packer.ts#L26">maxrects-packer.ts:26</a></li>
 					</ul>
 				</aside>
 			</section>
@@ -1004,7 +1031,7 @@ img { max-width: 100%; }
 				<div class="tsd-signature tsd-kind-icon">pot<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">false</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">true</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/soimy/maxrects-packer/blob/b117652/src/maxrects-packer.ts#L19">maxrects-packer.ts:19</a></li>
+						<li>Defined in <a href="https://github.com/soimy/maxrects-packer/blob/2f89299/src/maxrects-packer.ts#L22">maxrects-packer.ts:22</a></li>
 					</ul>
 				</aside>
 			</section>
@@ -1014,7 +1041,7 @@ img { max-width: 100%; }
 				<div class="tsd-signature tsd-kind-icon">smart<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">false</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">true</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/soimy/maxrects-packer/blob/b117652/src/maxrects-packer.ts#L18">maxrects-packer.ts:18</a></li>
+						<li>Defined in <a href="https://github.com/soimy/maxrects-packer/blob/2f89299/src/maxrects-packer.ts#L21">maxrects-packer.ts:21</a></li>
 					</ul>
 				</aside>
 			</section>
@@ -1024,7 +1051,17 @@ img { max-width: 100%; }
 				<div class="tsd-signature tsd-kind-icon">square<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">false</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">true</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/soimy/maxrects-packer/blob/b117652/src/maxrects-packer.ts#L20">maxrects-packer.ts:20</a></li>
+						<li>Defined in <a href="https://github.com/soimy/maxrects-packer/blob/2f89299/src/maxrects-packer.ts#L23">maxrects-packer.ts:23</a></li>
+					</ul>
+				</aside>
+			</section>
+			<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+				<a name="tag" class="tsd-anchor"></a>
+				<h3><span class="tsd-flag ts-flagOptional">Optional</span> tag</h3>
+				<div class="tsd-signature tsd-kind-icon">tag<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">false</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">true</span></div>
+				<aside class="tsd-sources">
+					<ul>
+						<li>Defined in <a href="https://github.com/soimy/maxrects-packer/blob/2f89299/src/maxrects-packer.ts#L25">maxrects-packer.ts:25</a></li>
 					</ul>
 				</aside>
 			</section>
