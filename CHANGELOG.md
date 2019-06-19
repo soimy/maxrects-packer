@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.4.0-alpha.0](https://github.com/soimy/maxrects-packer/compare/v2.3.0...v2.4.0-alpha.0) (2019-06-19)
+
+
+### Bug Fixes
+
+* **maxrects-bin.ts:** split freerect not use rotated node ([5f06524](https://github.com/soimy/maxrects-packer/commit/5f06524))
+
+
+### Features
+
+* Add `Bin.border` to control space to edge ([62bc66b](https://github.com/soimy/maxrects-packer/commit/62bc66b)), closes [#5](https://github.com/soimy/maxrects-packer/issues/5)
+* Implement `dirty` status get/set of `Rectangle`&`MaxRectsBin` ([ca932ba](https://github.com/soimy/maxrects-packer/commit/ca932ba))
+* Report bin dirty status ([a7527b6](https://github.com/soimy/maxrects-packer/commit/a7527b6))
+* reset/repack (beta) ([eb93239](https://github.com/soimy/maxrects-packer/commit/eb93239))
+
+
+
 ## [2.3.0](https://github.com/soimy/maxrects-packer/compare/v2.2.0...v2.3.0) (2019-06-06)
 
 
