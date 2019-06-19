@@ -13,6 +13,7 @@ export const EDGE_MIN_VALUE: number = 128;
  * @property {boolean} options.square use square size (default is false)
  * @property {boolean} options.allowRotation allow rotation packing (default is false)
  * @property {boolean} options.tag allow auto grouping based on `rect.tag` (default is false)
+ * @property {boolean} options.border atlas edge spacing (default is 0)
  * @export
  * @interface Option
  */
@@ -119,6 +120,13 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
         this.sort(rects).forEach(rect => this.add(rect));
     }
 
+    /**
+     * Repack all elements inside bins
+     *
+     * @param {boolean} [quick=true] quick repack only dirty bins
+     * @returns {void}
+     * @memberof MaxRectsPacker
+     */
     public repack (quick: boolean = true): void {
         if (quick) {
             let unpack: T[] = [];
@@ -224,7 +232,21 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     }
 
     private _currentBinIndex: number = 0;
+    /**
+     * Return current functioning bin index, perior to this wont accept any new elements
+     *
+     * @readonly
+     * @type {number}
+     * @memberof MaxRectsPacker
+     */
     get currentBinIndex (): number { return this._currentBinIndex; }
 
+    /**
+     * Returns dirty status of all child bins
+     *
+     * @readonly
+     * @type {boolean}
+     * @memberof MaxRectsPacker
+     */
     get dirty (): boolean { return this.bins.some(bin => bin.dirty); }
 }

@@ -36,7 +36,9 @@ const options = {
     smart: true,
     pot: true,
     square: false,
-    allowRotation: true
+    allowRotation: true,
+    tag: false,
+    border: 5
 }; // Set packing options
 let packer = new MaxRectsPacker(1024, 1024, 2, options); // width, height, padding, options
 
@@ -81,6 +83,7 @@ Creates a new Packer. maxWidth and maxHeight are passed on to all bins. If ```pa
 - `options.square` bin size shall alway be square. (defaut is `false`)
 - `options.allowRotation` allow 90-degree rotation while packing. (defaut is `false`)
 - `options.tag` allow tag based group packing. (defaut is `false`)
+- `options.border` atlas edge spacing (default is 0)
 
 #### ```packer.add(width, height, data)``` +1 overload
 
@@ -93,6 +96,10 @@ Adds a rect to an existing bin or creates a new one to accomodate it. Accept any
 #### ```packer.addArray([{width: number, height: number, ...}, ...])```
 
 Adds multiple rects. Since the input is automatically sorted before adding this approach usually leads to fewer bins created than separate calls to ```.add()```
+
+#### ```packer.repack(quick: boolean = true)```
+
+Repack all elements inside bins. If `quick == true`, only bins with `dirty` flag will be repacked. If `false` is passed, all rects inside this packer will be re-sort and repacked, might result different bin number. Slower but high packing effeciency.
 
 #### ```packer.next()```
 
