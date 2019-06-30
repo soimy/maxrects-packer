@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.4.0](https://github.com/soimy/maxrects-packer/compare/v2.4.0-alpha.0...v2.4.0) (2019-06-30)
+
+
+### Bug Fixes
+
+* Export IBin interface ([aaa40a4](https://github.com/soimy/maxrects-packer/commit/aaa40a4))
+
+
+
 ## [2.4.0-alpha.0](https://github.com/soimy/maxrects-packer/compare/v2.3.0...v2.4.0-alpha.0) (2019-06-19)
 
 
