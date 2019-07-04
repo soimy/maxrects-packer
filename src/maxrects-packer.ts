@@ -121,6 +121,16 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     }
 
     /**
+     * Reset entire packer to initial states, keep settings
+     *
+     * @memberof MaxRectsPacker
+     */
+    public reset (): void {
+        this.bins = [];
+        this._currentBinIndex = 0;
+    }
+
+    /**
      * Repack all elements inside bins
      *
      * @param {boolean} [quick=true] quick repack only dirty bins
@@ -140,11 +150,8 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
             return;
         }
         if (!this.dirty) return;
-        let allRects: T[] = [];
-        for (let bin of this.bins) {
-            allRects.push(...bin.rects);
-        }
-        this.bins = [];
+        const allRects = this.rects;
+        this.reset();
         this.addArray(allRects);
     }
 
@@ -249,4 +256,19 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * @memberof MaxRectsPacker
      */
     get dirty (): boolean { return this.bins.some(bin => bin.dirty); }
+
+    /**
+     * Return all rectangles in this packer
+     *
+     * @readonly
+     * @type {T[]}
+     * @memberof MaxRectsPacker
+     */
+    get rects (): T[] {
+        let allRects: T[] = [];
+        for (let bin of this.bins) {
+            allRects.push(...bin.rects);
+        }
+        return allRects;
+    }
 }
