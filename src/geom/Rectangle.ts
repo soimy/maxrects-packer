@@ -148,7 +148,6 @@ export class Rectangle implements IRectangle {
      * @memberof Rectangle
      */
     set rot (value: boolean) {
-        if (this._rot && value) return;
         if (this._rot !== value) {
             const tmp = this.width;
             this.width = this.height;

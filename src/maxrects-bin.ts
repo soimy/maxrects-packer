@@ -124,7 +124,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
             this.verticalExpand = this.width > this.height ? true : false;
             rect.x = node.x;
             rect.y = node.y;
-            rect.rot = node.rot;
+            rect.rot = node.rot ? !rect.rot : rect.rot;
             this._dirty ++;
             return rect as T;
         } else if (!this.verticalExpand) {
