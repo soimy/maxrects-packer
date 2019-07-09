@@ -115,6 +115,9 @@ describe("no padding", () => {
         bin.reset(true);
         expect(bin.width).toBe(0);
         expect(bin.rects.length).toBe(0);
+        expect(bin.options.tag).toBe(true);
+        bin.reset(true, true);
+        expect(bin.options.tag).toBe(false);
     });
 
     test("repack", () => {

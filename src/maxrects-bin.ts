@@ -76,19 +76,21 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         return unpacked.length > 0 ? unpacked : undefined;
     }
 
-    public reset (deepReset: boolean = false): void {
+    public reset (deepReset: boolean = false, resetOption: boolean = false): void {
         if (deepReset) {
             if (this.data) delete this.data;
             if (this.tag) delete this.tag;
             this.rects = [];
-            this.options = {
-                smart: true,
-                pot: true,
-                square: true,
-                allowRotation: false,
-                tag: false,
-                border: 0
-            };
+            if (resetOption) {
+                this.options = {
+                    smart: true,
+                    pot: true,
+                    square: true,
+                    allowRotation: false,
+                    tag: false,
+                    border: 0
+                };
+            }
         }
         this.width = this.options.smart ? 0 : this.maxWidth;
         this.height = this.options.smart ? 0 : this.maxHeight;
