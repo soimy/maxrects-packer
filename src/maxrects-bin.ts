@@ -52,7 +52,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
             rect.setDirty(false);
         }
 
-        const result = this.process(rect);
+        const result = this.place(rect);
         if (result) this.rects.push(result);
         return result;
     }
@@ -68,7 +68,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
             } else return result;
         });
         for (let rect of this.rects) {
-            if (!this.process(rect)) {
+            if (!this.place(rect)) {
                 unpacked.push(rect);
             }
         }
@@ -104,7 +104,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         this._dirty = 0;
     }
 
-    private process (rect: IRectangle): T | undefined {
+    private place (rect: IRectangle): T | undefined {
         // recheck if tag matched
         let tag = (rect.data && rect.data.tag) ? rect.data.tag : rect.tag ? rect.tag : undefined;
         if (this.options.tag && this.tag !== tag) return undefined;
@@ -137,7 +137,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
                 rect.width + this.padding, rect.height + this.padding,
                 this.border, this.height + this.padding - this.border
             ))) {
-                return this.process(rect);
+                return this.place(rect);
             }
         } else {
             if (this.updateBinSize(new Rectangle(
@@ -147,7 +147,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
                 rect.width + this.padding, rect.height + this.padding,
                 this.width + this.padding - this.border, this.border
             ))) {
-                return this.process(rect);
+                return this.place(rect);
             }
         }
         return undefined;
