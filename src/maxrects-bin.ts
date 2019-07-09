@@ -252,6 +252,15 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         if (this.stage.contain(node)) return false;
         let tmpWidth: number = Math.max(this.width, node.x + node.width - this.padding + this.border);
         let tmpHeight: number = Math.max(this.height, node.y + node.height - this.padding + this.border);
+        if (this.options.allowRotation) {
+            // do extra test on rotated node whether it's a better choice
+            const rotWidth: number = Math.max(this.width, node.x + node.height - this.padding + this.border);
+            const rotHeight: number = Math.max(this.height, node.y + node.width - this.padding + this.border);
+            if (rotWidth * rotHeight < tmpWidth * tmpHeight) {
+                tmpWidth = rotWidth;
+                tmpHeight = rotHeight;
+            }
+        }
         if (this.options.pot) {
             tmpWidth = Math.pow(2, Math.ceil(Math.log(tmpWidth) * Math.LOG2E));
             tmpHeight = Math.pow(2, Math.ceil(Math.log(tmpHeight) * Math.LOG2E));
