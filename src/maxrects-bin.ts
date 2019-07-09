@@ -130,17 +130,22 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
             this._dirty ++;
             return rect as T;
         } else if (!this.verticalExpand) {
-            if (this.updateBinSize(new Rectangle(rect.width + this.padding, rect.height + this.padding, this.width + this.padding - this.border, this.border))
-                || this.updateBinSize(new Rectangle(rect.width + this.padding, rect.height + this.padding, this.border, this.height + this.padding - this.border))) {
+            if (this.updateBinSize(new Rectangle(
+                rect.width + this.padding, rect.height + this.padding,
+                this.width + this.padding - this.border, this.border
+            )) || this.updateBinSize(new Rectangle(
+                rect.width + this.padding, rect.height + this.padding,
+                this.border, this.height + this.padding - this.border
+            ))) {
                 return this.process(rect);
             }
         } else {
             if (this.updateBinSize(new Rectangle(
                 rect.width + this.padding, rect.height + this.padding,
-                0, this.height + this.padding
+                this.border, this.height + this.padding - this.border
             )) || this.updateBinSize(new Rectangle(
                 rect.width + this.padding, rect.height + this.padding,
-                this.width + this.padding, 0
+                this.width + this.padding - this.border, this.border
             ))) {
                 return this.process(rect);
             }
