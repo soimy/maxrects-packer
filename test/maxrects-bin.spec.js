@@ -61,6 +61,19 @@ describe("no padding", () => {
         expect(bin.rects[0].data.foo).toBe("bar");
     });
 
+    test("set rotation correctly", () => {
+        bin = new MaxRectsBin(1024, 1024, 0, {...opt, allowRotation: true});
+        bin.add({width: 512, height: 1024});
+        bin.add({width: 1024, height: 512});
+        expect(bin.rects.length).toBe(2);
+        expect(bin.rects[1].rot).toBe(true);
+        bin.reset(true);
+        bin.add({width: 512, height: 1024});
+        bin.add({width: 1024, height: 512, rot: true});
+        expect(bin.rects.length).toBe(2);
+        expect(bin.rects[1].rot).toBe(false);
+    });
+
     test("stores custom rect correctly", () => {
         bin.add({width: 200, height: 100, foo: "bar"});
         expect(bin.rects[0].foo).toBe("bar");
