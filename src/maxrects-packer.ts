@@ -185,6 +185,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 });
                 newBin.width = bin.width;
                 newBin.height = bin.height;
+                if (bin.tag) newBin.tag = bin.tag;
                 this.bins[index] = newBin;
             }
         }, this);
@@ -206,6 +207,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 rects: [],
                 options: bin.options
             };
+            if (bin.tag) saveBin = { ...saveBin, tag: bin.tag };
             bin.freeRects.forEach(r => {
                 saveBin.freeRects.push({
                     x: r.x,

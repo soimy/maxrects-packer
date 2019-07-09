@@ -153,19 +153,26 @@ describe("#addArray", () => {
 
 describe("#save & load", () => {
     test("Load old bins and continue packing", () => {
+        packer.options.tag = true;
         let input = [
             {width: 512, height: 512, data: {number: 1}},
-            {width: 512, height: 512, data: {number: 2}},
-            {width: 512, height: 512, data: {number: 3}},
+            {width: 512, height: 512, data: {number: 2}, tag: "one"},
+            {width: 512, height: 512, data: {number: 3}, tag: "one"},
             {width: 512, height: 512, data: {number: 4}},
         ];
-        packer.add(input[0].width, input[0].height, input[0].data);
-        expect(packer.bins.length).toBe(1);
+        packer.addArray(input);
+        expect(packer.bins.length).toBe(2);
+        expect(packer.bins[0].rects.length).toBe(2);
+        expect(packer.bins[1].rects.length).toBe(2);
         let bins = packer.save();
-        expect(bins[0].freeRects.length).toBe(0);
+        expect(bins[0].rects.length).toBe(0);
+        expect(bins[1].tag).toBe("one");
         packer.load(bins);
         packer.addArray(input);
         expect(packer.bins.length).toBe(2);
+        expect(packer.bins[0].rects.length).toBe(2);
+        expect(packer.bins[1].rects.length).toBe(2);
+        expect(packer.bins[1].tag).toBe("one");
     });
 });
 
