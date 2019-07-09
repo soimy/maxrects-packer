@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.4.3](https://github.com/soimy/maxrects-packer/compare/v2.4.2...v2.4.3) (2019-07-09)
+
+
+### Bug Fixes
+
+* process() vertical expand not take border into account ([7382912](https://github.com/soimy/maxrects-packer/commit/7382912))
+* updateBinSize() not consider rotated node ([aee9a4b](https://github.com/soimy/maxrects-packer/commit/aee9a4b))
+
+
+### Tests
+
+* add set rotation test ([0f1d301](https://github.com/soimy/maxrects-packer/commit/0f1d301))
+
+
+
 ### [2.4.2](https://github.com/soimy/maxrects-packer/compare/v2.4.1...v2.4.2) (2019-07-08)
 
 
