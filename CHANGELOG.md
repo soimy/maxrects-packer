@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.4.4](https://github.com/soimy/maxrects-packer/compare/v2.4.3...v2.4.4) (2019-07-10)
+
+
+### Bug Fixes
+
+* save/load bins with tag correctly ([ac95c4a](https://github.com/soimy/maxrects-packer/commit/ac95c4a))
+
+
+
 ### [2.4.3](https://github.com/soimy/maxrects-packer/compare/v2.4.2...v2.4.3) (2019-07-09)
 
 
