@@ -8,7 +8,7 @@
 
 A simple max rectangle 2d bin packing algorithm for packing glyphs or images into multiple sprite-sheet/atlas. Minimalist with no module dependency.
 
-This is a evolved version of [Multi-Bin-Packer](https://github.com/marekventur/multi-bin-packer) with much effiecent packing algorithm. All interfaces and methods are inherited so no tweaks needed in your current code except module name.
+This is a evolved version of [Multi-Bin-Packer](https://github.com/marekventur/multi-bin-packer) with much efficient packing algorithm. All interfaces and methods are inherited so no tweaks needed in your current code except module name.
 
 It differs from the long list of similar packages by its packing approach: Instead of creating one output bin with a minimum size this package is trying to create a minimum number of bins under a certain size. This avoids problems with single massive image files that are not browser-friendly. This can be especially useful for WebGL games where the GPU will benefit from spritesheets close to power-of-2 sizes.
 
@@ -79,19 +79,19 @@ Note: maxrects-packer requires node >= 4.0.0
 Creates a new Packer. maxWidth and maxHeight are passed on to all bins. If ```padding``` is supplied all rects will be kept at least ```padding``` pixels apart.
 
 - `options.smart` packing with smallest possible size. (default is `true`)
-- `options.pot` bin size round up to smallest power of 2. (defalt is `true`)
-- `options.square` bin size shall alway be square. (defaut is `false`)
-- `options.allowRotation` allow 90-degree rotation while packing. (defaut is `false`)
-- `options.tag` allow tag based group packing. (defaut is `false`)
+- `options.pot` bin size round up to smallest power of 2. (default is `true`)
+- `options.square` bin size shall alway be square. (default is `false`)
+- `options.allowRotation` allow 90-degree rotation while packing. (default is `false`)
+- `options.tag` allow tag based group packing. (default is `false`)
 - `options.border` atlas edge spacing (default is 0)
 
 #### ```packer.add(width, height, data)``` +1 overload
 
-Adds a rect to an existing bin or creates a new one to accomodate it. ```data``` can be anything, it will be stored along with the position data of each rect.
+Adds a rect to an existing bin or creates a new one to accommodate it. ```data``` can be anything, it will be stored along with the position data of each rect.
 
 #### ```packer.add({width: number, height: number, ... })``` +1 overload
 
-Adds a rect to an existing bin or creates a new one to accomodate it. Accept any object with `width & height`. If you are using `typescript`, that means any class extends `MaxRectsPacker.IRectangle`
+Adds a rect to an existing bin or creates a new one to accommodate it. Accept any object with `width & height`. If you are using `typescript`, that means any class extends `MaxRectsPacker.IRectangle`
 
 #### ```packer.addArray([{width: number, height: number, ...}, ...])```
 
@@ -99,7 +99,7 @@ Adds multiple rects. Since the input is automatically sorted before adding this 
 
 #### ```packer.repack(quick: boolean = true)```
 
-Repack all elements inside bins. If `quick == true`, only bins with `dirty` flag will be repacked. If `false` is passed, all rects inside this packer will be re-sort and repacked, might result different bin number. Slower but high packing effeciency.
+Repack all elements inside bins. If `quick == true`, only bins with `dirty` flag will be repacked. If `false` is passed, all rects inside this packer will be re-sort and repacked, might result different bin number. Slower but high packing efficiency.
 
 #### ```packer.next()```
 
@@ -111,7 +111,7 @@ Save current bins settings and free area to an Array of objects for later use. B
 
 #### ```packer.load(bins)```
 
-Restore previous saved `let bins = JSON.parse(fs.readFileSync(savedFile, 'utf8'));` settings and overwrite current one. Continue packing and previous packed area will not be overlaped.
+Restore previous saved `let bins = JSON.parse(fs.readFileSync(savedFile, 'utf8'));` settings and overwrite current one. Continue packing and previous packed area will not be overlapped.
 
 #### ```packer.bins```
 

@@ -1,3 +1,11 @@
 {
-    "editor.minimap.enabled": true
+    "editor.minimap.enabled": true,
+    "spellright.language": [
+        "en"
+    ],
+    "spellright.documentTypes": [
+        "markdown",
+        "latex",
+        "plaintext"
+    ]
 }
