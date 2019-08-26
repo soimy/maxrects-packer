@@ -35,35 +35,15 @@ describe('Efficiency', () => {
     test.skip('area logic', () => {
         let heading = ["#", "size"].concat(AREA_CANDIDATES.map(c => c.name));
         let results = AREA_CANDIDATES.map(candidate => meassureEfficiency(candidate.factory));
-        let rows = SCENARIOS.map((scenario, i) => {
-            return [i, rectSizeSum[i]].concat(results.map(resultCandidate => {
-                let result = resultCandidate[i];
-                return `${toPercent(result.efficieny)} (${result.bins} bins)`;
-            }));
-        }).concat([["sum", ""].concat(results.map(result => {
-            let usedSize = result.reduce((memo, data) => memo + data.usedSize, 0);
-            let rectSize = result.reduce((memo, data) => memo + data.rectSize, 0);
-            let totalBins = result.reduce((memo, data) => memo + data.bins, 0);
-            return `${toPercent(rectSize / usedSize)} (${totalBins} bins)`;
-        }))]);
-
+        let rows = createRows(results);
+        
         console.log(new AsciiTable({ heading, rows }).toString());
     });
 
     test.skip('edge logic', () => {
         let heading = ["#", "size"].concat(EDGE_CANDIDATES.map(c => c.name));
         let results = EDGE_CANDIDATES.map(candidate => meassureEfficiency(candidate.factory));
-        let rows = SCENARIOS.map((scenario, i) => {
-            return [i, rectSizeSum[i]].concat(results.map(resultCandidate => {
-                let result = resultCandidate[i];
-                return `${toPercent(result.efficieny)} (${result.bins} bins)`;
-            }));
-        }).concat([["sum", ""].concat(results.map(result => {
-            let usedSize = result.reduce((memo, data) => memo + data.usedSize, 0);
-            let rectSize = result.reduce((memo, data) => memo + data.rectSize, 0);
-            let totalBins = result.reduce((memo, data) => memo + data.bins, 0);
-            return `${toPercent(rectSize / usedSize)} (${totalBins} bins)`;
-        }))]);
+        let rows = createRows(results);
 
         console.log(new AsciiTable({ heading, rows }).toString());
     });
@@ -86,17 +66,7 @@ describe('Efficiency', () => {
                 return result1;
             }
         }));
-        let rows = SCENARIOS.map((scenario, i) => {
-            return [i, rectSizeSum[i]].concat(results.map(resultCandidate => {
-                let result = resultCandidate[i];
-                return `${toPercent(result.efficieny)} (${result.bins} bins)`;
-            }));
-        }).concat([["sum", ""].concat(results.map(result => {
-            let usedSize = result.reduce((memo, data) => memo + data.usedSize, 0);
-            let rectSize = result.reduce((memo, data) => memo + data.rectSize, 0);
-            let totalBins = result.reduce((memo, data) => memo + data.bins, 0);
-            return `${toPercent(rectSize / usedSize)} (${totalBins} bins)`;
-        }))]);
+        let rows = createRows(results);
 
         console.log(new AsciiTable({ heading, rows }).toString());
     });
@@ -117,4 +87,18 @@ function meassureEfficiency (factory) {
 
 function toPercent (input) {
     return Math.round(input * 1000) / 10 + "%";
+}
+
+function createRows (results) {
+    return SCENARIOS.map((scenario, i) => {
+        return [i, rectSizeSum[i]].concat(results.map(resultCandidate => {
+            let result = resultCandidate[i];
+            return `${toPercent(result.efficieny)} (${result.bins} bins)`;
+        }));
+    }).concat([["sum", ""].concat(results.map(result => {
+        let usedSize = result.reduce((memo, data) => memo + data.usedSize, 0);
+        let rectSize = result.reduce((memo, data) => memo + data.rectSize, 0);
+        let totalBins = result.reduce((memo, data) => memo + data.bins, 0);
+        return `${toPercent(rectSize / usedSize)} (${totalBins} bins)`;
+    }))]);
 }
