@@ -30,7 +30,8 @@ test('Efficiency', () => {
     }).concat([["sum", ""].concat(results.map(result => {
         let usedSize = result.reduce((memo, data) => memo + data.usedSize, 0);
         let rectSize = result.reduce((memo, data) => memo + data.rectSize, 0);
-        return toPercent(rectSize / usedSize);
+        let totalBins = result.reduce((memo, data) => memo + data.bins, 0);
+        return `${toPercent(rectSize / usedSize)} (${totalBins} bins)`;
     }))]);
 
     console.log(new AsciiTable({ heading, rows }).toString());

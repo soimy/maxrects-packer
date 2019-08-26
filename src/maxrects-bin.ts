@@ -161,7 +161,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         for (let i in this.freeRects) {
             r = this.freeRects[i];
             if (r.width >= width && r.height >= height) {
-                areaFit = r.width * r.height - width * height;
+                areaFit = Math.min(r.width - width, r.height - height);
                 if (areaFit < score) {
                     bestNode = new Rectangle(width, height, r.x, r.y);
                     score = areaFit;
@@ -170,7 +170,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
             if (!this.options.allowRotation) continue;
             // Continue to test 90-degree rotated rectangle
             if (r.width >= height && r.height >= width) {
-                areaFit = r.width * r.height - height * width;
+                areaFit = Math.min(r.height - width, r.width - height);
                 if (areaFit < score) {
                     bestNode = new Rectangle(height, width, r.x, r.y, true); // Rotated node
                     score = areaFit;

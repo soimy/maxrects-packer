@@ -222,7 +222,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     }
 
     /**
-     * Sort the given rects based on longest edge
+     * Sort the given rects based on surface area
      *
      * If having same long edge, will sort second key `hash` if presented.
      *
@@ -233,7 +233,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      */
     private sort (rects: T[]) {
         return rects.slice().sort((a, b) => {
-            const result = Math.max(b.width, b.height) - Math.max(a.width, a.height);
+            const result = b.width * b.height - a.width * a.height;
             if (result === 0 && a.hash && b.hash) {
                 return a.hash > b.hash ? -1 : 1;
             } else return result;

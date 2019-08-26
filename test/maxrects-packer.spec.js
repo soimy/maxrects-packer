@@ -110,8 +110,8 @@ describe("#sort", () => {
             {width: 2, height: 2}
         ];
         let output = packer.sort(input);
-        expect(output[0].width).toBe(3);
-        expect(output[1].width).toBe(2);
+        expect(output[0].width).toBe(2);
+        expect(output[1].width).toBe(3);
         expect(output[2].width).toBe(1);
     });
 });
