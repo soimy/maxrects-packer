@@ -14,6 +14,7 @@ export const EDGE_MIN_VALUE: number = 128;
  * @property {boolean} options.allowRotation allow rotation packing (default is false)
  * @property {boolean} options.tag allow auto grouping based on `rect.tag` (default is false)
  * @property {boolean} options.border atlas edge spacing (default is 0)
+ * @property {string} options.logic "area" or "edge" based sorting logic (default is "area")
  * @export
  * @interface Option
  */
@@ -24,6 +25,7 @@ export interface IOption {
     allowRotation?: boolean;
     tag?: boolean;
     border?: number;
+    logic?: 'area' | 'edge';
 }
 
 export class MaxRectsPacker<T extends IRectangle = Rectangle> {
@@ -48,7 +50,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
         public width: number = EDGE_MAX_VALUE,
         public height: number = EDGE_MAX_VALUE,
         public padding: number = 0,
-        public options: IOption = { smart: true, pot: true, square: false, allowRotation: false, tag: false, border: 0 }
+        public options: IOption = { smart: true, pot: true, square: false, allowRotation: false, tag: false, border: 0, logic: 'area' }
     ) {
         this.bins = [];
     }
@@ -117,7 +119,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * @memberof MaxRectsPacker
      */
     public addArray (rects: T[]) {
-        this.sort(rects).forEach(rect => this.add(rect));
+        this.sort(rects, this.options.logic).forEach(rect => this.add(rect));
     }
 
     /**
@@ -222,18 +224,21 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     }
 
     /**
-     * Sort the given rects based on surface area
+     * Sort the given rects based on longest edge or surface area.
      *
-     * If having same long edge, will sort second key `hash` if presented.
+     * If rects have the same sort value, will sort by second key `hash` if presented.
      *
      * @private
      * @param {T[]} rects
+     * @param {string} [logic="area"] sorting logic, "area" or "edge"
      * @returns
      * @memberof MaxRectsPacker
      */
-    private sort (rects: T[]) {
+    private sort (rects: T[], logic: IOption['logic'] = 'area') {
         return rects.slice().sort((a, b) => {
-            const result = b.width * b.height - a.width * a.height;
+            const result = (logic === 'edge') ?
+                Math.max(b.width, b.height) - Math.max(a.width, a.height) :
+                b.width * b.height - a.width * a.height;
             if (result === 0 && a.hash && b.hash) {
                 return a.hash > b.hash ? -1 : 1;
             } else return result;

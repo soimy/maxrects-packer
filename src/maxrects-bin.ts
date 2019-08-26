@@ -15,7 +15,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         public maxWidth: number = EDGE_MAX_VALUE,
         public maxHeight: number = EDGE_MAX_VALUE,
         public padding: number = 0,
-        public options: IOption = { smart: true, pot: true, square: true, allowRotation: false, tag: false, border: 0 }
+        public options: IOption = { smart: true, pot: true, square: true, allowRotation: false, tag: false, border: 0, logic: 'area' }
     ) {
         super();
         this.width = this.options.smart ? 0 : maxWidth;
@@ -161,7 +161,9 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         for (let i in this.freeRects) {
             r = this.freeRects[i];
             if (r.width >= width && r.height >= height) {
-                areaFit = Math.min(r.width - width, r.height - height);
+                areaFit = (this.options.logic === 'edge') ?
+                    r.width * r.height - width * height :
+                    Math.min(r.width - width, r.height - height);
                 if (areaFit < score) {
                     bestNode = new Rectangle(width, height, r.x, r.y);
                     score = areaFit;
@@ -170,7 +172,9 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
             if (!this.options.allowRotation) continue;
             // Continue to test 90-degree rotated rectangle
             if (r.width >= height && r.height >= width) {
-                areaFit = Math.min(r.height - width, r.width - height);
+                areaFit = (this.options.logic === 'edge') ?
+                    r.width * r.height - height * width :
+                    Math.min(r.height - width, r.width - height);
                 if (areaFit < score) {
                     bestNode = new Rectangle(height, width, r.x, r.y, true); // Rotated node
                     score = areaFit;

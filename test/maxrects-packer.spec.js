@@ -103,15 +103,27 @@ describe("#sort", () => {
         expect(input[0].width).toBe(1);
     });
 
-    test("works correctly", () => {
+    test("works correctly by area", () => {
         let input = [
             {width: 1, height: 1},
             {width: 3, height: 1},
             {width: 2, height: 2}
         ];
-        let output = packer.sort(input);
+        let output = packer.sort(input, "area");
         expect(output[0].width).toBe(2);
         expect(output[1].width).toBe(3);
+        expect(output[2].width).toBe(1);
+    });
+
+    test("works correctly by edge", () => {
+        let input = [
+            {width: 1, height: 1},
+            {width: 3, height: 1},
+            {width: 2, height: 2}
+        ];
+        let output = packer.sort(input, "edge");
+        expect(output[0].width).toBe(3);
+        expect(output[1].width).toBe(2);
         expect(output[2].width).toBe(1);
     });
 });
