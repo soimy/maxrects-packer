@@ -1,6 +1,7 @@
 "use strict";
 
 let MaxRectsPacker = require("../dist/maxrects-packer").MaxRectsPacker;
+let PACKING_LOGIC = require("../dist/maxrects-packer").PACKING_LOGIC;
 let Rectangle = require("../dist/maxrects-packer").Rectangle;
 
 const opt = {
@@ -109,7 +110,7 @@ describe("#sort", () => {
             {width: 3, height: 1},
             {width: 2, height: 2}
         ];
-        let output = packer.sort(input, "area");
+        let output = packer.sort(input, PACKING_LOGIC.MAX_AREA);
         expect(output[0].width).toBe(2);
         expect(output[1].width).toBe(3);
         expect(output[2].width).toBe(1);
@@ -121,7 +122,7 @@ describe("#sort", () => {
             {width: 3, height: 1},
             {width: 2, height: 2}
         ];
-        let output = packer.sort(input, "edge");
+        let output = packer.sort(input, PACKING_LOGIC.MAX_EDGE);
         expect(output[0].width).toBe(3);
         expect(output[1].width).toBe(2);
         expect(output[2].width).toBe(1);

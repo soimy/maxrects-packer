@@ -1,4 +1,4 @@
-import { EDGE_MAX_VALUE, IOption } from "./maxrects-packer";
+import { EDGE_MAX_VALUE, PACKING_LOGIC, IOption } from "./maxrects-packer";
 import { Rectangle, IRectangle } from "./geom/Rectangle";
 import { Bin } from "./abstract-bin";
 
@@ -15,7 +15,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         public maxWidth: number = EDGE_MAX_VALUE,
         public maxHeight: number = EDGE_MAX_VALUE,
         public padding: number = 0,
-        public options: IOption = { smart: true, pot: true, square: true, allowRotation: false, tag: false, border: 0, logic: 'area' }
+        public options: IOption = { smart: true, pot: true, square: true, allowRotation: false, tag: false, border: 0, logic: PACKING_LOGIC.MAX_AREA }
     ) {
         super();
         this.width = this.options.smart ? 0 : maxWidth;
@@ -161,7 +161,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         for (let i in this.freeRects) {
             r = this.freeRects[i];
             if (r.width >= width && r.height >= height) {
-                areaFit = (this.options.logic === 'edge') ?
+                areaFit = (this.options.logic === PACKING_LOGIC.MAX_AREA) ?
                     r.width * r.height - width * height :
                     Math.min(r.width - width, r.height - height);
                 if (areaFit < score) {
@@ -172,7 +172,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
             if (!this.options.allowRotation) continue;
             // Continue to test 90-degree rotated rectangle
             if (r.width >= height && r.height >= width) {
-                areaFit = (this.options.logic === 'edge') ?
+                areaFit = (this.options.logic === PACKING_LOGIC.MAX_AREA) ?
                     r.width * r.height - height * width :
                     Math.min(r.height - width, r.width - height);
                 if (areaFit < score) {

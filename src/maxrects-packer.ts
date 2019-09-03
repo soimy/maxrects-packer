@@ -5,6 +5,10 @@ import { Bin, IBin } from "./abstract-bin";
 
 export const EDGE_MAX_VALUE: number = 4096;
 export const EDGE_MIN_VALUE: number = 128;
+export enum PACKING_LOGIC {
+    MAX_AREA = 0,
+    MAX_EDGE = 1
+}
 
 /**
  * Options for MaxRect Packer
@@ -25,7 +29,7 @@ export interface IOption {
     allowRotation?: boolean;
     tag?: boolean;
     border?: number;
-    logic?: 'area' | 'edge';
+    logic?: PACKING_LOGIC.MAX_AREA | PACKING_LOGIC.MAX_EDGE;
 }
 
 export class MaxRectsPacker<T extends IRectangle = Rectangle> {
@@ -50,7 +54,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
         public width: number = EDGE_MAX_VALUE,
         public height: number = EDGE_MAX_VALUE,
         public padding: number = 0,
-        public options: IOption = { smart: true, pot: true, square: false, allowRotation: false, tag: false, border: 0, logic: 'area' }
+        public options: IOption = { smart: true, pot: true, square: false, allowRotation: false, tag: false, border: 0, logic: PACKING_LOGIC.MAX_EDGE }
     ) {
         this.bins = [];
     }
@@ -234,9 +238,9 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * @returns
      * @memberof MaxRectsPacker
      */
-    private sort (rects: T[], logic: IOption['logic'] = 'area') {
+    private sort (rects: T[], logic: IOption['logic'] = PACKING_LOGIC.MAX_EDGE) {
         return rects.slice().sort((a, b) => {
-            const result = (logic === 'edge') ?
+            const result = (logic === PACKING_LOGIC.MAX_EDGE) ?
                 Math.max(b.width, b.height) - Math.max(a.width, a.height) :
                 b.width * b.height - a.width * a.height;
             if (result === 0 && a.hash && b.hash) {

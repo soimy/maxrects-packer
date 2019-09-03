@@ -1,6 +1,7 @@
 "use strict";
 
 let MaxRectsPacker = require("../dist/maxrects-packer").MaxRectsPacker;
+let PACKING_LOGIC = require("../dist/maxrects-packer").PACKING_LOGIC;
 let AsciiTable = require("ascii-table")
 
 const SCENARIOS = require("./scenarios.json");
@@ -22,14 +23,14 @@ describe('Efficiency', () => {
     ];
 
     const EDGE_CANDIDATES = [
-        {name: "1024x2048:0", factory: () => new MaxRectsPacker(1024, 2048, 0, { smart: true, pot: true, square: false, logic: "edge" })},
-        {name: "1024x2048:1", factory: () => new MaxRectsPacker(1024, 2048, 1, { smart: true, pot: true, square: false, logic: "edge" })},
-        {name: "1024x2048:1:Rot", factory: () => new MaxRectsPacker(1024, 2048, 1, { smart: true, pot: true, square: true, allowRotation: true, logic: "edge" })},
-        {name: "1024x1024:0", factory: () => new MaxRectsPacker(1024, 1024, 0, { smart: true, pot: true, square: false, logic: "edge" })},
-        {name: "1024x1024:1", factory: () => new MaxRectsPacker(1024, 1024, 1, { smart: true, pot: true, square: false, logic: "edge" })},
-        {name: "1024x1024:1:Rot", factory: () => new MaxRectsPacker(1024, 1024, 1, { smart: true, pot: true, square: true, allowRotation: true, logic: "edge" })},
-        {name: "2048:2048:1", factory: () => new MaxRectsPacker(2048, 2048, 1, { smart: true, pot: true, square: false, logic: "edge" })},
-        {name: "2048:2048:1:Rot", factory: () => new MaxRectsPacker(2048, 2048, 1, { smart: true, pot: true, square: true, allowRotation: true, logic: "edge" })}
+        {name: "1024x2048:0", factory: () => new MaxRectsPacker(1024, 2048, 0, { smart: true, pot: true, square: false, logic: PACKING_LOGIC.MAX_EDGE })},
+        {name: "1024x2048:1", factory: () => new MaxRectsPacker(1024, 2048, 1, { smart: true, pot: true, square: false, logic: PACKING_LOGIC.MAX_EDGE })},
+        {name: "1024x2048:1:Rot", factory: () => new MaxRectsPacker(1024, 2048, 1, { smart: true, pot: true, square: true, allowRotation: true, logic: PACKING_LOGIC.MAX_EDGE })},
+        {name: "1024x1024:0", factory: () => new MaxRectsPacker(1024, 1024, 0, { smart: true, pot: true, square: false, logic: PACKING_LOGIC.MAX_EDGE })},
+        {name: "1024x1024:1", factory: () => new MaxRectsPacker(1024, 1024, 1, { smart: true, pot: true, square: false, logic: PACKING_LOGIC.MAX_EDGE })},
+        {name: "1024x1024:1:Rot", factory: () => new MaxRectsPacker(1024, 1024, 1, { smart: true, pot: true, square: true, allowRotation: true, logic: PACKING_LOGIC.MAX_EDGE })},
+        {name: "2048:2048:1", factory: () => new MaxRectsPacker(2048, 2048, 1, { smart: true, pot: true, square: false, logic: PACKING_LOGIC.MAX_EDGE })},
+        {name: "2048:2048:1:Rot", factory: () => new MaxRectsPacker(2048, 2048, 1, { smart: true, pot: true, square: true, allowRotation: true, logic: PACKING_LOGIC.MAX_EDGE })}
     ];
 
     test.skip('area logic', () => {
