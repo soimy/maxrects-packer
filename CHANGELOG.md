@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.5.0](https://github.com/soimy/maxrects-packer/compare/v2.4.5...v2.5.0) (2019-09-03)
+
+
+### Features
+
+* area or edge logic selection option ([c4dff4b](https://github.com/soimy/maxrects-packer/commit/c4dff4b))
+
+
+### Tests
+
+* efficiency tests refactoring ([0afa958](https://github.com/soimy/maxrects-packer/commit/0afa958))
+
+
+
 ### [2.4.5](https://github.com/soimy/maxrects-packer/compare/v2.4.4...v2.4.5) (2019-08-26)
 
 
