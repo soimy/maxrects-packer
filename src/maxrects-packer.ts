@@ -18,7 +18,7 @@ export enum PACKING_LOGIC {
  * @property {boolean} options.allowRotation allow rotation packing (default is false)
  * @property {boolean} options.tag allow auto grouping based on `rect.tag` (default is false)
  * @property {boolean} options.border atlas edge spacing (default is 0)
- * @property {string} options.logic "area" or "edge" based sorting logic (default is "area")
+ * @property {PACKING_LOGIC} options.logic MAX_AREA or MAX_EDGE based sorting logic (default is MAX_EDGE)
  * @export
  * @interface Option
  */
@@ -29,7 +29,7 @@ export interface IOption {
     allowRotation?: boolean;
     tag?: boolean;
     border?: number;
-    logic?: PACKING_LOGIC.MAX_AREA | PACKING_LOGIC.MAX_EDGE;
+    logic?: PACKING_LOGIC;
 }
 
 export class MaxRectsPacker<T extends IRectangle = Rectangle> {
@@ -234,7 +234,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      *
      * @private
      * @param {T[]} rects
-     * @param {string} [logic="area"] sorting logic, "area" or "edge"
+     * @param {PACKING_LOGIC} [logic=PACKING_LOGIC.MAX_EDGE] sorting logic, "area" or "edge"
      * @returns
      * @memberof MaxRectsPacker
      */

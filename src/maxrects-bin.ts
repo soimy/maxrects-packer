@@ -15,7 +15,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         public maxWidth: number = EDGE_MAX_VALUE,
         public maxHeight: number = EDGE_MAX_VALUE,
         public padding: number = 0,
-        public options: IOption = { smart: true, pot: true, square: true, allowRotation: false, tag: false, border: 0, logic: PACKING_LOGIC.MAX_AREA }
+        public options: IOption = { smart: true, pot: true, square: true, allowRotation: false, tag: false, border: 0, logic: PACKING_LOGIC.MAX_EDGE }
     ) {
         super();
         this.width = this.options.smart ? 0 : maxWidth;
