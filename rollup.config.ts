@@ -1,5 +1,6 @@
-import { ts, dts } from "rollup-plugin-dts";
+import ts from "rollup-plugin-ts";
 import uglify from "rollup-plugin-uglify-es";
+import path from "path";
 
 const config = [
     {
@@ -9,7 +10,13 @@ const config = [
             { file: "dist/maxrects-packer.js", name: "MaxRectsPacker", format: "umd", sourcemap: true },
             { file: "dist/maxrects-packer.mjs", format: "es", sourcemap: true }
         ],
-        plugins: [ ts() ]
+        plugins: [ ts({
+            'tsconfig': (resolvedConfig) => {
+                const config = Object.assign({}, resolvedConfig);
+                config.declarationDir = path.join(__dirname, 'dist');
+                return config;
+            }
+        })]
     },
     {
         input: "./src/index.ts",
@@ -18,12 +25,6 @@ const config = [
             { file: "dist/maxrects-packer.min.js", format: "cjs", sourcemap: false }
         ],
         plugins: [ uglify(), ts() ]
-    },
-    {
-        input: "./src/index.ts",
-        // bundled `.d.ts` file
-        output: [{ file: "dist/maxrects-packer.d.ts", format: "es" }],
-        plugins: [ dts() ]
     }
 ];
 export default config;
