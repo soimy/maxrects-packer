@@ -56,14 +56,19 @@ describe('Efficiency', () => {
         let results = results1.map((scenario, scenarioIndex) => scenario.map((result1, resultIndex) => {
             const result2 = results2[scenarioIndex][resultIndex];
             if (result1.bins < result2.bins) {
+                result1.method = "E";
                 return result1;
             } else if (result1.bins > result2.bins) {
+                result2.method = "A";
                 return result2;
             } else if (result1.efficieny > result2.efficieny) {
+                result1.method = "E";
                 return result1;
             } else if (result1.efficieny < result2.efficieny) {
+                result2.method = "A";
                 return result2;
             } else {
+                result1.method = "";
                 return result1;
             }
         }));
@@ -94,7 +99,7 @@ function createRows (results) {
     return SCENARIOS.map((scenario, i) => {
         return [i, rectSizeSum[i]].concat(results.map(resultCandidate => {
             let result = resultCandidate[i];
-            return `${toPercent(result.efficieny)} (${result.bins} bins)`;
+            return `${toPercent(result.efficieny)} (${result.bins} bins)${result.method}`;
         }));
     }).concat([["sum", ""].concat(results.map(result => {
         let usedSize = result.reduce((memo, data) => memo + data.usedSize, 0);

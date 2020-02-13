@@ -23,6 +23,7 @@ export class Rectangle implements IRectangle {
      * @param {number} [x=0]
      * @param {number} [y=0]
      * @param {boolean} [rot=false]
+     * @param {boolean} [allowRotation=false]
      * @memberof Rectangle
      */
     constructor (
@@ -30,7 +31,8 @@ export class Rectangle implements IRectangle {
         height: number = 0,
         x: number = 0,
         y: number = 0,
-        rot: boolean = false
+        rot: boolean = false,
+        allowRotation: boolean | undefined = undefined
     ) {
         this._width = width;
         this._height = height;
@@ -38,29 +40,30 @@ export class Rectangle implements IRectangle {
         this._y = y;
         this._data = {};
         this._rot = rot;
+        this._allowRotation = allowRotation;
     }
 
     /**
      * Test if two given rectangle collide each other
      *
      * @static
-     * @param {Rectangle} first
-     * @param {Rectangle} second
+     * @param {IRectangle} first
+     * @param {IRectangle} second
      * @returns
      * @memberof Rectangle
      */
-    public static Collide (first: Rectangle, second: Rectangle) { return first.collide(second); }
+    public static Collide (first: IRectangle, second: IRectangle) { return first.collide(second); }
 
     /**
      * Test if the first rectangle contains the second one
      *
      * @static
-     * @param {Rectangle} first
-     * @param {Rectangle} second
+     * @param {IRectangle} first
+     * @param {IRectangle} second
      * @returns
      * @memberof Rectangle
      */
-    public static Contain (first: Rectangle, second: Rectangle) { return first.contain(second); }
+    public static Contain (first: IRectangle, second: IRectangle) { return first.contain(second); }
 
     /**
      * Get the area (w * h) of the rectangle
@@ -73,11 +76,11 @@ export class Rectangle implements IRectangle {
     /**
      * Test if the given rectangle collide with this rectangle.
      *
-     * @param {Rectangle} rect
+     * @param {IRectangle} rect
      * @returns {boolean}
      * @memberof Rectangle
      */
-    public collide (rect: Rectangle): boolean {
+    public collide (rect: IRectangle): boolean {
         return (
             rect.x < this.x + this.width &&
             rect.x + rect.width > this.x &&
@@ -89,11 +92,11 @@ export class Rectangle implements IRectangle {
     /**
      * Test if this rectangle contains the given rectangle.
      *
-     * @param {Rectangle} rect
+     * @param {IRectangle} rect
      * @returns {boolean}
      * @memberof Rectangle
      */
-    public contain (rect: Rectangle): boolean {
+    public contain (rect: IRectangle): boolean {
         return (rect.x >= this.x && rect.y >= this.y &&
                 rect.x + rect.width <= this.x + this.width && rect.y + rect.height <= this.y + this.height);
     }
@@ -148,6 +151,8 @@ export class Rectangle implements IRectangle {
      * @memberof Rectangle
      */
     set rot (value: boolean) {
+        if (this._allowRotation === false) return;
+
         if (this._rot !== value) {
             const tmp = this.width;
             this.width = this.height;
@@ -157,11 +162,37 @@ export class Rectangle implements IRectangle {
         }
     }
 
+    protected _allowRotation: boolean | undefined = undefined;
+
+    /**
+     * If the rectangle allow rotation
+     *
+     * @type {boolean}
+     * @memberof Rectangle
+     */
+    get allowRotation (): boolean | undefined { return this._allowRotation; }
+
+    /**
+     * Set the allowRotation tag of the rectangle.
+     *
+     * @memberof Rectangle
+     */
+    set allowRotation (value: boolean | undefined) {
+        if (this._allowRotation !== value) {
+            this._allowRotation = value;
+            this._dirty ++;
+        }
+    }
+
     protected _data: any;
     get data (): any { return this._data; }
     set data (value: any) {
-        if (value === this._data) return;
+        if (value === null || value === this._data) return;
         this._data = value;
+        // extract allowRotation settings
+        if (typeof value === "object" && value.hasOwnProperty("allowRotation")) {
+            this._allowRotation = value.allowRotation;
+        }
         this._dirty ++;
     }
 

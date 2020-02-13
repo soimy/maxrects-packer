@@ -67,6 +67,22 @@ describe("Rectangle", () => {
         expect(rect.dirty).toBe(true);
     });
 
+    test("allowRotation setting", () => {
+        const rect = new Rectangle(512, 256, 0, 0, false, true);
+        expect(rect.allowRotation).toBe(true);
+        rect.allowRotation = false;
+        expect(rect.allowRotation).toBe(false);
+    });
+
+    test("data.allowRotation sync", () => {
+        const rect = new Rectangle(512, 256);
+        expect(rect.allowRotation).toBeUndefined();
+        rect.data = { allowRotation: false };
+        expect(rect.allowRotation).toBe(false);
+        rect.data = { allowRotation: true };
+        expect(rect.allowRotation).toBe(true);
+    });
+
     test("method: area()", () => {
         const rect = new Rectangle(16, 16);
         expect(rect.area()).toBe(256);

@@ -109,7 +109,16 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         let tag = (rect.data && rect.data.tag) ? rect.data.tag : rect.tag ? rect.tag : undefined;
         if (this.options.tag && this.tag !== tag) return undefined;
 
-        let node: Rectangle | undefined = this.findNode(rect.width + this.padding, rect.height + this.padding);
+        let node: IRectangle | undefined;
+        let allowRotation: boolean | undefined;
+        // getter/setter do not support hasOwnProperty()
+        if (rect.hasOwnProperty("_allowRotation") && rect.allowRotation !== undefined) {
+            allowRotation = rect.allowRotation; // Per Rectangle allowRotation override packer settings
+        } else {
+            allowRotation = this.options.allowRotation;
+        }
+        node = this.findNode(rect.width + this.padding, rect.height + this.padding, allowRotation);
+
         if (node) {
             this.updateBinSize(node);
             let numRectToProcess = this.freeRects.length;
@@ -126,6 +135,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
             this.verticalExpand = this.width > this.height ? true : false;
             rect.x = node.x;
             rect.y = node.y;
+            if (rect.rot === undefined) rect.rot = false;
             rect.rot = node.rot ? !rect.rot : rect.rot;
             this._dirty ++;
             return rect as T;
@@ -153,7 +163,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         return undefined;
     }
 
-    private findNode (width: number, height: number): Rectangle | undefined {
+    private findNode (width: number, height: number, allowRotation?: boolean): Rectangle | undefined {
         let score: number = Number.MAX_VALUE;
         let areaFit: number;
         let r: Rectangle;
@@ -169,7 +179,9 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
                     score = areaFit;
                 }
             }
-            if (!this.options.allowRotation) continue;
+
+            if (!allowRotation) continue;
+
             // Continue to test 90-degree rotated rectangle
             if (r.width >= height && r.height >= width) {
                 areaFit = (this.options.logic === PACKING_LOGIC.MAX_AREA) ?
@@ -184,7 +196,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         return bestNode;
     }
 
-    private splitNode (freeRect: Rectangle, usedNode: Rectangle): boolean {
+    private splitNode (freeRect: IRectangle, usedNode: IRectangle): boolean {
         // Test if usedNode intersect with freeRect
         if (!freeRect.collide(usedNode)) return false;
 
@@ -256,7 +268,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         }
     }
 
-    private updateBinSize (node: Rectangle): boolean {
+    private updateBinSize (node: IRectangle): boolean {
         if (!this.options.smart) return false;
         if (this.stage.contain(node)) return false;
         let tmpWidth: number = Math.max(this.width, node.x + node.width - this.padding + this.border);

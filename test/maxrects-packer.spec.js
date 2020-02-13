@@ -214,7 +214,7 @@ describe("misc functionalities", () => {
     });
     
     test("quick repack & deep repack", () => {
-        packer = new MaxRectsPacker(1024, 1024, 0, {...opt, ...{tag: true}});
+        packer = new MaxRectsPacker(1024, 1024, 0, {...opt, ...{ tag: true }});
         let rect = packer.add(1024, 512, {hash: "6"});
         packer.add(512, 512, {hash: "5"});
         packer.add(512, 512, {hash: "4"});
@@ -236,4 +236,35 @@ describe("misc functionalities", () => {
         packer.repack(false); // deep repack
         expect(packer.bins.length).toBe(2);
     });
+
+    test("Packer allow rotation", () => {
+        packer = new MaxRectsPacker(500, 400, 1, {...opt, ...{ smart: false, allowRotation: true }});
+        packer.add(398, 98);
+        packer.add(398, 98);
+        packer.add(398, 98);
+        let x = packer.add(398, 98);
+        expect(x.rot).toBe(true);
+    });
+
+    test("Per rectangle allow rotation", () => {
+        packer = new MaxRectsPacker(500, 400, 1, {...opt, ...{ smart: false, allowRotation: true }});
+        packer.add(448, 98);
+        packer.add(448, 98);
+        packer.add(448, 98);
+        packer.add(448, 98);
+        // false overriding
+        let x = packer.add(398, 48, { allowRotation: false });
+        expect(packer.bins.length).toBe(2);
+        expect(x.rot).toBe(false);
+
+        packer = new MaxRectsPacker(500, 400, 1, {...opt, ...{ smart: false, allowRotation: false}});
+        packer.add(448, 98);
+        packer.add(448, 98);
+        packer.add(448, 98);
+        packer.add(448, 98);
+        // true overriding
+        x = packer.add(398, 48, { allowRotation: true });
+        expect(packer.bins.length).toBe(1);
+        expect(x.rot).toBe(true)
+    })
 });
