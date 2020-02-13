@@ -47,7 +47,7 @@ let input = [ // any object with width & height is OK since v2.1.0
     {width: 600, height: 20, name: "flower"},
     {width: 2000, height: 2000, name: "oversized background", {frameWidth: 500, frameHeight: 500}},
     {width: 1000, height: 1000, name: "background", color: 0x000000ff},
-    {width: 1000, height: 1000, name: "overlay"}
+    {width: 1000, height: 1000, name: "overlay", allowRotation: true}
 ];
 
 packer.addArray(input); // Start packing with input array

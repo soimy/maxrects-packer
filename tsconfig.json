@@ -67,7 +67,9 @@
   "typedocOptions": {
     "mode": "modules",
     "out": "docs",
-    "theme": "minimal"
+    "excludeExternals": true,
+    "excludeNotExported": true,
+    "excludePrivate": true
   },
   "include": [
     "./src/**/*"
