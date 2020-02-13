@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.6.0](https://github.com/soimy/maxrects-packer/compare/v2.5.0...v2.6.0) (2020-02-13)
+
+
+### Bug Fixes
+
+* fixes to default packing logic usage and documentation ([#12](https://github.com/soimy/maxrects-packer/issues/12)) ([caa1532](https://github.com/soimy/maxrects-packer/commit/caa1532))
+
+
+### Build System
+
+* Update rollup config & dts plugin ([1d1b80e](https://github.com/soimy/maxrects-packer/commit/1d1b80e))
+
+
+### Features
+
+* Per rectangle allowRotation ([ab68e1c](https://github.com/soimy/maxrects-packer/commit/ab68e1c))
+
+
+
 ## [2.5.0](https://github.com/soimy/maxrects-packer/compare/v2.4.5...v2.5.0) (2019-09-03)
 
 
