@@ -17,6 +17,7 @@ export enum PACKING_LOGIC {
  * @property {boolean} options.square use square size (default is false)
  * @property {boolean} options.allowRotation allow rotation packing (default is false)
  * @property {boolean} options.tag allow auto grouping based on `rect.tag` (default is false)
+ * @property {boolean} options.exclusiveTag tagged rects will have dependent bin, if set to `false`, packer will try to put tag rects into the same bin (default is true)
  * @property {boolean} options.border atlas edge spacing (default is 0)
  * @property {PACKING_LOGIC} options.logic MAX_AREA or MAX_EDGE based sorting logic (default is MAX_EDGE)
  * @export
@@ -28,6 +29,7 @@ export interface IOption {
     square?: boolean;
     allowRotation?: boolean;
     tag?: boolean;
+    exclusiveTag?: boolean;
     border?: number;
     logic?: PACKING_LOGIC;
 }
@@ -54,7 +56,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
         public width: number = EDGE_MAX_VALUE,
         public height: number = EDGE_MAX_VALUE,
         public padding: number = 0,
-        public options: IOption = { smart: true, pot: true, square: false, allowRotation: false, tag: false, border: 0, logic: PACKING_LOGIC.MAX_EDGE }
+        public options: IOption = { smart: true, pot: true, square: false, allowRotation: false, tag: false, exclusiveTag: true, border: 0, logic: PACKING_LOGIC.MAX_EDGE }
     ) {
         this.bins = [];
     }
@@ -122,8 +124,26 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * @param {IRectangle[]} rects Array of bin/rectangles
      * @memberof MaxRectsPacker
      */
-    public addArray (rects: T[]) {
-        this.sort(rects, this.options.logic).forEach(rect => this.add(rect));
+    public addArray (rects: T[], exclusive: boolean = true) {
+        if (!this.options.tag || this.options.exclusiveTag || exclusive) {
+            // if not using tag or using exclusiveTag, old approach
+            this.sort(rects, this.options.logic).forEach(rect => this.add(rect));
+        } else {
+            // sort rects by tags first
+            rects.sort((a,b) => {
+                const aTag = (a.data && a.data.tag) ? a.data.tag : a.tag ? a.tag : undefined;
+                const bTag = (b.data && b.data.tag) ? b.data.tag : b.tag ? b.tag : undefined;
+                return bTag === undefined ? 1 : aTag === undefined ? -1 : bTag > aTag ? 1 : -1;
+            });
+            
+            // iterate all bins to find the first bin which can place rects with same tag
+            //
+            let currentTag: any;
+            let currentIdx: number;
+            let targetBin = this.bins.slice(this._currentBinIndex).find(bin => {
+                let testBin = bin.clone();
+            });
+        }
     }
 
     /**

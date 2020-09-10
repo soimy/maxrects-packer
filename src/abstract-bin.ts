@@ -43,4 +43,6 @@ export abstract class Bin<T extends IRectangle> implements IBin {
             }
         }
     }
+
+    public abstract clone (): Bin<T>;
 }

@@ -9,7 +9,8 @@ const opt = {
     pot: false,
     square: false,
     allowRotation: false,
-    tag: false
+    tag: false,
+    exclusiveTag: true
 }
 
 let packer;
