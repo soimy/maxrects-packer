@@ -135,14 +135,61 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 const bTag = (b.data && b.data.tag) ? b.data.tag : b.tag ? b.tag : undefined;
                 return bTag === undefined ? 1 : aTag === undefined ? -1 : bTag > aTag ? 1 : -1;
             });
-            
+
             // iterate all bins to find the first bin which can place rects with same tag
             //
             let currentTag: any;
-            let currentIdx: number;
+            let currentIdx: number = 0;
             let targetBin = this.bins.slice(this._currentBinIndex).find(bin => {
                 let testBin = bin.clone();
+                for (let i = currentIdx; i < rects.length; i++) {
+                    const rect = rects[i];
+                    const tag = (rect.data && rect.data.tag) ? rect.data.tag : rect.tag ? rect.tag : undefined;
+
+                    // initialize currentTag
+                    if (i === 0) currentTag = tag;
+
+                    if (tag !== currentTag) {
+                        // all current tag memeber tested successfully
+                        currentTag = tag;
+                        // do addArray()
+                        this.sort(rects.slice(currentIdx, i), this.options.logic).forEach(r => bin.add(r));
+                        currentIdx = i;
+                        testBin = bin.clone();
+                    }
+
+                    // remaining untagged rect will use normal addArray()
+                    if (tag === undefined) {
+                        // do addArray()
+                        this.addArray(rects.slice(i));
+                        currentIdx = rects.length;
+                        // end test
+                        return true;
+                    }
+
+                    // still in the same tag group
+                    if (testBin.add(rect) === undefined) {
+                        // current bin cannot contain all tag members
+                        // procceed to test next bin
+                        return false;
+                    }
+                }
+
+                // all rects tested
+                // do addArray() to the remaining tag group
+                this.sort(rects.slice(currentIdx), this.options.logic).forEach(r => bin.add(r));
+                return true;
             });
+
+            // create a new bin if no current bin fit
+            if (!targetBin) {
+                const rect = rects[currentIdx];
+                const bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
+                const tag = (rect.data && rect.data.tag) ? rect.data.tag : rect.tag ? rect.tag : undefined;
+                if (this.options.tag && this.options.exclusiveTag && tag) bin.tag = tag;
+                this.bins.push(bin);
+                this.addArray(rects.slice(currentIdx));
+            }
         }
     }
 
