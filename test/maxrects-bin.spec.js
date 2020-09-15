@@ -10,7 +10,8 @@ const opt = {
     pot: true,
     square: false,
     allowRotation: false,
-    tag: true
+    tag: true,
+
 }
 
 let bin;
@@ -79,20 +80,30 @@ describe("no padding", () => {
         expect(bin.rects[0].foo).toBe("bar");
     });
 
-    test("none tag bin reject all tagged rects", () => {
+    test("none tag bin reject all tagged rects on exclusive tag mode", () => {
         bin.add({width: 200, height: 100});
         bin.add({width: 200, height: 100, tag: "foo"});
         bin.add({width: 200, height: 100, tag: "bar"});
         expect(bin.rects.length).toBe(1);
     });
 
-    test("tagged bin reject different tagged rects", () => {
+    test("tagged bin reject different tagged rects on exclusive tag mode", () => {
         bin.tag = "foo";
         let one = bin.add({width: 200, height: 100, tag: "foo"});
         let two = bin.add({width: 200, height: 100, tag: "bar"});
         expect(bin.rects.length).toBe(1);
         expect(bin.rects[0].tag).toBe("foo");
         expect(two).toBeUndefined();
+    });
+
+    test("tagged bin accept different tagged rects on non-exclusive tag mode", () => {
+        bin.tag = "foo";
+        bin.options.exclusiveTag = false;
+        let one = bin.add({width: 200, height: 100, tag: "foo"});
+        let two = bin.add({width: 200, height: 100, tag: "bar"});
+        expect(bin.rects.length).toBe(2);
+        expect(bin.rects[0].tag).toBe("foo");
+        expect(two).toBeDefined();
     });
 
     test("fits squares correctly", () => {

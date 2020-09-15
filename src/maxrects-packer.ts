@@ -45,6 +45,30 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     public bins: Bin<T>[];
 
     /**
+     * Options for MaxRect Packer
+     * @property {boolean} options.smart Smart sizing packer (default is true)
+     * @property {boolean} options.pot use power of 2 sizing (default is true)
+     * @property {boolean} options.square use square size (default is false)
+     * @property {boolean} options.allowRotation allow rotation packing (default is false)
+     * @property {boolean} options.tag allow auto grouping based on `rect.tag` (default is false)
+     * @property {boolean} options.exclusiveTag tagged rects will have dependent bin, if set to `false`, packer will try to put tag rects into the same bin (default is true)
+     * @property {boolean} options.border atlas edge spacing (default is 0)
+     * @property {PACKING_LOGIC} options.logic MAX_AREA or MAX_EDGE based sorting logic (default is MAX_EDGE)
+     * @export
+     * @interface Option
+     */
+    public options: IOption = {
+        smart: true,
+        pot: true,
+        square: false,
+        allowRotation: false,
+        tag: false,
+        exclusiveTag: true,
+        border: 0,
+        logic: PACKING_LOGIC.MAX_EDGE
+    }
+
+    /**
      * Creates an instance of MaxRectsPacker.
      * @param {number} width of the output atlas (default is 4096)
      * @param {number} height of the output atlas (default is 4096)
@@ -56,9 +80,10 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
         public width: number = EDGE_MAX_VALUE,
         public height: number = EDGE_MAX_VALUE,
         public padding: number = 0,
-        public options: IOption = { smart: true, pot: true, square: false, allowRotation: false, tag: false, exclusiveTag: true, border: 0, logic: PACKING_LOGIC.MAX_EDGE }
+        options: IOption = {}
     ) {
         this.bins = [];
+        this.options = { ...this.options, ...options };
     }
 
     /**
@@ -124,8 +149,8 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * @param {IRectangle[]} rects Array of bin/rectangles
      * @memberof MaxRectsPacker
      */
-    public addArray (rects: T[], exclusive: boolean = true) {
-        if (!this.options.tag || this.options.exclusiveTag || exclusive) {
+    public addArray(rects: T[]) {
+        if (!this.options.tag || this.options.exclusiveTag) {
             // if not using tag or using exclusiveTag, old approach
             this.sort(rects, this.options.logic).forEach(rect => this.add(rect));
         } else {
@@ -133,7 +158,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
             rects.sort((a,b) => {
                 const aTag = (a.data && a.data.tag) ? a.data.tag : a.tag ? a.tag : undefined;
                 const bTag = (b.data && b.data.tag) ? b.data.tag : b.tag ? b.tag : undefined;
-                return bTag === undefined ? 1 : aTag === undefined ? -1 : bTag > aTag ? 1 : -1;
+                return bTag === undefined ? -1 : aTag === undefined ? 1 : bTag > aTag ? -1 : 1;
             });
 
             // iterate all bins to find the first bin which can place rects with same tag
@@ -161,7 +186,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                     // remaining untagged rect will use normal addArray()
                     if (tag === undefined) {
                         // do addArray()
-                        this.addArray(rects.slice(i));
+                        rects.slice(i).forEach(r => this.add(r));
                         currentIdx = rects.length;
                         // end test
                         return true;
