@@ -186,7 +186,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                     // remaining untagged rect will use normal addArray()
                     if (tag === undefined) {
                         // do addArray()
-                        rects.slice(i).forEach(r => this.add(r));
+                        this.sort(rects.slice(i), this.options.logic).forEach(r => this.add(r));
                         currentIdx = rects.length;
                         // end test
                         return true;
