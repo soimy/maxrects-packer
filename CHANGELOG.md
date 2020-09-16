@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.7.0](https://github.com/soimy/maxrects-packer/compare/v2.6.0...v2.7.0) (2020-09-16)
+
+
+### Features
+
+* Non exclusive tag grouping ([#21](https://github.com/soimy/maxrects-packer/issues/21)) ([cf28fc5](https://github.com/soimy/maxrects-packer/commit/cf28fc5)), closes [#20](https://github.com/soimy/maxrects-packer/issues/20)
+
+
+
 ## [2.6.0](https://github.com/soimy/maxrects-packer/compare/v2.5.0...v2.6.0) (2020-02-13)
 
 
