@@ -16,6 +16,8 @@ And you can also save/load to reuse packer to add new sprites. (Below is a demo 
 
 ![Preview image](https://raw.githubusercontent.com/soimy/maxrects-packer/master/preview.png)
 
+## [Changelog](https://github.com/soimy/maxrects-packer/blob/master/CHANGELOG.md)
+
 ## Installing
 
 ```bash
