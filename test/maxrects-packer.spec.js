@@ -9,7 +9,8 @@ const opt = {
     pot: false,
     square: false,
     allowRotation: false,
-    tag: false
+    tag: false,
+    exclusiveTag: true
 }
 
 let packer;
@@ -83,6 +84,26 @@ describe("#add", () => {
         expect(packer.bins[1].tag).toBeUndefined();
         expect(packer.bins[packer.bins.length - 1].rects.length).toBe(1);
         expect(packer.bins[packer.bins.length - 1].tag).toBeUndefined();
+    });
+
+    test("adds to bins with non-exclusive tag matching", () => {
+        packer.options = {...packer.options, ...{tag: true, exclusiveTag: false}};
+        let input = [
+            {width: 512, height: 512, data: {}},
+            {width: 512, height: 512, data: {tag: "one"}},
+            {width: 512, height: 512, data: {tag: "two"}},
+            {width: 512, height: 512, data: {tag: "two"}},
+            {width: 512, height: 512, data: {tag: "two"}},
+            {width: 512, height: 512, data: {tag: "one"}},
+            {width: 512, height: 512, data: {}}
+        ];
+        packer.addArray(input);
+        expect(packer.bins.length).toBe(2);
+        expect(packer.bins[0].tag).toBeUndefined();
+        expect(packer.bins[1].tag).toBeUndefined();
+        expect(packer.bins[0].rects.length).toBe(4);
+        expect(packer.bins[1].rects.length).toBe(3);
+        expect(packer.bins[1].rects[0].data.tag).toBe("two");
     });
 
     test("allows oversized elements to be added", () => {

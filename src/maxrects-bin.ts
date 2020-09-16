@@ -10,14 +10,25 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
     private verticalExpand: boolean = false;
     private stage: Rectangle;
     private border: number;
+    public options: IOption = {
+        smart: true,
+        pot: true,
+        square: true,
+        allowRotation: false,
+        tag: false,
+        exclusiveTag: true,
+        border: 0,
+        logic: PACKING_LOGIC.MAX_EDGE
+    }
 
-    constructor (
+    constructor(
         public maxWidth: number = EDGE_MAX_VALUE,
         public maxHeight: number = EDGE_MAX_VALUE,
         public padding: number = 0,
-        public options: IOption = { smart: true, pot: true, square: true, allowRotation: false, tag: false, border: 0, logic: PACKING_LOGIC.MAX_EDGE }
+        options: IOption = {}
     ) {
         super();
+        this.options = { ...this.options, ...options };
         this.width = this.options.smart ? 0 : maxWidth;
         this.height = this.options.smart ? 0 : maxHeight;
         this.border = this.options.border ? this.options.border : 0;
@@ -39,11 +50,11 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
             rect = args[0] as T;
             // Check if rect.tag match bin.tag, if bin.tag not defined, it will accept any rect
             let tag = (rect.data && rect.data.tag) ? rect.data.tag : rect.tag ? rect.tag : undefined;
-            if (this.options.tag && this.tag !== tag) return undefined;
+            if (this.options.tag && this.options.exclusiveTag && this.tag !== tag) return undefined;
         } else {
             data = args.length > 2 ? args[2] : null;
             // Check if data.tag match bin.tag, if bin.tag not defined, it will accept any rect
-            if (this.options.tag) {
+            if (this.options.tag && this.options.exclusiveTag) {
                 if (data && this.tag !== data.tag) return undefined;
                 if (!data && this.tag) return undefined;
             }
@@ -104,10 +115,18 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         this._dirty = 0;
     }
 
+    public clone (): MaxRectsBin<T> {
+        let clonedBin: MaxRectsBin<T> = new MaxRectsBin<T>(this.maxWidth, this.maxHeight, this.padding, this.options);
+        for (let rect of this.rects) {
+            clonedBin.add(rect);
+        }
+        return clonedBin;
+    }
+
     private place (rect: IRectangle): T | undefined {
         // recheck if tag matched
         let tag = (rect.data && rect.data.tag) ? rect.data.tag : rect.tag ? rect.tag : undefined;
-        if (this.options.tag && this.tag !== tag) return undefined;
+        if (this.options.tag && this.options.exclusiveTag && this.tag !== tag) return undefined;
 
         let node: IRectangle | undefined;
         let allowRotation: boolean | undefined;

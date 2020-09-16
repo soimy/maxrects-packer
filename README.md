@@ -83,6 +83,7 @@ Creates a new Packer. maxWidth and maxHeight are passed on to all bins. If ```pa
 - `options.square` bin size shall alway be square. (default is `false`)
 - `options.allowRotation` allow 90-degree rotation while packing. (default is `false`)
 - `options.tag` allow tag based group packing. (default is `false`)
+- `options.exclusiveTag` tagged rects will have dependent bin, if set to `false`, packer will try to put tag rects into the same bin (default is `true`)
 - `options.border` atlas edge spacing (default is 0)
 
 #### ```packer.add(width, height, data)``` +1 overload

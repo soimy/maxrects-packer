@@ -44,4 +44,8 @@ export class OversizedElementBin<T extends IRectangle = Rectangle> extends Bin<T
         // nothing to do here
     }
     repack (): T[] | undefined { return undefined; }
+    clone(): Bin<T> {
+        let clonedBin: OversizedElementBin<T> = new OversizedElementBin<T>(this.rects[0]);
+        return clonedBin;
+    }
 }

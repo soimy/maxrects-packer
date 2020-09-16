@@ -17,6 +17,7 @@ export enum PACKING_LOGIC {
  * @property {boolean} options.square use square size (default is false)
  * @property {boolean} options.allowRotation allow rotation packing (default is false)
  * @property {boolean} options.tag allow auto grouping based on `rect.tag` (default is false)
+ * @property {boolean} options.exclusiveTag tagged rects will have dependent bin, if set to `false`, packer will try to put tag rects into the same bin (default is true)
  * @property {boolean} options.border atlas edge spacing (default is 0)
  * @property {PACKING_LOGIC} options.logic MAX_AREA or MAX_EDGE based sorting logic (default is MAX_EDGE)
  * @export
@@ -28,6 +29,7 @@ export interface IOption {
     square?: boolean;
     allowRotation?: boolean;
     tag?: boolean;
+    exclusiveTag?: boolean;
     border?: number;
     logic?: PACKING_LOGIC;
 }
@@ -43,6 +45,30 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     public bins: Bin<T>[];
 
     /**
+     * Options for MaxRect Packer
+     * @property {boolean} options.smart Smart sizing packer (default is true)
+     * @property {boolean} options.pot use power of 2 sizing (default is true)
+     * @property {boolean} options.square use square size (default is false)
+     * @property {boolean} options.allowRotation allow rotation packing (default is false)
+     * @property {boolean} options.tag allow auto grouping based on `rect.tag` (default is false)
+     * @property {boolean} options.exclusiveTag tagged rects will have dependent bin, if set to `false`, packer will try to put tag rects into the same bin (default is true)
+     * @property {boolean} options.border atlas edge spacing (default is 0)
+     * @property {PACKING_LOGIC} options.logic MAX_AREA or MAX_EDGE based sorting logic (default is MAX_EDGE)
+     * @export
+     * @interface Option
+     */
+    public options: IOption = {
+        smart: true,
+        pot: true,
+        square: false,
+        allowRotation: false,
+        tag: false,
+        exclusiveTag: true,
+        border: 0,
+        logic: PACKING_LOGIC.MAX_EDGE
+    }
+
+    /**
      * Creates an instance of MaxRectsPacker.
      * @param {number} width of the output atlas (default is 4096)
      * @param {number} height of the output atlas (default is 4096)
@@ -54,9 +80,10 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
         public width: number = EDGE_MAX_VALUE,
         public height: number = EDGE_MAX_VALUE,
         public padding: number = 0,
-        public options: IOption = { smart: true, pot: true, square: false, allowRotation: false, tag: false, border: 0, logic: PACKING_LOGIC.MAX_EDGE }
+        options: IOption = {}
     ) {
         this.bins = [];
+        this.options = { ...this.options, ...options };
     }
 
     /**
@@ -122,8 +149,73 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * @param {IRectangle[]} rects Array of bin/rectangles
      * @memberof MaxRectsPacker
      */
-    public addArray (rects: T[]) {
-        this.sort(rects, this.options.logic).forEach(rect => this.add(rect));
+    public addArray(rects: T[]) {
+        if (!this.options.tag || this.options.exclusiveTag) {
+            // if not using tag or using exclusiveTag, old approach
+            this.sort(rects, this.options.logic).forEach(rect => this.add(rect));
+        } else {
+            // sort rects by tags first
+            rects.sort((a,b) => {
+                const aTag = (a.data && a.data.tag) ? a.data.tag : a.tag ? a.tag : undefined;
+                const bTag = (b.data && b.data.tag) ? b.data.tag : b.tag ? b.tag : undefined;
+                return bTag === undefined ? -1 : aTag === undefined ? 1 : bTag > aTag ? -1 : 1;
+            });
+
+            // iterate all bins to find the first bin which can place rects with same tag
+            //
+            let currentTag: any;
+            let currentIdx: number = 0;
+            let targetBin = this.bins.slice(this._currentBinIndex).find(bin => {
+                let testBin = bin.clone();
+                for (let i = currentIdx; i < rects.length; i++) {
+                    const rect = rects[i];
+                    const tag = (rect.data && rect.data.tag) ? rect.data.tag : rect.tag ? rect.tag : undefined;
+
+                    // initialize currentTag
+                    if (i === 0) currentTag = tag;
+
+                    if (tag !== currentTag) {
+                        // all current tag memeber tested successfully
+                        currentTag = tag;
+                        // do addArray()
+                        this.sort(rects.slice(currentIdx, i), this.options.logic).forEach(r => bin.add(r));
+                        currentIdx = i;
+                        testBin = bin.clone();
+                    }
+
+                    // remaining untagged rect will use normal addArray()
+                    if (tag === undefined) {
+                        // do addArray()
+                        this.sort(rects.slice(i), this.options.logic).forEach(r => this.add(r));
+                        currentIdx = rects.length;
+                        // end test
+                        return true;
+                    }
+
+                    // still in the same tag group
+                    if (testBin.add(rect) === undefined) {
+                        // current bin cannot contain all tag members
+                        // procceed to test next bin
+                        return false;
+                    }
+                }
+
+                // all rects tested
+                // do addArray() to the remaining tag group
+                this.sort(rects.slice(currentIdx), this.options.logic).forEach(r => bin.add(r));
+                return true;
+            });
+
+            // create a new bin if no current bin fit
+            if (!targetBin) {
+                const rect = rects[currentIdx];
+                const bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
+                const tag = (rect.data && rect.data.tag) ? rect.data.tag : rect.tag ? rect.tag : undefined;
+                if (this.options.tag && this.options.exclusiveTag && tag) bin.tag = tag;
+                this.bins.push(bin);
+                this.addArray(rects.slice(currentIdx));
+            }
+        }
     }
 
     /**
