@@ -180,7 +180,10 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                         // do addArray()
                         this.sort(rects.slice(currentIdx, i), this.options.logic).forEach(r => bin.add(r));
                         currentIdx = i;
-                        testBin = bin.clone();
+
+                        // recrusively addArray() with remaining rects
+                        this.addArray(rects.slice(i));
+                        return true;
                     }
 
                     // remaining untagged rect will use normal addArray()
