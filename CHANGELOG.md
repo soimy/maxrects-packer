@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.7.1](https://github.com/soimy/maxrects-packer/compare/v2.7.0...v2.7.1) (2020-09-18)
+
+
+### Bug Fixes
+
+* Non-exclusive tag logic: Restart test iteration on next tag group ([8b59925](https://github.com/soimy/maxrects-packer/commit/8b59925)), closes [#20](https://github.com/soimy/maxrects-packer/issues/20) [#20](https://github.com/soimy/maxrects-packer/issues/20)
+
+
+
 ## [2.7.0](https://github.com/soimy/maxrects-packer/compare/v2.6.0...v2.7.0) (2020-09-16)
 
 
