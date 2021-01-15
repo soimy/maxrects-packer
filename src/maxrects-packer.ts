@@ -155,6 +155,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
             this.sort(rects, this.options.logic).forEach(rect => this.add(rect));
         } else {
             // sort rects by tags first
+            if (rects.length === 0) return;
             rects.sort((a,b) => {
                 const aTag = (a.data && a.data.tag) ? a.data.tag : a.tag ? a.tag : undefined;
                 const bTag = (b.data && b.data.tag) ? b.data.tag : b.tag ? b.tag : undefined;

@@ -183,6 +183,19 @@ describe("#addArray", () => {
         expect(packer.bins[0].rects[0].hash).toBe("ddd");
         expect(packer.bins[0].rects[1].hash).toBe("bbb");
     });
+
+    test("add empty array", () => {
+        packer.addArray([]); // test null array error
+        expect(packer.bins.length).toBe(0);
+    });
+
+    test("add one element array", () => {
+        let input = [
+            {width: 600, height: 20, data: {number: 1}, hash: "aaa"}
+        ];
+        packer.addArray(input); // test null array error
+        expect(packer.bins.length).toBe(1);
+    });
 });
 
 describe("#save & load", () => {
