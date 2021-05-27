@@ -94,16 +94,29 @@ describe("#add", () => {
             {width: 512, height: 512, data: {tag: "two"}},
             {width: 512, height: 512, data: {tag: "two"}},
             {width: 512, height: 512, data: {tag: "two"}},
+            // Will break into its own bin
+            {width: 600, height: 600, data: {tag: "two"}},
+            {width: 512, height: 512, data: {tag: "two"}},
             {width: 512, height: 512, data: {tag: "one"}},
             {width: 512, height: 512, data: {}}
         ];
         packer.addArray(input);
-        expect(packer.bins.length).toBe(2);
+        expect(packer.bins.length).toBe(3);
         expect(packer.bins[0].tag).toBeUndefined();
         expect(packer.bins[1].tag).toBeUndefined();
+        expect(packer.bins[2].tag).toBeUndefined();
         expect(packer.bins[0].rects.length).toBe(4);
-        expect(packer.bins[1].rects.length).toBe(3);
+        expect(packer.bins[1].rects.length).toBe(4);
+        expect(packer.bins[2].rects.length).toBe(1);
+        expect(packer.bins[0].rects[0].data.tag).toBe("one");
+        expect(packer.bins[0].rects[1].data.tag).toBe("one");
+        expect(packer.bins[0].rects[2].data.tag).toBe("two");
+        expect(packer.bins[0].rects[3].data.tag).toBe("two");
         expect(packer.bins[1].rects[0].data.tag).toBe("two");
+        expect(packer.bins[1].rects[1].data.tag).toBe("two");
+        expect(packer.bins[1].rects[2].data.tag).toBeUndefined();
+        expect(packer.bins[1].rects[3].data.tag).toBeUndefined();
+        expect(packer.bins[2].rects[0].data.tag).toBe("two");
     });
 
     test("allows oversized elements to be added", () => {
