@@ -149,7 +149,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * @param {IRectangle[]} rects Array of bin/rectangles
      * @memberof MaxRectsPacker
      */
-    public addArray(rects: T[]) {
+     public addArray(rects: T[]) {
         if (!this.options.tag || this.options.exclusiveTag) {
             // if not using tag or using exclusiveTag, old approach
             this.sort(rects, this.options.logic).forEach(rect => this.add(rect));
@@ -161,12 +161,12 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 const bTag = (b.data && b.data.tag) ? b.data.tag : b.tag ? b.tag : undefined;
                 return bTag === undefined ? -1 : aTag === undefined ? 1 : bTag > aTag ? -1 : 1;
             });
-
+            
             // iterate all bins to find the first bin which can place rects with same tag
             //
             let currentTag: any;
             let currentIdx: number = 0;
-            let targetBin = this.bins.slice(this._currentBinIndex).find(bin => {
+            let targetBin = this.bins.slice(this._currentBinIndex).find((bin, binIndex) => {
                 let testBin = bin.clone();
                 for (let i = currentIdx; i < rects.length; i++) {
                     const rect = rects[i];
@@ -198,6 +198,11 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
 
                     // still in the same tag group
                     if (testBin.add(rect) === undefined) {
+                        // add the rects that could fit into the bins already
+                        // do addArray()
+                        this.sort(rects.slice(currentIdx, i), this.options.logic).forEach(r => bin.add(r));
+                        currentIdx = i;
+
                         // current bin cannot contain all tag members
                         // procceed to test next bin
                         return false;
@@ -217,6 +222,9 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 const tag = (rect.data && rect.data.tag) ? rect.data.tag : rect.tag ? rect.tag : undefined;
                 if (this.options.tag && this.options.exclusiveTag && tag) bin.tag = tag;
                 this.bins.push(bin);
+                // Add the rect to the newly created bin
+                bin.add(rect)
+                currentIdx++
                 this.addArray(rects.slice(currentIdx));
             }
         }
