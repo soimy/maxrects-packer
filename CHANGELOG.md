@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.7.3](https://github.com/soimy/maxrects-packer/compare/v2.7.2...v2.7.3) (2022-02-02)
+
+
+### Bug Fixes
+
+* Recursion with non-exclusive tags addArray ([#34](https://github.com/soimy/maxrects-packer/issues/34)) ([d107163](https://github.com/soimy/maxrects-packer/commit/d107163dc214e1f4f45d1bf4241efe8e5b1b34b3))
+
 ### [2.7.2](https://github.com/soimy/maxrects-packer/compare/v2.7.1...v2.7.2) (2021-01-15)
 
 
