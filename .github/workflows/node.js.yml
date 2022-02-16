@@ -28,8 +28,21 @@ jobs:
         cache: 'npm'
     - run: npm ci
     - run: npm run cover
-    
-    - name: Coveralls
+    - name: Coveralls Parallel
       uses: coverallsapp/github-action@master
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        github-token: ${{ secrets.github_token }}
+        path-to-lcov: ./test/coverage/lcov.info
+        flag-name: run-${{ matrix.test_number }}
+        parallel: true
+  
+  finish:
+    needs: run-cover
+    runs-on: ubuntu-latest
+    steps:
+    - name: Coveralls Finished
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.github_token }}
+        path-to-lcov: ./test/coverage/lcov.info
+        parallel-finished: true
