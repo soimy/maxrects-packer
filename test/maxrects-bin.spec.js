@@ -1,3 +1,4 @@
+/* eslint-disable no-constant-condition */
 "use strict";
 
 let MaxRectsBin = require("../dist/maxrects-packer").MaxRectsBin;
@@ -12,7 +13,7 @@ const opt = {
     allowRotation: false,
     tag: true,
 
-}
+};
 
 let bin;
 
@@ -24,7 +25,7 @@ describe("no padding", () => {
     test("is initially empty", () => {
         expect(bin.width).toBe(0);
         expect(bin.height).toBe(0);
-    })
+    });
 
     test("adds rects correctly", () => {
         let position = bin.add(200, 100, {});
@@ -42,7 +43,7 @@ describe("no padding", () => {
         bin.setDirty(false);
         bin.setDirty();
         expect(bin.dirty).toBe(true); // setDirty is dirty
-        bin.reset();    
+        bin.reset();
         expect(bin.dirty).toBe(false); // reset clean dirty
         let rect = bin.add(new Rectangle(200, 100));
         bin.setDirty(false);
@@ -108,7 +109,7 @@ describe("no padding", () => {
 
     test("fits squares correctly", () => {
         let i = 0;
-        while(bin.add(100, 100, {number: i})) {
+        while(bin.add(100, 100, {num: i})) {
             // circuit breaker
             if (i++ === 1000) {
                 break;
@@ -120,8 +121,8 @@ describe("no padding", () => {
         expect(bin.height).toBe(1024);
 
         bin.rects.forEach((rect, i) => {
-            expect(rect.data.number).toBe(i);
-        })
+            expect(rect.data.num).toBe(i);
+        });
     });
 
     test("reset & deep reset", () => {
@@ -190,7 +191,7 @@ describe("no padding", () => {
             expect(rect1.y + rect1.height).toBeLessThanOrEqual(bin.height);
         });
     });
-})
+});
 
 let padding = 4;
 
@@ -202,7 +203,7 @@ describe("padding", () => {
     test("is initially empty", () => {
         expect(bin.width).toBe(0);
         expect(bin.height).toBe(0);
-    })
+    });
 
     test("handles padding correctly", () => {
         bin.add(512, 512, {});
@@ -244,7 +245,7 @@ describe("padding", () => {
             rects.forEach(rect2 => {
                 if (rect1 !== rect2) {
                     try {
-                        expect(rect1.collide(rect2)).toBe(false); 
+                        expect(rect1.collide(rect2)).toBe(false);
                     } catch (e) {
                         throw new Error("intersection detected: " + JSON.stringify(rect1) + " " + JSON.stringify(rect2));
                     }
@@ -260,7 +261,7 @@ describe("padding", () => {
     });
 });
 
-padding = 4
+padding = 4;
 let border = 5;
 
 describe("border", () => {
@@ -272,7 +273,7 @@ describe("border", () => {
     test("is initially empty", () => {
         expect(bin.width).toBe(0);
         expect(bin.height).toBe(0);
-    })
+    });
 
     test("handles border & padding correctly", () => {
         let size = 512 - border * 2; //
@@ -301,8 +302,8 @@ describe("border", () => {
     let repeat = 5;
     test(`super monkey testing (${repeat} loop)`, () => {
         while (repeat > 0) {
-            padding = Math.floor(Math.random() * 10);            
-            border = Math.floor(Math.random() * 20);            
+            padding = Math.floor(Math.random() * 10);
+            border = Math.floor(Math.random() * 20);
             const borderOpt = {...opt, ...{border: border, square: false}};
             bin = new MaxRectsBin(1024, 1024, padding, borderOpt);
 
@@ -311,7 +312,7 @@ describe("border", () => {
                 let width = Math.floor(Math.random() * 200);
                 let height = Math.floor(Math.random() * 200);
                 let rect = new Rectangle(width, height);
-    
+
                 let position = bin.add(rect);
                 if (position) {
                     expect(position.width).toBe(width);
@@ -321,22 +322,22 @@ describe("border", () => {
                     break;
                 }
             }
-    
+
             expect(bin.width).toBeLessThanOrEqual(1024);
             expect(bin.height).toBeLessThanOrEqual(1024);
-    
+
             rects.forEach(rect1 => {
                 // Make sure rects are not overlapping
                 rects.forEach(rect2 => {
                     if (rect1 !== rect2) {
                         try {
-                            expect(rect1.collide(rect2)).toBe(false); 
+                            expect(rect1.collide(rect2)).toBe(false);
                         } catch (e) {
                             throw new Error("intersection detected: " + JSON.stringify(rect1) + " " + JSON.stringify(rect2));
                         }
                     }
                 });
-    
+
                 // Make sure no rect is outside bounds
                 expect(rect1.x).toBeGreaterThanOrEqual(bin.options.border);
                 expect(rect1.y).toBeGreaterThanOrEqual(bin.options.border);

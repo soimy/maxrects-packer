@@ -1,4 +1,4 @@
-"use strict"
+"use strict";
 
 const Rectangle = require("../dist/maxrects-packer").Rectangle;
 

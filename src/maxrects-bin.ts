@@ -19,9 +19,9 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         exclusiveTag: true,
         border: 0,
         logic: PACKING_LOGIC.MAX_EDGE
-    }
+    };
 
-    constructor(
+    constructor (
         public maxWidth: number = EDGE_MAX_VALUE,
         public maxHeight: number = EDGE_MAX_VALUE,
         public padding: number = 0,

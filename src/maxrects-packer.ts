@@ -12,6 +12,7 @@ export enum PACKING_LOGIC {
 
 /**
  * Options for MaxRect Packer
+ *
  * @property {boolean} options.smart Smart sizing packer (default is true)
  * @property {boolean} options.pot use power of 2 sizing (default is true)
  * @property {boolean} options.square use square size (default is false)
@@ -24,14 +25,14 @@ export enum PACKING_LOGIC {
  * @interface Option
  */
 export interface IOption {
-    smart?: boolean;
-    pot?: boolean;
-    square?: boolean;
-    allowRotation?: boolean;
-    tag?: boolean;
-    exclusiveTag?: boolean;
-    border?: number;
-    logic?: PACKING_LOGIC;
+    smart?: boolean
+    pot?: boolean
+    square?: boolean
+    allowRotation?: boolean
+    tag?: boolean
+    exclusiveTag?: boolean
+    border?: number
+    logic?: PACKING_LOGIC
 }
 
 export class MaxRectsPacker<T extends IRectangle = Rectangle> {
@@ -46,6 +47,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
 
     /**
      * Options for MaxRect Packer
+     *
      * @property {boolean} options.smart Smart sizing packer (default is true)
      * @property {boolean} options.pot use power of 2 sizing (default is true)
      * @property {boolean} options.square use square size (default is false)
@@ -66,10 +68,11 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
         exclusiveTag: true,
         border: 0,
         logic: PACKING_LOGIC.MAX_EDGE
-    }
+    };
 
     /**
      * Creates an instance of MaxRectsPacker.
+     *
      * @param {number} width of the output atlas (default is 4096)
      * @param {number} height of the output atlas (default is 4096)
      * @param {number} padding between glyphs/images (default is 0)
@@ -88,6 +91,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
 
     /**
      * Add a bin/rectangle object with data to packer
+     *
      * @param {number} width of the input bin/rectangle
      * @param {number} height of the input bin/rectangle
      * @param {*} data custom data object
@@ -96,6 +100,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     public add (width: number, height: number, data: any): T;
     /**
      * Add a bin/rectangle object extends IRectangle to packer
+     *
      * @template T Generic type extends IRectangle interface
      * @param {T} rect the rect object add to the packer bin
      * @memberof MaxRectsPacker
@@ -149,7 +154,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * @param {IRectangle[]} rects Array of bin/rectangles
      * @memberof MaxRectsPacker
      */
-     public addArray(rects: T[]) {
+     public addArray (rects: T[]) {
         if (!this.options.tag || this.options.exclusiveTag) {
             // if not using tag or using exclusiveTag, old approach
             this.sort(rects, this.options.logic).forEach(rect => this.add(rect));
@@ -161,7 +166,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 const bTag = (b.data && b.data.tag) ? b.data.tag : b.tag ? b.tag : undefined;
                 return bTag === undefined ? -1 : aTag === undefined ? 1 : bTag > aTag ? -1 : 1;
             });
-            
+
             // iterate all bins to find the first bin which can place rects with same tag
             //
             let currentTag: any;
@@ -223,8 +228,8 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 if (this.options.tag && this.options.exclusiveTag && tag) bin.tag = tag;
                 this.bins.push(bin);
                 // Add the rect to the newly created bin
-                bin.add(rect)
-                currentIdx++
+                bin.add(rect);
+                currentIdx++;
                 this.addArray(rects.slice(currentIdx));
             }
         }
@@ -280,6 +285,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
 
     /**
      * Load bins to the packer, overwrite exist bins
+     *
      * @param {MaxRectsBin[]} bins MaxRectsBin objects
      * @memberof MaxRectsPacker
      */
@@ -303,6 +309,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
 
     /**
      * Output current bins to save
+     *
      * @memberof MaxRectsPacker
      */
     public save (): IBin[] {

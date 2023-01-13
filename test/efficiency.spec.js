@@ -2,7 +2,7 @@
 
 let MaxRectsPacker = require("../dist/maxrects-packer").MaxRectsPacker;
 let PACKING_LOGIC = require("../dist/maxrects-packer").PACKING_LOGIC;
-let AsciiTable = require("ascii-table")
+let AsciiTable = require("ascii-table");
 
 const SCENARIOS = require("./scenarios.json");
 
@@ -37,7 +37,7 @@ describe('Efficiency', () => {
         let heading = ["#", "size"].concat(AREA_CANDIDATES.map(c => c.name));
         let results = AREA_CANDIDATES.map(candidate => meassureEfficiency(candidate.factory));
         let rows = createRows(results);
-        
+
         console.log(new AsciiTable({ heading, rows }).toString());
     });
 

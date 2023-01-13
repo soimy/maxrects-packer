@@ -1,9 +1,9 @@
 export interface IRectangle {
-    width: number;
-    height: number;
-    x: number;
-    y: number;
-    [propName: string]: any;
+    width: number
+    height: number
+    x: number
+    y: number
+    [propName: string]: any
 }
 
 export class Rectangle implements IRectangle {

@@ -1,6 +1,5 @@
-import ts from "rollup-plugin-ts";
-import uglify from "rollup-plugin-uglify-es";
-import path from "path";
+import typescript from "rollup-plugin-typescript2";
+import terser from "@rollup/plugin-terser";
 
 const config = [
     {
@@ -10,13 +9,7 @@ const config = [
             { file: "dist/maxrects-packer.js", name: "MaxRectsPacker", format: "umd", sourcemap: true },
             { file: "dist/maxrects-packer.mjs", format: "es", sourcemap: true }
         ],
-        plugins: [ ts({
-            'tsconfig': (resolvedConfig) => {
-                const config = Object.assign({}, resolvedConfig);
-                config.declarationDir = path.join(__dirname, 'dist');
-                return config;
-            }
-        })]
+        plugins: [ typescript()]
     },
     {
         input: "./src/index.ts",
@@ -24,7 +17,7 @@ const config = [
         output: [
             { file: "dist/maxrects-packer.min.js", format: "cjs", sourcemap: false }
         ],
-        plugins: [ uglify(), ts() ]
+        plugins: [ terser(), typescript() ]
     }
 ];
 export default config;

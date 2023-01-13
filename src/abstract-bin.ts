@@ -2,14 +2,14 @@ import { IRectangle, Rectangle } from "./geom/Rectangle";
 import { IOption } from "./maxrects-packer";
 
 export interface IBin {
-    width: number;
-    height: number;
-    maxWidth: number;
-    maxHeight: number;
-    freeRects: IRectangle[];
-    rects: IRectangle[];
-    options: IOption;
-    [propName: string]: any;
+    width: number
+    height: number
+    maxWidth: number
+    maxHeight: number
+    freeRects: IRectangle[]
+    rects: IRectangle[]
+    options: IOption
+    [propName: string]: any
 }
 
 export abstract class Bin<T extends IRectangle> implements IBin {

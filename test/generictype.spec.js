@@ -6,8 +6,8 @@ class Block extends Rectangle {
         super();
         this.color = 0xffffffff; // Extended attribution
     }
-    getColor() { // Extended method
-        return this.color
+    getColor () { // Extended method
+        return this.color;
     }
 }
 
