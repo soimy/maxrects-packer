@@ -348,3 +348,72 @@ describe("border", () => {
         }
     });
 });
+
+describe("logic FILL_WIDTH", () => {
+    beforeEach(() => {
+        bin = new MaxRectsBin(1024, 512, 0, {allowRotation: true, logic: 2, pot: false, square: false});
+    });
+
+    test("sets all elements along width with the smallest height", () => {
+        /**
+         * Visualize the placement result
+         * _______________________
+         * | ███  ███  ███      |  
+         * ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+         */
+        
+        let position1 = bin.add(300, 50, {});
+        let position2 = bin.add(50, 300, {});
+        let position3 = bin.add(300, 50, {});
+        expect(position1.x).toBe(0);
+        expect(position1.y).toBe(0);
+        expect(position2.x).toBe(300);
+        expect(position2.y).toBe(0);
+        expect(position3.x).toBe(600);
+        expect(position3.y).toBe(0);
+        expect(bin.width).toBe(900);
+        expect(bin.height).toBe(50);
+    });
+
+    test("adds rects correctly with rotation", () => {
+        /**
+         * Visualize the placement result (1 vertical at the end)
+         * _______________________
+         * | ███  ███  ███  █ |
+         * | ███  ███  ███  █ |
+         * | ███  ███  ███  █ |
+         * | ██████                     |
+         * ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+         */
+        
+        const rects = [
+            [300, 100],
+            [100, 300],
+            [300, 100],
+            [300, 100],
+            [100, 300],
+            [300, 100],
+            [300, 100],
+            [100, 300],
+            [300, 100],
+            [300, 100],
+            [300, 100],
+            [100, 600],
+        ]
+        rects.forEach(rect => bin.add(rect[0], rect[1]));
+        expect([bin.rects[0].x, bin.rects[0].y]).toEqual([0, 0]);
+        expect([bin.rects[1].x, bin.rects[1].y]).toEqual([300, 0]);
+        expect([bin.rects[2].x, bin.rects[2].y]).toEqual([600, 0]);
+        expect([bin.rects[3].x, bin.rects[3].y]).toEqual([0, 100]);
+        expect([bin.rects[4].x, bin.rects[4].y]).toEqual([300, 100]);
+        expect([bin.rects[5].x, bin.rects[5].y]).toEqual([600, 100]);
+        expect([bin.rects[6].x, bin.rects[6].y]).toEqual([0, 200]);
+        expect([bin.rects[7].x, bin.rects[7].y]).toEqual([300, 200]);
+        expect([bin.rects[8].x, bin.rects[8].y]).toEqual([600, 200]);
+        expect([bin.rects[9].x, bin.rects[9].y]).toEqual([900, 0]);
+        expect([bin.rects[10].x, bin.rects[10].y]).toEqual([0, 300]);
+        expect(bin.width).toBe(1000);
+        expect(bin.height).toBe(400);
+    });
+
+});
