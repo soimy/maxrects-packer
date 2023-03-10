@@ -110,7 +110,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
         if (args.length === 1) {
             if (typeof args[0] !== 'object') throw new Error("MacrectsPacker.add(): Wrong parameters");
             const rect = args[0] as T;
-            if (rect.width > this.width || rect.height > this.height) {
+            if (!((rect.width <= this.width && rect.height <= this.height) || (this.options.allowRotation && rect.width <= this.height && rect.height <= this.width))) {
                 this.bins.push(new OversizedElementBin<T>(rect));
             } else {
                 let added = this.bins.slice(this._currentBinIndex).find(bin => bin.add(rect) !== undefined);
@@ -127,7 +127,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
             const rect: IRectangle = new Rectangle(args[0], args[1]);
             if (args.length > 2) rect.data = args[2];
 
-            if (rect.width > this.width || rect.height > this.height) {
+            if (!((rect.width <= this.width && rect.height <= this.height) || (this.options.allowRotation && rect.width <= this.height && rect.height <= this.width))) {
                 this.bins.push(new OversizedElementBin<T>(rect as T));
             } else {
                 let added = this.bins.slice(this._currentBinIndex).find(bin => bin.add(rect as T) !== undefined);

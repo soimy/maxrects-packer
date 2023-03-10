@@ -126,6 +126,23 @@ describe("#add", () => {
         expect(packer.bins[1].rects[0].width).toBe(2000);
         expect(packer.bins[1].rects[0].oversized).toBe(true);
     });
+
+    test("checks oversized elements rotation and adds rotated", () => {
+        const packer = new MaxRectsPacker(512, 1024, 0, {...opt, allowRotation: true});
+        packer.add(640, 256, {num: 1});
+        expect(packer.bins.length).toBe(1);
+        expect(packer.bins[0].rects[0].width).toBe(256);
+        expect(packer.bins[0].rects[0].height).toBe(640);
+        expect(packer.bins[0].rects[0].oversized).toBe(false);
+    });
+
+    test("checks oversized elements and skip rotation when set to false", () => {
+        const packer = new MaxRectsPacker(512, 1024, 0, {...opt, allowRotation: false});
+        packer.add(640, 256, {num: 1});
+        expect(packer.bins.length).toBe(1);
+        expect(packer.bins[0].rects[0].width).toBe(640);
+        expect(packer.bins[0].rects[0].oversized).toBe(true);
+    });
 });
 
 describe("#sort", () => {
