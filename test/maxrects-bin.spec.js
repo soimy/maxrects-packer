@@ -371,7 +371,7 @@ describe("logic FILL_WIDTH", () => {
         expect(position2.y).toBe(0);
         expect(position3.x).toBe(600);
         expect(position3.y).toBe(0);
-        expect(bin.width).toBe(1024);
+        expect(bin.width).toBe(900);
         expect(bin.height).toBe(50);
     });
 
@@ -407,11 +407,12 @@ describe("logic FILL_WIDTH", () => {
         expect([bin.rects[3].x, bin.rects[3].y]).toEqual([0, 100]);
         expect([bin.rects[4].x, bin.rects[4].y]).toEqual([300, 100]);
         expect([bin.rects[5].x, bin.rects[5].y]).toEqual([600, 100]);
-        expect([bin.rects[6].x, bin.rects[6].y]).toEqual([900, 0]);
-        expect([bin.rects[7].x, bin.rects[7].y]).toEqual([0, 200]);
-        expect([bin.rects[8].x, bin.rects[8].y]).toEqual([300, 200]);
-        expect([bin.rects[9].x, bin.rects[9].y]).toEqual([600, 200]);
+        expect([bin.rects[6].x, bin.rects[6].y]).toEqual([0, 200]);
+        expect([bin.rects[7].x, bin.rects[7].y]).toEqual([300, 200]);
+        expect([bin.rects[8].x, bin.rects[8].y]).toEqual([600, 200]);
+        expect([bin.rects[9].x, bin.rects[9].y]).toEqual([900, 0]);
         expect([bin.rects[10].x, bin.rects[10].y]).toEqual([0, 300]);
+        expect(bin.width).toBe(1000);
         expect(bin.height).toBe(400);
     });
 

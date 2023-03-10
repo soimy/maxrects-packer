@@ -151,7 +151,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
                 i++;
             }
             this.pruneFreeList();
-            this.verticalExpand = this.width > this.height ? true : false;
+            this.verticalExpand = this.options.logic === PACKING_LOGIC.FILL_WIDTH ? false : this.width > this.height ? true : false;
             rect.x = node.x;
             rect.y = node.y;
             if (rect.rot === undefined) rect.rot = false;
@@ -339,9 +339,6 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         if (this.options.pot) {
             tmpWidth = Math.pow(2, Math.ceil(Math.log(tmpWidth) * Math.LOG2E));
             tmpHeight = Math.pow(2, Math.ceil(Math.log(tmpHeight) * Math.LOG2E));
-        }
-        if (this.options.logic === PACKING_LOGIC.FILL_WIDTH) {
-            tmpWidth = this.maxWidth;
         }
         if (this.options.square) {
             tmpWidth = tmpHeight = Math.max(tmpWidth, tmpHeight);
