@@ -6,9 +6,9 @@ import { Bin, IBin } from "./abstract-bin";
 export const EDGE_MAX_VALUE: number = 4096;
 export const EDGE_MIN_VALUE: number = 128;
 export enum PACKING_LOGIC {
-    MAX_AREA = "maxArea",
-    MAX_EDGE = "maxEdge",
-    FILL_WIDTH = "fillWidth",
+    MAX_AREA = 0,
+    MAX_EDGE = 1,
+    FILL_WIDTH = 2,
 }
 
 /**

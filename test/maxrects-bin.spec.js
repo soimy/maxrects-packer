@@ -351,7 +351,7 @@ describe("border", () => {
 
 describe("logic FILL_WIDTH", () => {
     beforeEach(() => {
-        bin = new MaxRectsBin(1024, 512, 0, {allowRotation: true, logic: "fillWidth", pot: false, square: false});
+        bin = new MaxRectsBin(1024, 512, 0, {allowRotation: true, logic: 2, pot: false, square: false});
     });
 
     test("sets all elements along width with the smallest height", () => {
