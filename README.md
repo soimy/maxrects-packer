@@ -87,6 +87,7 @@ Creates a new Packer. maxWidth and maxHeight are passed on to all bins. If ```pa
 - `options.tag` allow tag based group packing. (default is `false`)
 - `options.exclusiveTag` tagged rects will have dependent bin, if set to `false`, packer will try to put tag rects into the same bin (default is `true`)
 - `options.border` atlas edge spacing (default is 0)
+- `options.logic` how to fill the rects. There are three options: maxArea, maxEdge, fillWidth. Default is maxEdge
 
 #### ```packer.add(width, height, data)``` +1 overload
 
@@ -135,6 +136,18 @@ If `options.tag` is set to `true`, packer will check if the input object has `ta
 ## Support for oversized rectangles
 
 Normally all bins are of equal size or smaller than ```maxWidth```/```maxHeight```. If a rect is added that individually does not fit into those constraints a special bin will be created. This bin will only contain a single rect with a special "oversized" flag. This can be handled further on in the chain by displaying an error/warning or by simply ignoring it.
+
+## Packing logic
+
+`options.logic` allows to change the method on how the algorithm selects the free spaces. There are three options:
+
+`{option.logic = "maxEdge"}` is default and selects the free space with the smallest loss of either width or height.
+
+`{option.logic = "maxArea"}` selects the free space with the smallest loss of area.
+
+`{option.logic = "fillWidth"}` fills the complete width first before placing elements in next row. To get the used height `bin.height` only gives correct values with options: `{pot: false, square: false}`. Best results also with `option.allowRotation = true`
+
+
 
 ## Packing algorithm
 
