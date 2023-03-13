@@ -292,11 +292,19 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         if (this.stage.contain(node)) return false;
         let tmpWidth: number = Math.max(this.width, node.x + node.width - this.padding + this.border);
         let tmpHeight: number = Math.max(this.height, node.y + node.height - this.padding + this.border);
+        let tmpFits: boolean = !(tmpWidth > this.maxWidth || tmpHeight > this.maxHeight);
         if (this.options.allowRotation) {
             // do extra test on rotated node whether it's a better choice
             const rotWidth: number = Math.max(this.width, node.x + node.height - this.padding + this.border);
             const rotHeight: number = Math.max(this.height, node.y + node.width - this.padding + this.border);
-            if (rotWidth * rotHeight < tmpWidth * tmpHeight) {
+            const rotFits: boolean = !(rotWidth > this.maxWidth || rotHeight > this.maxHeight);
+            // only compare when both rects will fit into bin
+            if (tmpFits && rotFits && rotWidth * rotHeight < tmpWidth * tmpHeight) {
+                tmpWidth = rotWidth;
+                tmpHeight = rotHeight;
+            }
+            // if rot fits and tmpFits not then do not compare area and set rot directly (some cases area of not rotated is smaller but will not fit)
+            if (rotFits && !tmpFits) {
                 tmpWidth = rotWidth;
                 tmpHeight = rotHeight;
             }
@@ -308,7 +316,8 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         if (this.options.square) {
             tmpWidth = tmpHeight = Math.max(tmpWidth, tmpHeight);
         }
-        if (tmpWidth > this.maxWidth + this.padding || tmpHeight > this.maxHeight + this.padding) {
+        tmpFits = !(tmpWidth > this.maxWidth || tmpHeight > this.maxHeight);
+        if (!tmpFits) {
             return false;
         }
         this.expandFreeRects(tmpWidth + this.padding, tmpHeight + this.padding);

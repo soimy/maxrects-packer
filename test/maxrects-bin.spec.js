@@ -33,6 +33,15 @@ describe("no padding", () => {
         expect(position.y).toBe(0);
     });
 
+    test("edge case: only rotated version fits and should be set", () => {
+        const edgeCaseBin = new MaxRectsBin(256, 1024, 0, {allowRotation: true, pot: false});
+        edgeCaseBin.add(260, 80);
+        edgeCaseBin.add(260, 80);
+        edgeCaseBin.add(260, 80);
+        edgeCaseBin.add(260, 80);
+        expect(edgeCaseBin.rects).toHaveLength(4);
+    });
+
     test("report/set bin dirty status", () => {
         bin.add(200, 100, {});
         expect(bin.dirty).toBe(true); // add element to bin will render bin dirty
@@ -217,6 +226,18 @@ describe("padding", () => {
     test("adds rects with sizes close to the max", () => {
         expect(bin.add(1024, 1024)).toBeDefined();
         expect(bin.rects.length).toBe(1);
+    });
+
+    test("edge case: multiple rects with slightly bigger size then maxWidth should be placed rotated", () => {
+        const edgeCaseBin = new MaxRectsBin(256, 1024, padding, {allowRotation: true, pot: false, square: false, smart: true}); //why square in maxrects-packer false and in maxrects-bin: true?
+        edgeCaseBin.add(260, 80);
+        edgeCaseBin.add(260, 80);
+        edgeCaseBin.add(260, 80);
+        edgeCaseBin.add(260, 80);
+
+        expect(edgeCaseBin.rects).toHaveLength(4);
+        expect(edgeCaseBin.rects[3].rot).toBeTruthy();
+        expect(edgeCaseBin.rects[3].width).toBe(80);
     });
 
     test("monkey testing", () => {
