@@ -151,7 +151,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
                 i++;
             }
             this.pruneFreeList();
-            this.verticalExpand = this.width > this.height ? true : false;
+            this.verticalExpand = this.options.logic === PACKING_LOGIC.FILL_WIDTH ? false : this.width > this.height ? true : false;
             rect.x = node.x;
             rect.y = node.y;
             if (rect.rot === undefined) rect.rot = false;
@@ -182,7 +182,16 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         return undefined;
     }
 
+    /**
+     * Find the best rect out of freeRects
+     * This method has different logics to resolve the best rect.
+     * @param width 
+     * @param height 
+     * @param allowRotation 
+     * @returns Rectangle of the best rect for placement
+     */
     private findNode (width: number, height: number, allowRotation?: boolean): Rectangle | undefined {
+        // scoring based on one single number. The smaller the better the choice.
         let score: number = Number.MAX_VALUE;
         let areaFit: number;
         let r: Rectangle;
@@ -190,9 +199,25 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         for (let i in this.freeRects) {
             r = this.freeRects[i];
             if (r.width >= width && r.height >= height) {
-                areaFit = (this.options.logic === PACKING_LOGIC.MAX_AREA) ?
-                    r.width * r.height - width * height :
-                    Math.min(r.width - width, r.height - height);
+                if (this.options.logic === PACKING_LOGIC.MAX_AREA) {
+                    // the rect with the lowest rest area wins
+                    areaFit =  r.width * r.height - width * height;
+                } else if (this.options.logic === PACKING_LOGIC.FILL_WIDTH) {
+                    // this logic needs to factors to build a score. 
+                    // 1. rect position: choose the most rightest one with the lowest y coordinate.
+                    // 2. size that needs to grow to place the element. The lower the better score (leads to optimal rotation placement)
+
+                    const currentRectPositionScore = r.x + r.y * this.maxWidth; // each y value adds a full width to the score to balance x and y coordinates to a single number
+                    const numberOfBetterRects = this.freeRects.filter(rect =>  (rect.x + rect.y * this.maxWidth) < currentRectPositionScore).length; // search if there are rects, righter and a lower y coordinate.
+
+                    // calculate how much space will be add to total height
+                    const heightToGain = r.y + height - this.height;
+                    
+                    areaFit = numberOfBetterRects + heightToGain; // add both factors together 
+                } else {
+                    // the rect with the lowest loss of either width or height wins
+                    areaFit = Math.min(r.width - width, r.height - height);
+                }
                 if (areaFit < score) {
                     bestNode = new Rectangle(width, height, r.x, r.y);
                     score = areaFit;
@@ -203,9 +228,19 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
 
             // Continue to test 90-degree rotated rectangle
             if (r.width >= height && r.height >= width) {
-                areaFit = (this.options.logic === PACKING_LOGIC.MAX_AREA) ?
-                    r.width * r.height - height * width :
-                    Math.min(r.height - width, r.width - height);
+                if (this.options.logic === PACKING_LOGIC.MAX_AREA) {
+                    areaFit =  r.width * r.height - height * width;
+                } else if (this.options.logic === PACKING_LOGIC.FILL_WIDTH) {
+                    const currentRectPositionScore = r.x + r.y * this.maxWidth;
+                    const numberOfBetterRects = this.freeRects.filter(rect =>  (rect.x + rect.y * this.maxWidth) < currentRectPositionScore).length; // search if there are rects, righter and a lower y coordinate.
+
+                    // calculate how much space will be add to total height
+                    const heightToGain = r.y + width - this.height;
+                    
+                    areaFit = numberOfBetterRects + heightToGain; // add both factors together 
+                } else {
+                    areaFit = Math.min(r.height - width, r.width - height);
+                }
                 if (areaFit < score) {
                     bestNode = new Rectangle(height, width, r.x, r.y, true); // Rotated node
                     score = areaFit;
