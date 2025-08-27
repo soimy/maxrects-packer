@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "es5",
+    "module": "esnext",
+    "declaration": true,
+    "declarationDir": "./lib/types",
+    "outDir": "./lib",
+    "removeComments": true,
+    "types": [],
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "./src/**/*"
+  ],
+  "exclude": [
+    "./test/**/*",
+    "./node_modules",
+    "./lib",
+    "./dist"
+  ]
+}
