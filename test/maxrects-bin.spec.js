@@ -229,7 +229,7 @@ describe("padding", () => {
     });
 
     test("edge case: multiple rects with slightly bigger size then maxWidth should be placed rotated", () => {
-        const edgeCaseBin = new MaxRectsBin(256, 1024, padding, {allowRotation: true, pot: false, square: false, smart: true}); //why square in maxrects-packer false and in maxrects-bin: true?
+        const edgeCaseBin = new MaxRectsBin(256, 1024, padding, {allowRotation: true, pot: false, square: false, smart: true});
         edgeCaseBin.add(260, 80);
         edgeCaseBin.add(260, 80);
         edgeCaseBin.add(260, 80);

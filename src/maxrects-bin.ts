@@ -13,7 +13,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
     public options: IOption = {
         smart: true,
         pot: true,
-        square: true,
+        square: false,
         allowRotation: false,
         tag: false,
         exclusiveTag: true,
