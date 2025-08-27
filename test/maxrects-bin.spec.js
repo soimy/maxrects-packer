@@ -379,10 +379,9 @@ describe("logic FILL_WIDTH", () => {
         /**
          * Visualize the placement result
          * _______________________
-         * | ███  ███  ███      |  
+         * | ███  ███  ███      |
          * ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
          */
-        
         let position1 = bin.add(300, 50, {});
         let position2 = bin.add(50, 300, {});
         let position3 = bin.add(300, 50, {});
@@ -406,7 +405,6 @@ describe("logic FILL_WIDTH", () => {
          * | ██████                     |
          * ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
          */
-        
         const rects = [
             [300, 100],
             [100, 300],
@@ -420,7 +418,7 @@ describe("logic FILL_WIDTH", () => {
             [300, 100],
             [300, 100],
             [100, 600],
-        ]
+        ];
         rects.forEach(rect => bin.add(rect[0], rect[1]));
         expect([bin.rects[0].x, bin.rects[0].y]).toEqual([0, 0]);
         expect([bin.rects[1].x, bin.rects[1].y]).toEqual([300, 0]);
