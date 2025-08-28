@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file. See [standa
 ### Bug Fixes
 
 * circular dependencies on maxracts-packer.ts ([1172feb](https://github.com/soimy/maxrects-packer/commit/1172feb0c702a6d8e7416aab3f0ef92d359d4066))
+* Bugs in edgy rect placement in updateBinSize() (#56)
+* 51 expanding one dimension (#54)
 
 ### [2.7.3](https://github.com/soimy/maxrects-packer/compare/v2.7.2...v2.7.3) (2022-02-02)
 
