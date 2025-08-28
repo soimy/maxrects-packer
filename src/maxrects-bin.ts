@@ -1,4 +1,4 @@
-import { EDGE_MAX_VALUE, PACKING_LOGIC, IOption } from "./maxrects-packer";
+import { EDGE_MAX_VALUE, PACKING_LOGIC, IOption } from "./types";
 import { Rectangle, IRectangle } from "./geom/Rectangle";
 import { Bin } from "./abstract-bin";
 
