@@ -1,8 +1,8 @@
 /* eslint-disable no-constant-condition */
 "use strict";
 
-let MaxRectsBin = require("../dist/maxrects-packer").MaxRectsBin;
-let Rectangle = require("../dist/maxrects-packer").Rectangle;
+let MaxRectsBin = require("../src/maxrects-bin").MaxRectsBin;
+let Rectangle = require("../src/geom/Rectangle").Rectangle;
 
 const EDGE_MAX_VALUE = 4096;
 const EDGE_MIN_VALUE = 128;
