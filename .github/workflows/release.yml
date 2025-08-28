@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build project
+      run: npm run build:clean
+
+    - name: Get tag version
+      id: get_version
+      run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+    - name: Extract changelog
+      id: extract_changelog
+      run: |
+        # Extract changelog for the current version
+        VERSION="${{ steps.get_version.outputs.version }}"
+        # Find the line number of the current version
+        VERSION_LINE=$(grep -n "### \[$VERSION\]" CHANGELOG.md | head -1 | cut -d: -f1)
+        if [ -n "$VERSION_LINE" ]; then
+          # Find the next version line
+          NEXT_VERSION_LINE=$(tail -n +$((VERSION_LINE + 1)) CHANGELOG.md | grep -n "^### \[" | head -1 | cut -d: -f1)
+          if [ -n "$NEXT_VERSION_LINE" ]; then
+            # Extract lines between current version and next version
+            CHANGELOG=$(sed -n "$((VERSION_LINE + 1)),$((VERSION_LINE + NEXT_VERSION_LINE - 1))p" CHANGELOG.md)
+          else
+            # This is the last version, extract to end of file
+            CHANGELOG=$(sed -n "$((VERSION_LINE + 1)),\$p" CHANGELOG.md)
+          fi
+        else
+          CHANGELOG="No changelog found for version $VERSION"
+        fi
+        # Escape newlines for GitHub output
+        CHANGELOG="${CHANGELOG//'%'/'%25'}"
+        CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
+        CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
+        echo "changelog<<EOF" >> $GITHUB_OUTPUT
+        echo "$CHANGELOG" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create release
+      id: create_release
+      run: |
+        TAG_NAME="${{ github.ref_name }}"
+        gh release create "$TAG_NAME" \
+          --title "Release $TAG_NAME" \
+          --notes "${{ steps.extract_changelog.outputs.changelog }}" \
+          --generate-notes
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload release assets
+      run: |
+        TAG_NAME="${{ github.ref_name }}"
+        gh release upload "$TAG_NAME" ./dist/maxrects-packer.js ./dist/maxrects-packer.min.js ./dist/maxrects-packer.mjs
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload dist directory as zip
+      run: |
+        cd dist
+        zip -r ../dist.zip .
+        cd ..
+        TAG_NAME="${{ github.ref_name }}"
+        gh release upload "$TAG_NAME" ./dist.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
