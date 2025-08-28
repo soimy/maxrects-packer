@@ -1,295 +1,53 @@
-<!doctype html>
-<html class="default no-js">
-<head>
-	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>maxrects-packer - v2.7.0</title>
-	<meta name="description" content="">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="assets/css/main.css">
-</head>
-<body>
-<header>
-	<div class="tsd-page-toolbar">
-		<div class="container">
-			<div class="table-wrap">
-				<div class="table-cell" id="tsd-search" data-index="assets/js/search.js" data-base=".">
-					<div class="field">
-						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
-						<input id="tsd-search-field" type="text" />
-					</div>
-					<ul class="results">
-						<li class="state loading">Preparing search index...</li>
-						<li class="state failure">The search index is not available</li>
-					</ul>
-					<a href="index.html" class="title">maxrects-packer - v2.7.0</a>
-				</div>
-				<div class="table-cell" id="tsd-widgets">
-					<div id="tsd-filter">
-						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
-						<div class="tsd-filter-group">
-							<div class="tsd-select" id="tsd-filter-visibility">
-								<span class="tsd-select-label">All</span>
-								<ul class="tsd-select-list">
-									<li data-value="public">Public</li>
-									<li data-value="protected">Public/Protected</li>
-									<li data-value="private" class="selected">All</li>
-								</ul>
-							</div>
-							<input type="checkbox" id="tsd-filter-inherited" checked />
-							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
-						</div>
-					</div>
-					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
-				</div>
-			</div>
-		</div>
-	</div>
-	<div class="tsd-page-title">
-		<div class="container">
-			<ul class="tsd-breadcrumb">
-				<li>
-					<a href="globals.html">Globals</a>
-				</li>
-			</ul>
-			<h1> maxrects-packer - v2.7.0</h1>
-		</div>
-	</div>
-</header>
-<div class="container container-main">
-	<div class="row">
-		<div class="col-8 col-content">
-			<div class="tsd-panel tsd-typography">
-				<a href="#max-rects-packer" id="max-rects-packer" style="color: inherit; text-decoration: none;">
-					<h1>Max Rects Packer</h1>
-				</a>
-				<p><a href="https://travis-ci.org/soimy/maxrects-packer"><img src="https://travis-ci.org/soimy/maxrects-packer.svg?branch=master" alt="Build Status"></a>
-					<a href="https://coveralls.io/github/soimy/maxrects-packer?branch=master"><img src="https://coveralls.io/repos/github/soimy/maxrects-packer/badge.svg?branch=master" alt="Coverage Status"></a>
-					<a href="https://badge.fury.io/js/maxrects-packer"><img src="https://badge.fury.io/js/maxrects-packer.svg" alt="npm version"></a>
-					<img src="https://img.shields.io/npm/dm/maxrects-packer.svg" alt="npm">
-				<img src="https://shields-staging.herokuapp.com/npm/types/maxrects-packer.svg" alt="npm type definitions"></p>
-				<p>A simple max rectangle 2d bin packing algorithm for packing glyphs or images into multiple sprite-sheet/atlas. Minimalist with no module dependency.</p>
-				<p>This is a evolved version of <a href="https://github.com/marekventur/multi-bin-packer">Multi-Bin-Packer</a> with much efficient packing algorithm. All interfaces and methods are inherited so no tweaks needed in your current code except module name.</p>
-				<p>It differs from the long list of similar packages by its packing approach: Instead of creating one output bin with a minimum size this package is trying to create a minimum number of bins under a certain size. This avoids problems with single massive image files that are not browser-friendly. This can be especially useful for WebGL games where the GPU will benefit from spritesheets close to power-of-2 sizes.</p>
-				<p>And you can also save/load to reuse packer to add new sprites. (Below is a demo atlas packed with two difference bitmap fonts)</p>
-				<p><img src="https://raw.githubusercontent.com/soimy/maxrects-packer/master/preview.png" alt="Preview image"></p>
-				<a href="#a-hrefhttpsgithubcomsoimymaxrects-packerblobmasterchangelogmdchangeloga" id="a-hrefhttpsgithubcomsoimymaxrects-packerblobmasterchangelogmdchangeloga" style="color: inherit; text-decoration: none;">
-					<h2><a href="https://github.com/soimy/maxrects-packer/blob/master/CHANGELOG.md">Changelog</a></h2>
-				</a>
-				<a href="#installing" id="installing" style="color: inherit; text-decoration: none;">
-					<h2>Installing</h2>
-				</a>
-				<pre><code class="language-bash">npm install maxrects-packer --save</code></pre>
-				<a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
-					<h2>Usage</h2>
-				</a>
-				<p><strong>Note:</strong> <em>Since version 2.0.0 Max Rects Packer is rewritten in <code>typescript</code> and change the import method from old <code>require(&quot;maxrects-packer&quot;)</code> to <code>require(&quot;maxrects-packer&quot;).MaxRectsPacker</code> or more fashioned <code>import</code> statement.</em></p>
-				<p><strong>Note:</strong> <em>Since version 2.1.0 packer can be fed with any object with <code>width &amp; height</code> members, no need to follow <code>{ width: number, height: number, data: any }</code> pattern, if you are using <code>typescript</code>, that also mean any class extending <code>MaxRectsPacker.IRectangle</code></em></p>
-				<p><strong>Note:</strong> *Since version 2.1.0 Rectangle class constructor API is changed from <code>new Rectangle(x, y, width, height, rotated)</code> to <code>new Rectangle(width, height, x, y, rotated)</code>, cos most cases you only need to feed w/h and omit the rest like <code>new Rectangle(100, 100)</code> and left <code>x,y,rotated</code> to default value.</p>
-				<pre><code class="language-javascript"><span class="hljs-keyword">let</span> MaxRectsPacker = <span class="hljs-built_in">require</span>(<span class="hljs-string">"maxrects-packer"</span>).MaxRectsPacker;
-<span class="hljs-keyword">const</span> options = {
-    <span class="hljs-attr">smart</span>: <span class="hljs-literal">true</span>,
-    <span class="hljs-attr">pot</span>: <span class="hljs-literal">true</span>,
-    <span class="hljs-attr">square</span>: <span class="hljs-literal">false</span>,
-    <span class="hljs-attr">allowRotation</span>: <span class="hljs-literal">true</span>,
-    <span class="hljs-attr">tag</span>: <span class="hljs-literal">false</span>,
-    <span class="hljs-attr">border</span>: <span class="hljs-number">5</span>
-}; <span class="hljs-comment">// Set packing options</span>
-<span class="hljs-keyword">let</span> packer = <span class="hljs-keyword">new</span> MaxRectsPacker(<span class="hljs-number">1024</span>, <span class="hljs-number">1024</span>, <span class="hljs-number">2</span>, options); <span class="hljs-comment">// width, height, padding, options</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/><meta name="description" content="Documentation for maxrects-packer"/><meta name="viewport" content="width=device-width, initial-scale=1"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>maxrects-packer</title><link rel="stylesheet" href="assets/highlight.css"/><link rel="stylesheet" href="assets/custom.css"/><script defer src="assets/custom.js"></script><link rel="stylesheet" href="assets/styles.css"/></head><body><dialog id="search-dialog" popover><button type="button" class="close-button" popovertarget="search-dialog"><svg width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M6.75827 17.2426L12.0009 12M17.2435 6.75736L12.0009 12M12.0009 12L6.75827 6.75736M12.0009 12L17.2435 17.2426" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></button><h3>Search</h3><input type="search" id="search-input" placeholder="Search…"/><hr/><div id="search-results" data-state="idle">Search something to see results</div></dialog><header class="page-header"><h3 class="site-title"><a href="" class="header-logo">maxrects-packer</a></h3><div class="header-content"><button type="button" popovertarget="search-dialog"><svg class="icon-search" width="1em" height="1em" viewBox="0 0 24 24" stroke-width="1.5" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M17 17L21 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M3 11C3 15.4183 6.58172 19 11 19C13.213 19 15.2161 18.1015 16.6644 16.6493C18.1077 15.2022 19 13.2053 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></button><label for="mobile-nav-opened" class="mobile-nav-burger-trigger" aria-label="Menu"><svg class="icon-menu" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M3 5H21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M3 12H21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M3 19H21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></label></div></header><input id="mobile-nav-opened" type="checkbox" hidden/><div class="page-layout"><aside class="site-nav-wrapper"><div class="site-nav"><nav class="project-nav"><a href="modules.html" class="nav-leaf">Modules</a><ul class="nav-tree"><li><a class="nav-leaf" href="enums/PACKING_LOGIC.html"><span>PACKING_LOGIC</span><small><abbr title="Enum" class="kind-icon">(E)</abbr></small></a></li><li><a class="nav-leaf" href="classes/Bin.html"><span>Bin</span><small><abbr title="Class" class="kind-icon">(C)</abbr></small></a></li><li><a class="nav-leaf" href="classes/MaxRectsBin.html"><span>MaxRectsBin</span><small><abbr title="Class" class="kind-icon">(C)</abbr></small></a></li><li><a class="nav-leaf" href="classes/MaxRectsPacker.html"><span>MaxRectsPacker</span><small><abbr title="Class" class="kind-icon">(C)</abbr></small></a></li><li><a class="nav-leaf" href="classes/OversizedElementBin.html"><span>OversizedElementBin</span><small><abbr title="Class" class="kind-icon">(C)</abbr></small></a></li><li><a class="nav-leaf" href="classes/Rectangle.html"><span>Rectangle</span><small><abbr title="Class" class="kind-icon">(C)</abbr></small></a></li><li><a class="nav-leaf" href="interfaces/IBin.html"><span>IBin</span><small><abbr title="Interface" class="kind-icon">(I)</abbr></small></a></li><li><a class="nav-leaf" href="interfaces/IOption.html"><span>IOption</span><small><abbr title="Interface" class="kind-icon">(I)</abbr></small></a></li><li><a class="nav-leaf" href="interfaces/IRectangle.html"><span>IRectangle</span><small><abbr title="Interface" class="kind-icon">(I)</abbr></small></a></li></ul></nav></div></aside><aside class="page-toc-wrapper"><div class="page-toc"></div></aside><main class="page-content"><div class="page-content-header"><h1>maxrects-packer</h1></div><div class="markdown readme"><h1 id="max-rects-packer" class="tsd-anchor-link">Max Rects Packer<a href="#max-rects-packer" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon-anchor" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></h1><p><a href="https://github.com/soimy/maxrects-packer/actions/workflows/node.js.yml"><img src="https://github.com/soimy/maxrects-packer/actions/workflows/node.js.yml/badge.svg" alt="Node.js CI"></a>
+<a href="https://codecov.io/gh/soimy/maxrects-packer"><img src="https://codecov.io/gh/soimy/maxrects-packer/branch/master/graph/badge.svg" alt="codecov"></a>
+<a href="https://badge.fury.io/js/maxrects-packer"><img src="https://badge.fury.io/js/maxrects-packer.svg" alt="npm version"></a>
+<img src="https://img.shields.io/npm/dm/maxrects-packer.svg" alt="npm">
+<img src="https://img.shields.io/npm/types/maxrects-packer" alt="NPM Type Definitions"></p>
+<p>A simple max rectangle 2d bin packing algorithm for packing glyphs or images into multiple sprite-sheet/atlas. Minimalist with no module dependency.</p>
+<p>This is a evolved version of <a href="https://github.com/marekventur/multi-bin-packer">Multi-Bin-Packer</a> with much efficient packing algorithm. All interfaces and methods are inherited so no tweaks needed in your current code except module name.</p>
+<p>It differs from the long list of similar packages by its packing approach: Instead of creating one output bin with a minimum size this package is trying to create a minimum number of bins under a certain size. This avoids problems with single massive image files that are not browser-friendly. This can be especially useful for WebGL games where the GPU will benefit from spritesheets close to power-of-2 sizes.</p>
+<p>And you can also save/load to reuse packer to add new sprites. (Below is a demo atlas packed with two difference bitmap fonts)</p>
+<p><img src="https://raw.githubusercontent.com/soimy/maxrects-packer/master/preview.png" alt="Preview image"></p>
+<h2 id="changelog" class="tsd-anchor-link"><a href="https://github.com/soimy/maxrects-packer/blob/master/CHANGELOG.md">Changelog</a><a href="#changelog" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon-anchor" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></h2><h2 id="installing" class="tsd-anchor-link">Installing<a href="#installing" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon-anchor" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></h2><pre><code class="bash"><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">install</span><span class="hl-1"> </span><span class="hl-2">maxrects-packer</span><span class="hl-1"> </span><span class="hl-3">--save</span>
+</code><button type="button">Copy</button></pre>
 
-<span class="hljs-keyword">let</span> input = [ <span class="hljs-comment">// any object with width &amp; height is OK since v2.1.0</span>
-    {<span class="hljs-attr">width</span>: <span class="hljs-number">600</span>, <span class="hljs-attr">height</span>: <span class="hljs-number">20</span>, <span class="hljs-attr">name</span>: <span class="hljs-string">"tree"</span>, <span class="hljs-attr">foo</span>: <span class="hljs-string">"bar"</span>},
-    {<span class="hljs-attr">width</span>: <span class="hljs-number">600</span>, <span class="hljs-attr">height</span>: <span class="hljs-number">20</span>, <span class="hljs-attr">name</span>: <span class="hljs-string">"flower"</span>},
-    {<span class="hljs-attr">width</span>: <span class="hljs-number">2000</span>, <span class="hljs-attr">height</span>: <span class="hljs-number">2000</span>, <span class="hljs-attr">name</span>: <span class="hljs-string">"oversized background"</span>, {<span class="hljs-attr">frameWidth</span>: <span class="hljs-number">500</span>, <span class="hljs-attr">frameHeight</span>: <span class="hljs-number">500</span>}},
-    {<span class="hljs-attr">width</span>: <span class="hljs-number">1000</span>, <span class="hljs-attr">height</span>: <span class="hljs-number">1000</span>, <span class="hljs-attr">name</span>: <span class="hljs-string">"background"</span>, <span class="hljs-attr">color</span>: <span class="hljs-number">0x000000ff</span>},
-    {<span class="hljs-attr">width</span>: <span class="hljs-number">1000</span>, <span class="hljs-attr">height</span>: <span class="hljs-number">1000</span>, <span class="hljs-attr">name</span>: <span class="hljs-string">"overlay"</span>, <span class="hljs-attr">allowRotation</span>: <span class="hljs-literal">true</span>}
-];
+<h2 id="usage" class="tsd-anchor-link">Usage<a href="#usage" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon-anchor" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></h2><p><strong>Note:</strong> <em>Since version 2.0.0 Max Rects Packer is rewritten in <code>typescript</code> and change the import method from old <code>require(&quot;maxrects-packer&quot;)</code> to <code>require(&quot;maxrects-packer&quot;).MaxRectsPacker</code> or more fashioned <code>import</code> statement.</em></p>
+<p><strong>Note:</strong> <em>Since version 2.1.0 packer can be fed with any object with <code>width &amp; height</code> members, no need to follow <code>{ width: number, height: number, data: any }</code> pattern, if you are using <code>typescript</code>, that also mean any class extending <code>MaxRectsPacker.IRectangle</code></em></p>
+<p><strong>Note:</strong> *Since version 2.1.0 Rectangle class constructor API is changed from <code>new Rectangle(x, y, width, height, rotated)</code> to <code>new Rectangle(width, height, x, y, rotated)</code>, cos most cases you only need to feed w/h and omit the rest like <code>new Rectangle(100, 100)</code> and left <code>x,y,rotated</code> to default value.</p>
+<pre><code class="javascript"><span class="hl-4">let</span><span class="hl-1"> </span><span class="hl-5">MaxRectsPacker</span><span class="hl-1"> </span><span class="hl-6">=</span><span class="hl-1"> </span><span class="hl-0">require</span><span class="hl-6">(</span><span class="hl-7">&quot;</span><span class="hl-2">maxrects-packer</span><span class="hl-7">&quot;</span><span class="hl-6">).</span><span class="hl-5">MaxRectsPacker</span><span class="hl-6">;</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-5">options</span><span class="hl-1"> </span><span class="hl-6">=</span><span class="hl-1"> </span><span class="hl-6">{</span><br/><span class="hl-1">    </span><span class="hl-8">smart</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-9">true</span><span class="hl-6">,</span><br/><span class="hl-1">    </span><span class="hl-8">pot</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-9">true</span><span class="hl-6">,</span><br/><span class="hl-1">    </span><span class="hl-8">square</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-9">false</span><span class="hl-6">,</span><br/><span class="hl-1">    </span><span class="hl-8">allowRotation</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-9">true</span><span class="hl-6">,</span><br/><span class="hl-1">    </span><span class="hl-8">tag</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-9">false</span><span class="hl-6">,</span><br/><span class="hl-1">    </span><span class="hl-8">border</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-10">5</span><br/><span class="hl-6">};</span><span class="hl-1"> </span><span class="hl-11">// Set packing options</span><br/><span class="hl-4">let</span><span class="hl-1"> </span><span class="hl-5">packer</span><span class="hl-1"> </span><span class="hl-6">=</span><span class="hl-1"> </span><span class="hl-4">new</span><span class="hl-1"> </span><span class="hl-0">MaxRectsPacker</span><span class="hl-6">(</span><span class="hl-10">1024</span><span class="hl-6">,</span><span class="hl-1"> </span><span class="hl-10">1024</span><span class="hl-6">,</span><span class="hl-1"> </span><span class="hl-10">2</span><span class="hl-6">,</span><span class="hl-1"> </span><span class="hl-5">options</span><span class="hl-6">);</span><span class="hl-1"> </span><span class="hl-11">// width, height, padding, options</span><br/><br/><span class="hl-4">let</span><span class="hl-1"> </span><span class="hl-5">input</span><span class="hl-1"> </span><span class="hl-6">=</span><span class="hl-1"> </span><span class="hl-6">[</span><span class="hl-1"> </span><span class="hl-11">// any object with width &amp; height is OK since v2.1.0</span><br/><span class="hl-1">    </span><span class="hl-6">{</span><span class="hl-8">width</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-10">600</span><span class="hl-6">,</span><span class="hl-1"> </span><span class="hl-8">height</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-10">20</span><span class="hl-6">,</span><span class="hl-1"> </span><span class="hl-8">name</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-7">&quot;</span><span class="hl-2">tree</span><span class="hl-7">&quot;</span><span class="hl-6">,</span><span class="hl-1"> </span><span class="hl-8">foo</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-7">&quot;</span><span class="hl-2">bar</span><span class="hl-7">&quot;</span><span class="hl-6">},</span><br/><span class="hl-1">    </span><span class="hl-6">{</span><span class="hl-8">width</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-10">600</span><span class="hl-6">,</span><span class="hl-1"> </span><span class="hl-8">height</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-10">20</span><span class="hl-6">,</span><span class="hl-1"> </span><span class="hl-8">name</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-7">&quot;</span><span class="hl-2">flower</span><span class="hl-7">&quot;</span><span class="hl-6">},</span><br/><span class="hl-1">    </span><span class="hl-6">{</span><span class="hl-8">width</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-10">2000</span><span class="hl-6">,</span><span class="hl-1"> </span><span class="hl-8">height</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-10">2000</span><span class="hl-6">,</span><span class="hl-1"> </span><span class="hl-8">name</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-7">&quot;</span><span class="hl-2">oversized background</span><span class="hl-7">&quot;</span><span class="hl-6">,</span><span class="hl-1"> </span><span class="hl-6">{</span><span class="hl-0">frameWidth</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-10">500</span><span class="hl-6">,</span><span class="hl-1"> </span><span class="hl-0">frameHeight</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-10">500</span><span class="hl-6">}},</span><br/><span class="hl-1">    </span><span class="hl-6">{</span><span class="hl-8">width</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-10">1000</span><span class="hl-6">,</span><span class="hl-1"> </span><span class="hl-8">height</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-10">1000</span><span class="hl-6">,</span><span class="hl-1"> </span><span class="hl-8">name</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-7">&quot;</span><span class="hl-2">background</span><span class="hl-7">&quot;</span><span class="hl-6">,</span><span class="hl-1"> </span><span class="hl-8">color</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-10">0x000000ff</span><span class="hl-6">},</span><br/><span class="hl-1">    </span><span class="hl-6">{</span><span class="hl-8">width</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-10">1000</span><span class="hl-6">,</span><span class="hl-1"> </span><span class="hl-8">height</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-10">1000</span><span class="hl-6">,</span><span class="hl-1"> </span><span class="hl-8">name</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-7">&quot;</span><span class="hl-2">overlay</span><span class="hl-7">&quot;</span><span class="hl-6">,</span><span class="hl-1"> </span><span class="hl-8">allowRotation</span><span class="hl-6">:</span><span class="hl-1"> </span><span class="hl-9">true</span><span class="hl-6">}</span><br/><span class="hl-6">];</span><br/><br/><span class="hl-5">packer</span><span class="hl-6">.</span><span class="hl-0">addArray</span><span class="hl-6">(</span><span class="hl-5">input</span><span class="hl-6">);</span><span class="hl-1"> </span><span class="hl-11">// Start packing with input array</span><br/><span class="hl-5">packer</span><span class="hl-6">.</span><span class="hl-0">next</span><span class="hl-6">();</span><span class="hl-1"> </span><span class="hl-11">// Start a new packer bin</span><br/><span class="hl-5">packer</span><span class="hl-6">.</span><span class="hl-0">addArray</span><span class="hl-6">(</span><span class="hl-5">input</span><span class="hl-6">.</span><span class="hl-0">slice</span><span class="hl-6">(</span><span class="hl-10">2</span><span class="hl-6">));</span><span class="hl-1"> </span><span class="hl-11">// Adding to the new bin</span><br/><span class="hl-5">packer</span><span class="hl-6">.</span><span class="hl-5">bins</span><span class="hl-6">.</span><span class="hl-0">forEach</span><span class="hl-6">(</span><span class="hl-5">bin</span><span class="hl-1"> </span><span class="hl-6">=&gt;</span><span class="hl-1"> </span><span class="hl-6">{</span><br/><span class="hl-1">    </span><span class="hl-5">console</span><span class="hl-6">.</span><span class="hl-0">log</span><span class="hl-6">(</span><span class="hl-5">bin</span><span class="hl-6">.</span><span class="hl-5">rects</span><span class="hl-6">);</span><br/><span class="hl-6">});</span><br/><br/><span class="hl-11">// Reuse packer</span><br/><span class="hl-4">let</span><span class="hl-1"> </span><span class="hl-5">bins</span><span class="hl-1"> </span><span class="hl-6">=</span><span class="hl-1"> </span><span class="hl-5">packer</span><span class="hl-6">.</span><span class="hl-0">save</span><span class="hl-6">();</span><br/><span class="hl-5">packer</span><span class="hl-6">.</span><span class="hl-0">load</span><span class="hl-6">(</span><span class="hl-5">bins</span><span class="hl-6">);</span><br/><span class="hl-5">packer</span><span class="hl-6">.</span><span class="hl-0">addArray</span><span class="hl-6">(</span><span class="hl-5">input</span><span class="hl-6">);</span><br/>
+</code><button type="button">Copy</button></pre>
 
-packer.addArray(input); <span class="hljs-comment">// Start packing with input array</span>
-packer.next(); <span class="hljs-comment">// Start a new packer bin</span>
-packer.addArray(input.slice(<span class="hljs-number">2</span>)); <span class="hljs-comment">// Adding to the new bin</span>
-packer.bins.forEach(<span class="hljs-function"><span class="hljs-params">bin</span> =&gt;</span> {
-    <span class="hljs-built_in">console</span>.log(bin.rects);
-});
+<h2 id="test" class="tsd-anchor-link">Test<a href="#test" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon-anchor" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></h2><pre><code class="bash"><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">test</span>
+</code><button type="button">Copy</button></pre>
 
-<span class="hljs-comment">// Reuse packer</span>
-<span class="hljs-keyword">let</span> bins = packer.save();
-packer.load(bins);
-packer.addArray(input);
-</code></pre>
-				<a href="#test" id="test" style="color: inherit; text-decoration: none;">
-					<h2>Test</h2>
-				</a>
-				<pre><code class="language-bash">npm <span class="hljs-built_in">test</span></code></pre>
-				<a href="#api" id="api" style="color: inherit; text-decoration: none;">
-					<h2>API</h2>
-				</a>
-				<p>Note: maxrects-packer requires node &gt;= 4.0.0</p>
-				<a href="#codenew-maxrectspackermaxwidth-maxheight-padding-optionscode" id="codenew-maxrectspackermaxwidth-maxheight-padding-optionscode" style="color: inherit; text-decoration: none;">
-					<h4><code>new MaxRectsPacker(maxWidth, maxHeight[, padding, options])</code></h4>
-				</a>
-				<p>Creates a new Packer. maxWidth and maxHeight are passed on to all bins. If <code>padding</code> is supplied all rects will be kept at least <code>padding</code> pixels apart.</p>
-				<ul>
-					<li><code>options.smart</code> packing with smallest possible size. (default is <code>true</code>)</li>
-					<li><code>options.pot</code> bin size round up to smallest power of 2. (default is <code>true</code>)</li>
-					<li><code>options.square</code> bin size shall alway be square. (default is <code>false</code>)</li>
-					<li><code>options.allowRotation</code> allow 90-degree rotation while packing. (default is <code>false</code>)</li>
-					<li><code>options.tag</code> allow tag based group packing. (default is <code>false</code>)</li>
-					<li><code>options.exclusiveTag</code> tagged rects will have dependent bin, if set to <code>false</code>, packer will try to put tag rects into the same bin (default is <code>true</code>)</li>
-					<li><code>options.border</code> atlas edge spacing (default is 0)</li>
-				</ul>
-				<a href="#codepackeraddwidth-height-datacode-1-overload" id="codepackeraddwidth-height-datacode-1-overload" style="color: inherit; text-decoration: none;">
-					<h4><code>packer.add(width, height, data)</code> +1 overload</h4>
-				</a>
-				<p>Adds a rect to an existing bin or creates a new one to accommodate it. <code>data</code> can be anything, it will be stored along with the position data of each rect.</p>
-				<a href="#codepackeraddwidth-number-height-number--code-1-overload" id="codepackeraddwidth-number-height-number--code-1-overload" style="color: inherit; text-decoration: none;">
-					<h4><code>packer.add({width: number, height: number, ... })</code> +1 overload</h4>
-				</a>
-				<p>Adds a rect to an existing bin or creates a new one to accommodate it. Accept any object with <code>width &amp; height</code>. If you are using <code>typescript</code>, that means any class extends <code>MaxRectsPacker.IRectangle</code></p>
-				<a href="#codepackeraddarraywidth-number-height-number--code" id="codepackeraddarraywidth-number-height-number--code" style="color: inherit; text-decoration: none;">
-					<h4><code>packer.addArray([{width: number, height: number, ...}, ...])</code></h4>
-				</a>
-				<p>Adds multiple rects. Since the input is automatically sorted before adding this approach usually leads to fewer bins created than separate calls to <code>.add()</code></p>
-				<a href="#codepackerrepackquick-boolean--truecode" id="codepackerrepackquick-boolean--truecode" style="color: inherit; text-decoration: none;">
-					<h4><code>packer.repack(quick: boolean = true)</code></h4>
-				</a>
-				<p>Repack all elements inside bins. If <code>quick == true</code>, only bins with <code>dirty</code> flag will be repacked. If <code>false</code> is passed, all rects inside this packer will be re-sort and repacked, might result different bin number. Slower but high packing efficiency.</p>
-				<a href="#codepackernextcode" id="codepackernextcode" style="color: inherit; text-decoration: none;">
-					<h4><code>packer.next()</code></h4>
-				</a>
-				<p>Stop adding new element to the current bin and return a new bin. After calling <code>next()</code> all elements will no longer added to previous bins.</p>
-				<a href="#codelet-bins--packersavecode" id="codelet-bins--packersavecode" style="color: inherit; text-decoration: none;">
-					<h4><code>let bins = packer.save()</code></h4>
-				</a>
-				<p>Save current bins settings and free area to an Array of objects for later use. Better to <code>JSON.stringify(bins)</code> and store in file.</p>
-				<a href="#codepackerloadbinscode" id="codepackerloadbinscode" style="color: inherit; text-decoration: none;">
-					<h4><code>packer.load(bins)</code></h4>
-				</a>
-				<p>Restore previous saved <code>let bins = JSON.parse(fs.readFileSync(savedFile, &#39;utf8&#39;));</code> settings and overwrite current one. Continue packing and previous packed area will not be overlapped.</p>
-				<a href="#codepackerbinscode" id="codepackerbinscode" style="color: inherit; text-decoration: none;">
-					<h4><code>packer.bins</code></h4>
-				</a>
-				<p>Array of bins. Every bin has a <code>width</code> and <code>height</code> parameter as well as an array <code>rects</code>.</p>
-				<a href="#codepackerbinsnrectscode" id="codepackerbinsnrectscode" style="color: inherit; text-decoration: none;">
-					<h4><code>packer.bins[n].rects</code></h4>
-				</a>
-				<p>Array of rects for a specific bin. Every rect has <code>x</code>, <code>y</code>, <code>width</code>, <code>height</code>, <code>rot</code> and <code>data</code>. In case of an rect exceeding <code>maxWidth</code>/<code>maxHeight</code> there will also be an <code>oversized</code> flag set to <code>true</code>.</p>
-				<a href="#support-for-90-degree-rotation-packing" id="support-for-90-degree-rotation-packing" style="color: inherit; text-decoration: none;">
-					<h2>Support for 90-degree rotation packing</h2>
-				</a>
-				<p>If <code>options.allowRotation</code> is set to <code>true</code>, packer will attempt to do an extra test in <code>findNode()</code> on rotated <code>Rectangle</code>. If the rotated one gives the best score, the given <code>Rectangle</code> will be rotated in the <code>Rectangle.rot</code> set to <code>true</code>.</p>
-				<a href="#support-for-tag-based-group-packing" id="support-for-tag-based-group-packing" style="color: inherit; text-decoration: none;">
-					<h2>Support for tag based group packing</h2>
-				</a>
-				<p>If <code>options.tag</code> is set to <code>true</code>, packer will check if the input object has <code>tag: string</code> property, all input with same <code>tag</code> will be packed in the same bin.</p>
-				<a href="#support-for-oversized-rectangles" id="support-for-oversized-rectangles" style="color: inherit; text-decoration: none;">
-					<h2>Support for oversized rectangles</h2>
-				</a>
-				<p>Normally all bins are of equal size or smaller than <code>maxWidth</code>/<code>maxHeight</code>. If a rect is added that individually does not fit into those constraints a special bin will be created. This bin will only contain a single rect with a special &quot;oversized&quot; flag. This can be handled further on in the chain by displaying an error/warning or by simply ignoring it.</p>
-				<a href="#packing-algorithm" id="packing-algorithm" style="color: inherit; text-decoration: none;">
-					<h2>Packing algorithm</h2>
-				</a>
-				<p>Use Max Rectangle Algorithm for packing, same as famous <strong>Texture Packer</strong></p>
-			</div>
-		</div>
-		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
-			<nav class="tsd-navigation primary">
-				<ul>
-					<li class="globals  ">
-						<a href="globals.html"><em>Globals</em></a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="modules/_abstract_bin_.html">&quot;abstract-<wbr>bin&quot;</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="modules/_geom_rectangle_.html">&quot;geom/<wbr>Rectangle&quot;</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="modules/_index_.html">&quot;index&quot;</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="modules/_maxrects_bin_.html">&quot;maxrects-<wbr>bin&quot;</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="modules/_maxrects_packer_.html">&quot;maxrects-<wbr>packer&quot;</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="modules/_oversized_element_bin_.html">&quot;oversized-<wbr>element-<wbr>bin&quot;</a>
-					</li>
-				</ul>
-			</nav>
-			<nav class="tsd-navigation secondary menu-sticky">
-				<ul class="before-current">
-				</ul>
-			</nav>
-		</div>
-	</div>
-</div>
-<footer class="with-border-bottom">
-	<div class="container">
-		<h2>Legend</h2>
-		<div class="tsd-legend-group">
-			<ul class="tsd-legend">
-				<li class="tsd-kind-module"><span class="tsd-kind-icon">Module</span></li>
-				<li class="tsd-kind-object-literal"><span class="tsd-kind-icon">Object literal</span></li>
-				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
-				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
-				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
-				<li class="tsd-kind-index-signature"><span class="tsd-kind-icon">Index signature</span></li>
-				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
-				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
-				<li class="tsd-kind-enum-member"><span class="tsd-kind-icon">Enumeration member</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-enum"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-enum"><span class="tsd-kind-icon">Method</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
-				<li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li>
-				<li class="tsd-kind-constructor tsd-parent-kind-interface"><span class="tsd-kind-icon">Constructor</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
-				<li class="tsd-kind-index-signature tsd-parent-kind-interface"><span class="tsd-kind-icon">Index signature</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
-				<li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li>
-				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class"><span class="tsd-kind-icon">Accessor</span></li>
-				<li class="tsd-kind-index-signature tsd-parent-kind-class"><span class="tsd-kind-icon">Index signature</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static property</span></li>
-				<li class="tsd-kind-call-signature tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li>
-			</ul>
-		</div>
-	</div>
-</footer>
-<div class="container tsd-generator">
-	<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p>
-</div>
-<div class="overlay"></div>
-<script src="assets/js/main.js"></script>
-<script>if (location.protocol == 'file:') document.write('<script src="assets/js/search.js"><' + '/script>');</script>
-</body>
-</html>
+<h2 id="api" class="tsd-anchor-link">API<a href="#api" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon-anchor" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></h2><p>Note: maxrects-packer requires node &gt;= 4.0.0</p>
+<h4 id="new-maxrectspackermaxwidth-maxheight-padding-options" class="tsd-anchor-link"><code>new MaxRectsPacker(maxWidth, maxHeight[, padding, options])</code><a href="#new-maxrectspackermaxwidth-maxheight-padding-options" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon-anchor" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></h4><p>Creates a new Packer. maxWidth and maxHeight are passed on to all bins. If <code>padding</code> is supplied all rects will be kept at least <code>padding</code> pixels apart.</p>
+<ul>
+<li><code>options.smart</code> packing with smallest possible size. (default is <code>true</code>)</li>
+<li><code>options.pot</code> bin size round up to smallest power of 2. (default is <code>true</code>)</li>
+<li><code>options.square</code> bin size shall alway be square. (default is <code>false</code>)</li>
+<li><code>options.allowRotation</code> allow 90-degree rotation while packing. (default is <code>false</code>)</li>
+<li><code>options.tag</code> allow tag based group packing. (default is <code>false</code>)</li>
+<li><code>options.exclusiveTag</code> tagged rects will have dependent bin, if set to <code>false</code>, packer will try to put tag rects into the same bin (default is <code>true</code>)</li>
+<li><code>options.border</code> atlas edge spacing (default is 0)</li>
+<li><code>options.logic</code> how to fill the rects. There are three options: 0 (max area),  1 (max edge), 2 (fillWidth). Default is 1 (max edge)</li>
+</ul>
+<h4 id="packeraddwidth-height-data-1-overload" class="tsd-anchor-link"><code>packer.add(width, height, data)</code> +1 overload<a href="#packeraddwidth-height-data-1-overload" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon-anchor" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></h4><p>Adds a rect to an existing bin or creates a new one to accommodate it. <code>data</code> can be anything, it will be stored along with the position data of each rect.</p>
+<h4 id="packeraddwidth-number-height-number---1-overload" class="tsd-anchor-link"><code>packer.add({width: number, height: number, ... })</code> +1 overload<a href="#packeraddwidth-number-height-number---1-overload" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon-anchor" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></h4><p>Adds a rect to an existing bin or creates a new one to accommodate it. Accept any object with <code>width &amp; height</code>. If you are using <code>typescript</code>, that means any class extends <code>MaxRectsPacker.IRectangle</code></p>
+<h4 id="packeraddarraywidth-number-height-number--" class="tsd-anchor-link"><code>packer.addArray([{width: number, height: number, ...}, ...])</code><a href="#packeraddarraywidth-number-height-number--" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon-anchor" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></h4><p>Adds multiple rects. Since the input is automatically sorted before adding this approach usually leads to fewer bins created than separate calls to <code>.add()</code></p>
+<h4 id="packerrepackquick-boolean--true" class="tsd-anchor-link"><code>packer.repack(quick: boolean = true)</code><a href="#packerrepackquick-boolean--true" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon-anchor" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></h4><p>Repack all elements inside bins. If <code>quick == true</code>, only bins with <code>dirty</code> flag will be repacked. If <code>false</code> is passed, all rects inside this packer will be re-sort and repacked, might result different bin number. Slower but high packing efficiency.</p>
+<h4 id="packernext" class="tsd-anchor-link"><code>packer.next()</code><a href="#packernext" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon-anchor" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></h4><p>Stop adding new element to the current bin and return a new bin. After calling <code>next()</code> all elements will no longer added to previous bins.</p>
+<h4 id="let-bins--packersave" class="tsd-anchor-link"><code>let bins = packer.save()</code><a href="#let-bins--packersave" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon-anchor" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></h4><p>Save current bins settings and free area to an Array of objects for later use. Better to <code>JSON.stringify(bins)</code> and store in file.</p>
+<h4 id="packerloadbins" class="tsd-anchor-link"><code>packer.load(bins)</code><a href="#packerloadbins" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon-anchor" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></h4><p>Restore previous saved <code>let bins = JSON.parse(fs.readFileSync(savedFile, 'utf8'));</code> settings and overwrite current one. Continue packing and previous packed area will not be overlapped.</p>
+<h4 id="packerbins" class="tsd-anchor-link"><code>packer.bins</code><a href="#packerbins" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon-anchor" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></h4><p>Array of bins. Every bin has a <code>width</code> and <code>height</code> parameter as well as an array <code>rects</code>.</p>
+<h4 id="packerbinsnrects" class="tsd-anchor-link"><code>packer.bins[n].rects</code><a href="#packerbinsnrects" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon-anchor" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></h4><p>Array of rects for a specific bin. Every rect has <code>x</code>, <code>y</code>, <code>width</code>, <code>height</code>, <code>rot</code> and <code>data</code>. In case of an rect exceeding <code>maxWidth</code>/<code>maxHeight</code> there will also be an <code>oversized</code> flag set to <code>true</code>.</p>
+<h2 id="support-for-90-degree-rotation-packing" class="tsd-anchor-link">Support for 90-degree rotation packing<a href="#support-for-90-degree-rotation-packing" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon-anchor" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></h2><p>If <code>options.allowRotation</code> is set to <code>true</code>, packer will attempt to do an extra test in <code>findNode()</code> on rotated <code>Rectangle</code>. If the rotated one gives the best score, the given <code>Rectangle</code> will be rotated in the <code>Rectangle.rot</code> set to <code>true</code>.</p>
+<h2 id="support-for-tag-based-group-packing" class="tsd-anchor-link">Support for tag based group packing<a href="#support-for-tag-based-group-packing" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon-anchor" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></h2><p>If <code>options.tag</code> is set to <code>true</code>, packer will check if the input object has <code>tag: string</code> property, all input with same <code>tag</code> will be packed in the same bin.</p>
+<h2 id="support-for-oversized-rectangles" class="tsd-anchor-link">Support for oversized rectangles<a href="#support-for-oversized-rectangles" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon-anchor" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></h2><p>Normally all bins are of equal size or smaller than <code>maxWidth</code>/<code>maxHeight</code>. If a rect is added that individually does not fit into those constraints a special bin will be created. This bin will only contain a single rect with a special &quot;oversized&quot; flag. This can be handled further on in the chain by displaying an error/warning or by simply ignoring it.</p>
+<h2 id="packing-logic" class="tsd-anchor-link">Packing logic<a href="#packing-logic" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon-anchor" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></h2><p><code>options.logic</code> allows to change the method on how the algorithm selects the free spaces. There are three options:</p>
+<p><code>{option.logic = 0}</code> Logic is MAX_AREA, selects the free space with the smallest loss of area.</p>
+<p><code>{option.logic = 1}</code> Logic is MAX_EDGE, is default and selects the free space with the smallest loss of either width or height.</p>
+<p><code>{option.logic = 2}</code> Logic is FILL_WIDTH, fills the complete width first before placing elements in next row. To get the used height <code>bin.height</code> only gives correct values with options: <code>{pot: false, square: false}</code>. Best results also with <code>option.allowRotation = true</code></p>
+<h2 id="packing-algorithm" class="tsd-anchor-link">Packing algorithm<a href="#packing-algorithm" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon-anchor" width="1em" height="1em" stroke-width="1.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M14 11.9976C14 9.5059 11.683 7 8.85714 7C8.52241 7 7.41904 7.00001 7.14286 7.00001C4.30254 7.00001 2 9.23752 2 11.9976C2 14.376 3.70973 16.3664 6 16.8714C6.36756 16.9525 6.75006 16.9952 7.14286 16.9952" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 11.9976C10 14.4893 12.317 16.9952 15.1429 16.9952C15.4776 16.9952 16.581 16.9952 16.8571 16.9952C19.6975 16.9952 22 14.7577 22 11.9976C22 9.6192 20.2903 7.62884 18 7.12383C17.6324 7.04278 17.2499 6.99999 16.8571 6.99999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></h2><p>Use Max Rectangle Algorithm for packing, same as famous <strong>Texture Packer</strong></p>
+</div></main></div><footer class="page-footer"><div class="footer-content"><select id="theme-select"><option value="light">☀️   Light</option><option value="dark">🌙   Dark</option></select><div>TypeDoc 🤓 Unhoax Theme</div></div><hr/><small class="copyright"><span>Made with ❤️ by SacNoeuds</span><span>Copyright 2025</span></small></footer><div class="overlay"></div><script>window.ReflectionKind={"1":"Project","2":"Module","4":"Namespace","8":"Enum","16":"EnumMember","32":"Variable","64":"Function","128":"Class","256":"Interface","512":"Constructor","1024":"Property","2048":"Method","4096":"CallSignature","8192":"IndexSignature","16384":"ConstructorSignature","32768":"Parameter","65536":"TypeLiteral","131072":"TypeParameter","262144":"Accessor","524288":"GetSignature","1048576":"SetSignature","2097152":"TypeAlias","4194304":"Reference","8388608":"Document","Project":1,"Module":2,"Namespace":4,"Enum":8,"EnumMember":16,"Variable":32,"Function":64,"Class":128,"Interface":256,"Constructor":512,"Property":1024,"Method":2048,"CallSignature":4096,"IndexSignature":8192,"ConstructorSignature":16384,"Parameter":32768,"TypeLiteral":65536,"TypeParameter":131072,"Accessor":262144,"GetSignature":524288,"SetSignature":1048576,"TypeAlias":2097152,"Reference":4194304,"Document":8388608,"All":8388607,"ClassOrInterface":384,"VariableOrProperty":1056,"FunctionOrMethod":2112,"ClassMember":265728,"SomeSignature":1601536,"SomeModule":6,"SomeType":2294016,"SomeValue":96,"SomeMember":265232,"SomeExport":6291950,"MayContainDocuments":14680559,"ExportContainer":7,"Inheritable":273920,"ContainsCallSignatures":2624,"TypeReferenceTarget":2097544,"ValueReferenceTarget":102,"SignatureContainer":264768,"VariableContainer":7,"MethodContainer":69088}
+window.basePath="//"</script><script type="module" src="assets/init-app.js"></script></body></html>
