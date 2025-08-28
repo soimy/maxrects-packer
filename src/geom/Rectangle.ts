@@ -9,22 +9,18 @@ export interface IRectangle {
 export class Rectangle implements IRectangle {
     /**
      * Oversized tag on rectangle which is bigger than packer itself.
-     *
-     * @type {boolean}
-     * @memberof Rectangle
      */
     public oversized: boolean = false;
 
     /**
      * Creates an instance of Rectangle.
      *
-     * @param {number} [width=0]
-     * @param {number} [height=0]
-     * @param {number} [x=0]
-     * @param {number} [y=0]
-     * @param {boolean} [rot=false]
-     * @param {boolean} [allowRotation=false]
-     * @memberof Rectangle
+     * @param width - width of the rectangle (default is 0)
+     * @param height - height of the rectangle (default is 0)
+     * @param x - x position of the rectangle (default is 0)
+     * @param y - y position of the rectangle (default is 0)
+     * @param rot - rotation flag (default is false)
+     * @param allowRotation - allow rotation flag (default is undefined)
      */
     constructor (
         width: number = 0,
@@ -46,39 +42,33 @@ export class Rectangle implements IRectangle {
     /**
      * Test if two given rectangle collide each other
      *
-     * @static
-     * @param {IRectangle} first
-     * @param {IRectangle} second
-     * @returns
-     * @memberof Rectangle
+     * @param first - first rectangle
+     * @param second - second rectangle
+     * @returns true if rectangles collide
      */
     public static Collide (first: IRectangle, second: IRectangle) { return first.collide(second); }
 
     /**
      * Test if the first rectangle contains the second one
      *
-     * @static
-     * @param {IRectangle} first
-     * @param {IRectangle} second
-     * @returns
-     * @memberof Rectangle
+     * @param first - first rectangle
+     * @param second - second rectangle
+     * @returns true if first rectangle contains the second
      */
     public static Contain (first: IRectangle, second: IRectangle) { return first.contain(second); }
 
     /**
      * Get the area (w * h) of the rectangle
      *
-     * @returns {number}
-     * @memberof Rectangle
+     * @returns The area of the rectangle
      */
     public area (): number { return this.width * this.height; }
 
     /**
      * Test if the given rectangle collide with this rectangle.
      *
-     * @param {IRectangle} rect
-     * @returns {boolean}
-     * @memberof Rectangle
+     * @param rect - rectangle to test collision with
+     * @returns true if rectangles collide
      */
     public collide (rect: IRectangle): boolean {
         return (
@@ -92,9 +82,8 @@ export class Rectangle implements IRectangle {
     /**
      * Test if this rectangle contains the given rectangle.
      *
-     * @param {IRectangle} rect
-     * @returns {boolean}
-     * @memberof Rectangle
+     * @param rect - rectangle to test containment
+     * @returns true if this rectangle contains the given rectangle
      */
     public contain (rect: IRectangle): boolean {
         return (rect.x >= this.x && rect.y >= this.y &&
@@ -137,9 +126,6 @@ export class Rectangle implements IRectangle {
 
     /**
      * If the rectangle is rotated
-     *
-     * @type {boolean}
-     * @memberof Rectangle
      */
     get rot (): boolean { return this._rot; }
 
@@ -147,8 +133,6 @@ export class Rectangle implements IRectangle {
      * Set the rotate tag of the rectangle.
      *
      * note: after `rot` is set, `width/height` of this rectangle is swaped.
-     *
-     * @memberof Rectangle
      */
     set rot (value: boolean) {
         if (this._allowRotation === false) return;
@@ -166,16 +150,11 @@ export class Rectangle implements IRectangle {
 
     /**
      * If the rectangle allow rotation
-     *
-     * @type {boolean}
-     * @memberof Rectangle
      */
     get allowRotation (): boolean | undefined { return this._allowRotation; }
 
     /**
      * Set the allowRotation tag of the rectangle.
-     *
-     * @memberof Rectangle
      */
     set allowRotation (value: boolean | undefined) {
         if (this._allowRotation !== value) {

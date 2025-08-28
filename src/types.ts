@@ -10,16 +10,14 @@ export enum PACKING_LOGIC {
 /**
  * Options for MaxRect Packer
  *
- * @property {boolean} options.smart Smart sizing packer (default is true)
- * @property {boolean} options.pot use power of 2 sizing (default is true)
- * @property {boolean} options.square use square size (default is false)
- * @property {boolean} options.allowRotation allow rotation packing (default is false)
- * @property {boolean} options.tag allow auto grouping based on `rect.tag` (default is false)
- * @property {boolean} options.exclusiveTag tagged rects will have dependent bin, if set to `false`, packer will try to put tag rects into the same bin (default is true)
- * @property {boolean} options.border atlas edge spacing (default is 0)
- * @property {PACKING_LOGIC} options.logic MAX_AREA or MAX_EDGE based sorting logic (default is MAX_EDGE)
- * @export
- * @interface Option
+ * @property smart - Smart sizing packer (default is true)
+ * @property pot - use power of 2 sizing (default is true)
+ * @property square - use square size (default is false)
+ * @property allowRotation - allow rotation packing (default is false)
+ * @property tag - allow auto grouping based on `rect.tag` (default is false)
+ * @property exclusiveTag - tagged rects will have dependent bin, if set to `false`, packer will try to put tag rects into the same bin (default is true)
+ * @property border - atlas edge spacing (default is 0)
+ * @property logic - MAX_AREA or MAX_EDGE based sorting logic (default is MAX_EDGE)
  */
 export interface IOption {
     smart?: boolean

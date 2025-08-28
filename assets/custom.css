@@ -1,0 +1,21 @@
+/* Custom CSS for TypeDoc with Favicon */
+
+/* Add favicon to the site title in header */
+.header-logo::before {
+    content: "";
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background-image: url('./favicon.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+/* Ensure the title container can accommodate the favicon */
+.header-logo {
+    display: flex;
+    align-items: center;
+}
+

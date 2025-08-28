@@ -32,8 +32,6 @@ export abstract class Bin<T extends IRectangle> implements IBin {
     get dirty (): boolean { return this._dirty > 0 || this.rects.some(rect => rect.dirty); }
     /**
      * Set bin dirty status
-     *
-     * @memberof Bin
      */
     public setDirty (value: boolean = true): void {
         this._dirty = value ? this._dirty + 1 : 0;

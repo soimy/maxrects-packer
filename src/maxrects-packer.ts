@@ -11,25 +11,20 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
 
     /**
      * The Bin array added to the packer
-     *
-     * @type {Bin[]}
-     * @memberof MaxRectsPacker
      */
     public bins: Bin<T>[];
 
     /**
      * Options for MaxRect Packer
      *
-     * @property {boolean} options.smart Smart sizing packer (default is true)
-     * @property {boolean} options.pot use power of 2 sizing (default is true)
-     * @property {boolean} options.square use square size (default is false)
-     * @property {boolean} options.allowRotation allow rotation packing (default is false)
-     * @property {boolean} options.tag allow auto grouping based on `rect.tag` (default is false)
-     * @property {boolean} options.exclusiveTag tagged rects will have dependent bin, if set to `false`, packer will try to put tag rects into the same bin (default is true)
-     * @property {boolean} options.border atlas edge spacing (default is 0)
-     * @property {PACKING_LOGIC} options.logic MAX_AREA or MAX_EDGE based sorting logic (default is MAX_EDGE)
-     * @export
-     * @interface Option
+     * @property smart - Smart sizing packer (default is true)
+     * @property pot - use power of 2 sizing (default is true)
+     * @property square - use square size (default is false)
+     * @property allowRotation - allow rotation packing (default is false)
+     * @property tag - allow auto grouping based on `rect.tag` (default is false)
+     * @property exclusiveTag - tagged rects will have dependent bin, if set to `false`, packer will try to put tag rects into the same bin (default is true)
+     * @property border - atlas edge spacing (default is 0)
+     * @property logic - MAX_AREA or MAX_EDGE based sorting logic (default is MAX_EDGE)
      */
     public options: IOption = {
         smart: true,
@@ -45,11 +40,10 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     /**
      * Creates an instance of MaxRectsPacker.
      *
-     * @param {number} width of the output atlas (default is 4096)
-     * @param {number} height of the output atlas (default is 4096)
-     * @param {number} padding between glyphs/images (default is 0)
-     * @param {IOption} [options={}] (Optional) packing options
-     * @memberof MaxRectsPacker
+     * @param width - width of the output atlas (default is 4096)
+     * @param height - height of the output atlas (default is 4096)
+     * @param padding - padding between glyphs/images (default is 0)
+     * @param options - (Optional) packing options
      */
     constructor (
         public width: number = EDGE_MAX_VALUE,
@@ -64,18 +58,15 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     /**
      * Add a bin/rectangle object with data to packer
      *
-     * @param {number} width of the input bin/rectangle
-     * @param {number} height of the input bin/rectangle
-     * @param {*} data custom data object
-     * @memberof MaxRectsPacker
+     * @param width - width of the input bin/rectangle
+     * @param height - height of the input bin/rectangle
+     * @param data - custom data object
      */
     public add (width: number, height: number, data: any): T;
     /**
      * Add a bin/rectangle object extends IRectangle to packer
      *
-     * @template T Generic type extends IRectangle interface
-     * @param {T} rect the rect object add to the packer bin
-     * @memberof MaxRectsPacker
+     * @param rect - the rect object add to the packer bin
      */
     public add (rect: T): T;
     public add (...args: any[]): any {
@@ -114,7 +105,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
         }
     }
 
-    /**
+     /**
      * Add an Array of bins/rectangles to the packer.
      *
      * `Javascript`: Any object has property: { width, height, ... } is accepted.
@@ -123,8 +114,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      *
      * note: object has `hash` property will have more stable packing result
      *
-     * @param {IRectangle[]} rects Array of bin/rectangles
-     * @memberof MaxRectsPacker
+     * @param rects - Array of bin/rectangles
      */
      public addArray (rects: T[]) {
         if (!this.options.tag || this.options.exclusiveTag) {
@@ -209,8 +199,6 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
 
     /**
      * Reset entire packer to initial states, keep settings
-     *
-     * @memberof MaxRectsPacker
      */
     public reset (): void {
         this.bins = [];
@@ -220,9 +208,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     /**
      * Repack all elements inside bins
      *
-     * @param {boolean} [quick=true] quick repack only dirty bins
-     * @returns {void}
-     * @memberof MaxRectsPacker
+     * @param quick - quick repack only dirty bins (default is true)
      */
     public repack (quick: boolean = true): void {
         if (quick) {
@@ -247,8 +233,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      *
      * note: After calling `next()` all elements will no longer added to previous bins.
      *
-     * @returns {Bin}
-     * @memberof MaxRectsPacker
+     * @returns The current bin index
      */
     public next (): number {
         this._currentBinIndex = this.bins.length;
@@ -258,8 +243,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     /**
      * Load bins to the packer, overwrite exist bins
      *
-     * @param {MaxRectsBin[]} bins MaxRectsBin objects
-     * @memberof MaxRectsPacker
+     * @param bins - MaxRectsBin objects
      */
     public load (bins: IBin[]) {
         bins.forEach((bin, index) => {
@@ -281,8 +265,6 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
 
     /**
      * Output current bins to save
-     *
-     * @memberof MaxRectsPacker
      */
     public save (): IBin[] {
         let saveBins: IBin[] = [];
@@ -316,10 +298,8 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * If rects have the same sort value, will sort by second key `hash` if presented.
      *
      * @private
-     * @param {T[]} rects
-     * @param {PACKING_LOGIC} [logic=PACKING_LOGIC.MAX_EDGE] sorting logic, "area" or "edge"
-     * @returns
-     * @memberof MaxRectsPacker
+     * @param rects - array of rectangles to sort
+     * @param logic - sorting logic, "area" or "edge" (default is MAX_EDGE)
      */
     private sort (rects: T[], logic: IOption['logic'] = PACKING_LOGIC.MAX_EDGE) {
         return rects.slice().sort((a, b) => {
@@ -335,28 +315,16 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     private _currentBinIndex: number = 0;
     /**
      * Return current functioning bin index, perior to this wont accept any new elements
-     *
-     * @readonly
-     * @type {number}
-     * @memberof MaxRectsPacker
      */
     get currentBinIndex (): number { return this._currentBinIndex; }
 
     /**
      * Returns dirty status of all child bins
-     *
-     * @readonly
-     * @type {boolean}
-     * @memberof MaxRectsPacker
      */
     get dirty (): boolean { return this.bins.some(bin => bin.dirty); }
 
     /**
      * Return all rectangles in this packer
-     *
-     * @readonly
-     * @type {T[]}
-     * @memberof MaxRectsPacker
      */
     get rects (): T[] {
         let allRects: T[] = [];
