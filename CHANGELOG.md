@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.7.4](https://github.com/soimy/maxrects-packer/compare/v2.7.3...v2.7.4) (2025-08-28)
+
+
+### Bug Fixes
+
+* circular dependencies on maxracts-packer.ts ([1172feb](https://github.com/soimy/maxrects-packer/commit/1172feb0c702a6d8e7416aab3f0ef92d359d4066))
+
 ### [2.7.3](https://github.com/soimy/maxrects-packer/compare/v2.7.2...v2.7.3) (2022-02-02)
 
 
