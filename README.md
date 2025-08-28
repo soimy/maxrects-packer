@@ -1,4 +1,4 @@
-# Max Rects Packer
+# ![icon](./assets/favicon32.png) Max Rects Packer
 
 [![Node.js CI](https://github.com/soimy/maxrects-packer/actions/workflows/node.js.yml/badge.svg)](https://github.com/soimy/maxrects-packer/actions/workflows/node.js.yml)
 [![codecov](https://codecov.io/gh/soimy/maxrects-packer/branch/master/graph/badge.svg)](https://codecov.io/gh/soimy/maxrects-packer)
@@ -14,7 +14,7 @@ It differs from the long list of similar packages by its packing approach: Inste
 
 And you can also save/load to reuse packer to add new sprites. (Below is a demo atlas packed with two difference bitmap fonts)
 
-![Preview image](https://raw.githubusercontent.com/soimy/maxrects-packer/master/preview.png)
+![Preview image](./assets/preview.png)
 
 ## [Changelog](https://github.com/soimy/maxrects-packer/blob/master/CHANGELOG.md)
 
