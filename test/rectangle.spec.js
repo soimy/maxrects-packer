@@ -1,6 +1,6 @@
 "use strict";
 
-const Rectangle = require("../dist/maxrects-packer").Rectangle;
+const Rectangle = require("../src/geom/Rectangle").Rectangle;
 
 const bigRect = new Rectangle(512, 512, 0, 0);
 const containedRect = new Rectangle(256, 256, 16, 128);

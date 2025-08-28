@@ -1,7 +1,7 @@
 "use strict";
 
-let OversizedElementBin = require("../dist/maxrects-packer").OversizedElementBin;
-let Rectangle = require("../dist/maxrects-packer").Rectangle;
+let OversizedElementBin = require("../src/oversized-element-bin").OversizedElementBin;
+let Rectangle = require("../src/geom/Rectangle").Rectangle;
 
 const oversizedRect = new Rectangle(2000, 2000);
 oversizedRect.data = {foo: "bar"};

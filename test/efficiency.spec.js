@@ -1,7 +1,7 @@
 "use strict";
 
-let MaxRectsPacker = require("../dist/maxrects-packer").MaxRectsPacker;
-let PACKING_LOGIC = require("../dist/maxrects-packer").PACKING_LOGIC;
+let MaxRectsPacker = require("../src/maxrects-packer").MaxRectsPacker;
+let PACKING_LOGIC = require("../src/maxrects-packer").PACKING_LOGIC;
 let AsciiTable = require("ascii-table");
 
 const SCENARIOS = require("./scenarios.json");

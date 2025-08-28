@@ -1,8 +1,8 @@
 "use strict";
 
-let MaxRectsPacker = require("../dist/maxrects-packer").MaxRectsPacker;
-let PACKING_LOGIC = require("../dist/maxrects-packer").PACKING_LOGIC;
-let Rectangle = require("../dist/maxrects-packer").Rectangle;
+let MaxRectsPacker = require("../src/maxrects-packer").MaxRectsPacker;
+let PACKING_LOGIC = require("../src/maxrects-packer").PACKING_LOGIC;
+let Rectangle = require("../src/geom/Rectangle").Rectangle;
 
 const opt = {
     smart: true,
