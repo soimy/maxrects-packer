@@ -34,6 +34,9 @@ build/Release
 dist
 lib
 
+# Git worktrees (default worktree location for this repo)
+.worktrees/
+
 # Dependency directories
 node_modules/
 jspm_packages/
