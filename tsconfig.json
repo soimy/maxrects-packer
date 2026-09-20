@@ -8,6 +8,7 @@
     // "allowJs": true,                       /* Allow javascript files to be compiled. */
     // "checkJs": true,                       /* Report errors in .js files. */
     // "jsx": "preserve",                     /* Specify JSX code generation: 'preserve', 'react-native', or 'react'. */
+    "ignoreDeprecations": "6.0",              /* TS6 requires this for baseUrl / moduleResolution=node10 / target=es5, all still used below */
     "declaration": true,                      /* Generates corresponding '.d.ts' file. */
     "declarationDir": "./lib/types",
     "sourceMap": true,                        /* Generates corresponding '.map' file. */
