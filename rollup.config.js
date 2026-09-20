@@ -9,19 +9,22 @@ const config = [
             { file: "dist/maxrects-packer.js", name: "MaxRectsPacker", format: "umd", sourcemap: true },
             { file: "dist/maxrects-packer.mjs", format: "es", sourcemap: true }
         ],
-        plugins: [ typescript({
-            tsconfig: "./tsconfig.build.json"
-        })]
+        plugins: [
+            typescript({
+                tsconfig: "./tsconfig.build.json"
+            })
+        ]
     },
     {
         input: "./src/index.ts",
         // uglified transpiled typescript in commonjs
-        output: [
-            { file: "dist/maxrects-packer.min.js", format: "cjs", sourcemap: false }
-        ],
-        plugins: [ terser(), typescript({
-            tsconfig: "./tsconfig.build.json"
-        }) ]
+        output: [{ file: "dist/maxrects-packer.min.js", format: "cjs", sourcemap: false }],
+        plugins: [
+            terser(),
+            typescript({
+                tsconfig: "./tsconfig.build.json"
+            })
+        ]
     }
 ];
 export default config;

@@ -4,7 +4,7 @@ export const EDGE_MIN_VALUE: number = 128;
 export enum PACKING_LOGIC {
     MAX_AREA = 0,
     MAX_EDGE = 1,
-    FILL_WIDTH = 2,
+    FILL_WIDTH = 2
 }
 
 /**
@@ -20,12 +20,12 @@ export enum PACKING_LOGIC {
  * @property {PACKING_LOGIC} logic - MAX_AREA or MAX_EDGE based sorting logic (default is MAX_EDGE)
  */
 export interface IOption {
-    smart?: boolean
-    pot?: boolean
-    square?: boolean
-    allowRotation?: boolean
-    tag?: boolean
-    exclusiveTag?: boolean
-    border?: number
-    logic?: PACKING_LOGIC
+    smart?: boolean;
+    pot?: boolean;
+    square?: boolean;
+    allowRotation?: boolean;
+    tag?: boolean;
+    exclusiveTag?: boolean;
+    border?: number;
+    logic?: PACKING_LOGIC;
 }

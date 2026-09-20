@@ -19,8 +19,8 @@
     "cover": "npm run build:clean && jest --coverage",
     "lint": "oxlint src test",
     "lint:fix": "oxlint --fix src test",
-    "format": "oxfmt src test \"*.js\"",
-    "format:check": "oxfmt --check src test \"*.js\"",
+    "format": "oxfmt \"src/**/*.ts\" \"test/**/*.js\" \"*.js\"",
+    "format:check": "oxfmt --check \"src/**/*.ts\" \"test/**/*.js\" \"*.js\"",
     "version": "standard-version",
     "prepare-release": "npm run test && npm run version"
   },

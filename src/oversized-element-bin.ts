@@ -12,12 +12,12 @@ export class OversizedElementBin<T extends IRectangle = Rectangle> extends Bin<T
     public rects: T[] = [];
     public freeRects: IRectangle[];
 
-    constructor (rect: T);
-    constructor (width: number, height: number, data: any);
-    constructor (...args: any[]) {
+    constructor(rect: T);
+    constructor(width: number, height: number, data: any);
+    constructor(...args: any[]) {
         super();
         if (args.length === 1) {
-            if (typeof args[0] !== 'object') throw new Error("OversizedElementBin: Wrong parameters");
+            if (typeof args[0] !== "object") throw new Error("OversizedElementBin: Wrong parameters");
             const rect = args[0];
             this.rects = [rect];
             this.width = rect.width;
@@ -39,11 +39,15 @@ export class OversizedElementBin<T extends IRectangle = Rectangle> extends Bin<T
         this.options = { smart: false, pot: false, square: false };
     }
 
-    add () { return undefined; }
-    reset (_deepReset: boolean = false): void {
+    add() {
+        return undefined;
+    }
+    reset(_deepReset: boolean = false): void {
         // nothing to do here
     }
-    repack (): T[] | undefined { return undefined; }
+    repack(): T[] | undefined {
+        return undefined;
+    }
     clone(): Bin<T> {
         let clonedBin: OversizedElementBin<T> = new OversizedElementBin<T>(this.rects[0]);
         return clonedBin;
