@@ -1,0 +1,47 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "typescript",
+    "import",
+    "jsdoc",
+    "jest",
+    "unicorn",
+    "oxc",
+    "node"
+  ],
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {
+    "no-console": "warn",
+    "no-debugger": "error",
+    "no-prototype-builtins": "error",
+    "no-unused-vars": "warn",
+    "no-unneeded-ternary": "warn",
+    "jsdoc/require-property-type": "warn",
+
+    // 公开 API 的 `data` 载荷刻意不约束类型（IRectangle 也带索引签名）
+    "typescript/no-explicit-any": "off",
+    // 受保护字段用 `_` 前缀是本库约定（Rectangle._width/_dirty 等）
+    "no-underscore-dangle": "off",
+    // 产物目标 ES5，且 MaxRectsBin.repack() 需要原地排序 rects
+    "unicorn/no-array-sort": "off",
+
+    // test/maxrects-bin.spec.js 的 monkey 测试刻意在循环/条件里断言；
+    // test/efficiency.spec.js 的两张对照表刻意 test.skip，需要时手工放开
+    "jest/no-conditional-expect": "off",
+    "jest/no-disabled-tests": "off"
+  },
+  "overrides": [
+    {
+      "files": ["test/**/*.js"],
+      "env": {
+        "jest": true,
+        "node": true
+      },
+      "rules": {
+        "jest/expect-expect": "off"
+      }
+    }
+  ]
+}
