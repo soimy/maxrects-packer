@@ -87,7 +87,11 @@ describe("#add", () => {
     });
 
     test("adds to bins with non-exclusive tag matching", () => {
-        packer.options = {...packer.options, ...{tag: true, exclusiveTag: false}};
+        packer.options = ({
+	...packer.options,
+	tag: true,
+	exclusiveTag: false
+});
         let input = [
             {width: 512, height: 512, data: {}},
             {width: 512, height: 512, data: {tag: "one"}},
@@ -278,7 +282,10 @@ describe("misc functionalities", () => {
     });
 
     test("quick repack & deep repack", () => {
-        packer = new MaxRectsPacker(1024, 1024, 0, {...opt, ...{ tag: true }});
+        packer = new MaxRectsPacker(1024, 1024, 0, ({
+	...opt,
+	tag: true
+}));
         let rect = packer.add(1024, 512, {hash: "6"});
         packer.add(512, 512, {hash: "5"});
         packer.add(512, 512, {hash: "4"});
@@ -302,7 +309,11 @@ describe("misc functionalities", () => {
     });
 
     test("Packer allow rotation", () => {
-        packer = new MaxRectsPacker(500, 400, 1, {...opt, ...{ smart: false, allowRotation: true }});
+        packer = new MaxRectsPacker(500, 400, 1, ({
+	...opt,
+	smart: false,
+	allowRotation: true
+}));
         packer.add(398, 98);
         packer.add(398, 98);
         packer.add(398, 98);
@@ -311,7 +322,11 @@ describe("misc functionalities", () => {
     });
 
     test("Per rectangle allow rotation", () => {
-        packer = new MaxRectsPacker(500, 400, 1, {...opt, ...{ smart: false, allowRotation: true }});
+        packer = new MaxRectsPacker(500, 400, 1, ({
+	...opt,
+	smart: false,
+	allowRotation: true
+}));
         packer.add(448, 98);
         packer.add(448, 98);
         packer.add(448, 98);
@@ -321,7 +336,11 @@ describe("misc functionalities", () => {
         expect(packer.bins.length).toBe(2);
         expect(x.rot).toBe(false);
 
-        packer = new MaxRectsPacker(500, 400, 1, {...opt, ...{ smart: false, allowRotation: false}});
+        packer = new MaxRectsPacker(500, 400, 1, ({
+	...opt,
+	smart: false,
+	allowRotation: false
+}));
         packer.add(448, 98);
         packer.add(448, 98);
         packer.add(448, 98);

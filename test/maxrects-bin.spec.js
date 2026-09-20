@@ -4,8 +4,6 @@
 let MaxRectsBin = require("../src/maxrects-bin").MaxRectsBin;
 let Rectangle = require("../src/geom/Rectangle").Rectangle;
 
-const EDGE_MAX_VALUE = 4096;
-const EDGE_MIN_VALUE = 128;
 const opt = {
     smart: true,
     pot: true,
@@ -99,7 +97,7 @@ describe("no padding", () => {
 
     test("tagged bin reject different tagged rects on exclusive tag mode", () => {
         bin.tag = "foo";
-        let one = bin.add({width: 200, height: 100, tag: "foo"});
+        bin.add({width: 200, height: 100, tag: "foo"});
         let two = bin.add({width: 200, height: 100, tag: "bar"});
         expect(bin.rects.length).toBe(1);
         expect(bin.rects[0].tag).toBe("foo");
@@ -109,7 +107,7 @@ describe("no padding", () => {
     test("tagged bin accept different tagged rects on non-exclusive tag mode", () => {
         bin.tag = "foo";
         bin.options.exclusiveTag = false;
-        let one = bin.add({width: 200, height: 100, tag: "foo"});
+        bin.add({width: 200, height: 100, tag: "foo"});
         let two = bin.add({width: 200, height: 100, tag: "bar"});
         expect(bin.rects.length).toBe(2);
         expect(bin.rects[0].tag).toBe("foo");
@@ -155,9 +153,9 @@ describe("no padding", () => {
     });
 
     test("repack", () => {
-        let rect1 = bin.add({width: 512, height: 512, id: "one"});
+        bin.add({width: 512, height: 512, id: "one"});
         let rect2 = bin.add({width: 512, height: 512, id: "two"});
-        let rect3 = bin.add({width: 512, height: 512, id: "three"});
+        bin.add({width: 512, height: 512, id: "three"});
         rect2.width = 1024;
         rect2.height = 513;
         let unpacked = bin.repack();
@@ -267,7 +265,7 @@ describe("padding", () => {
                 if (rect1 !== rect2) {
                     try {
                         expect(rect1.collide(rect2)).toBe(false);
-                    } catch (e) {
+                    } catch {
                         throw new Error("intersection detected: " + JSON.stringify(rect1) + " " + JSON.stringify(rect2));
                     }
                 }
@@ -287,7 +285,11 @@ let border = 5;
 
 describe("border", () => {
     beforeEach(() => {
-        const borderOpt = {...opt, ...{border: border, square: false}};
+        const borderOpt = ({
+	...opt,
+	border,
+	square: false
+});
         bin = new MaxRectsBin(1024, 1024, padding, borderOpt);
     });
 
@@ -325,7 +327,11 @@ describe("border", () => {
         while (repeat > 0) {
             padding = Math.floor(Math.random() * 10);
             border = Math.floor(Math.random() * 20);
-            const borderOpt = {...opt, ...{border: border, square: false}};
+            const borderOpt = ({
+	...opt,
+	border,
+	square: false
+});
             bin = new MaxRectsBin(1024, 1024, padding, borderOpt);
 
             let rects = [];
@@ -353,7 +359,7 @@ describe("border", () => {
                     if (rect1 !== rect2) {
                         try {
                             expect(rect1.collide(rect2)).toBe(false);
-                        } catch (e) {
+                        } catch {
                             throw new Error("intersection detected: " + JSON.stringify(rect1) + " " + JSON.stringify(rect2));
                         }
                     }

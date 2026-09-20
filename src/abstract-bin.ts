@@ -1,4 +1,4 @@
-import { IRectangle, Rectangle } from "./geom/Rectangle";
+import { IRectangle } from "./geom/Rectangle";
 import { IOption } from "./types";
 
 export interface IBin {

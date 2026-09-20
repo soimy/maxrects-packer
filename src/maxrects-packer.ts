@@ -2,7 +2,7 @@ import { Rectangle, IRectangle } from "./geom/Rectangle";
 import { MaxRectsBin } from "./maxrects-bin";
 import { OversizedElementBin } from "./oversized-element-bin";
 import { Bin, IBin } from "./abstract-bin";
-import { EDGE_MAX_VALUE, EDGE_MIN_VALUE, PACKING_LOGIC, IOption } from "./types";
+import { EDGE_MAX_VALUE, PACKING_LOGIC, IOption } from "./types";
 
 // Re-export types for backward compatibility
 export { EDGE_MAX_VALUE, EDGE_MIN_VALUE, PACKING_LOGIC, IOption } from "./types";
@@ -15,16 +15,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     public bins: Bin<T>[];
 
     /**
-     * Options for MaxRect Packer
-     *
-     * @property smart - Smart sizing packer (default is true)
-     * @property pot - use power of 2 sizing (default is true)
-     * @property square - use square size (default is false)
-     * @property allowRotation - allow rotation packing (default is false)
-     * @property tag - allow auto grouping based on `rect.tag` (default is false)
-     * @property exclusiveTag - tagged rects will have dependent bin, if set to `false`, packer will try to put tag rects into the same bin (default is true)
-     * @property border - atlas edge spacing (default is 0)
-     * @property logic - MAX_AREA or MAX_EDGE based sorting logic (default is MAX_EDGE)
+     * Options for MaxRect Packer, see {@link IOption} for the full list and defaults.
      */
     public options: IOption = {
         smart: true,
@@ -133,7 +124,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
             //
             let currentTag: any;
             let currentIdx: number = 0;
-            let targetBin = this.bins.slice(this._currentBinIndex).find((bin, binIndex) => {
+            let targetBin = this.bins.slice(this._currentBinIndex).find((bin) => {
                 let testBin = bin.clone();
                 for (let i = currentIdx; i < rects.length; i++) {
                     const rect = rects[i];
@@ -252,7 +243,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
             } else {
                 let newBin = new MaxRectsBin<T>(this.width, this.height, this.padding, bin.options);
                 newBin.freeRects.splice(0);
-                bin.freeRects.forEach((r, i) => {
+                bin.freeRects.forEach((r) => {
                     newBin.freeRects.push(new Rectangle(r.width, r.height, r.x, r.y));
                 });
                 newBin.width = bin.width;

@@ -131,7 +131,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         let node: IRectangle | undefined;
         let allowRotation: boolean | undefined;
         // getter/setter do not support hasOwnProperty()
-        if (rect.hasOwnProperty("_allowRotation") && rect.allowRotation !== undefined) {
+        if (Object.prototype.hasOwnProperty.call(rect, "_allowRotation") && rect.allowRotation !== undefined) {
             allowRotation = rect.allowRotation; // Per Rectangle allowRotation override packer settings
         } else {
             allowRotation = this.options.allowRotation;
@@ -151,7 +151,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
                 i++;
             }
             this.pruneFreeList();
-            this.verticalExpand = this.options.logic === PACKING_LOGIC.FILL_WIDTH ? false : this.width > this.height ? true : false;
+            this.verticalExpand = this.options.logic !== PACKING_LOGIC.FILL_WIDTH && this.width > this.height;
             rect.x = node.x;
             rect.y = node.y;
             if (rect.rot === undefined) rect.rot = false;
@@ -362,7 +362,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
     }
 
     private expandFreeRects (width: number, height: number) {
-        this.freeRects.forEach((freeRect, index) => {
+        this.freeRects.forEach((freeRect) => {
             if (freeRect.x + freeRect.width >= Math.min(this.width + this.padding - this.border, width)) {
                 freeRect.width = width - freeRect.x - this.border;
             }

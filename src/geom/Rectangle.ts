@@ -169,7 +169,7 @@ export class Rectangle implements IRectangle {
         if (value === null || value === this._data) return;
         this._data = value;
         // extract allowRotation settings
-        if (typeof value === "object" && value.hasOwnProperty("allowRotation")) {
+        if (typeof value === "object" && Object.prototype.hasOwnProperty.call(value, "allowRotation")) {
             this._allowRotation = value.allowRotation;
         }
         this._dirty ++;

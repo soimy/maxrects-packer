@@ -40,7 +40,7 @@ export class OversizedElementBin<T extends IRectangle = Rectangle> extends Bin<T
     }
 
     add () { return undefined; }
-    reset (deepReset: boolean = false): void {
+    reset (_deepReset: boolean = false): void {
         // nothing to do here
     }
     repack (): T[] | undefined { return undefined; }
