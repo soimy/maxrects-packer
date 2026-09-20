@@ -92,6 +92,6 @@ git worktree remove .worktrees/<branch>            # 用完清理
 - `typedoc` 目前只支持到 TS 6 的 JS API（peer `… || 6.0.x`），这就是 `typescript` 必须保持 6.x 别名的原因；等 typedoc 支持 TS 7 才能把别名换成真正的 `typescript@7`。
 - `MaxRectsBin.reset(true, true)` 会把 `options` 整体换成残缺对象：缺 `exclusiveTag`/`logic`，且 `square` 变成 `true`（与类默认值不同）。
 - `packer.add(w, h, undefined)` 且 `options.tag === true` 时抛 `TypeError`（`rect.data.tag`；单参数分支有 `&&` 守卫，这条没有）。
-- 打包/入口：`package.json` 是 `"type": "module"`，`main` 指向 UMD 的 `dist/maxrects-packer.js`，Node 会按 ESM 解析它（导出为空）；ESM/bundler 用户实际可用的是 `module` → `dist/maxrects-packer.mjs`。
+- 打包/入口：`package.json` 是 `"type": "module"`，包内 `.js` 会被 Node 当 ESM 解析，所以 `main` 必须指向 `.cjs`（`dist/maxrects-packer.cjs`）——历史上 `main` 指过 UMD 的 `.js`，导致 `require()` 拿到空对象整整 3 年半。`npm run build` 后会自动跑 `scripts/verify-entry.mjs` 自检入口导出，别删这个 postbuild。目前仍没有 `exports` 字段，所以深路径导入（`maxrects-packer/dist/...`）可用；加 `exports` 会封闭深路径，属 breaking，留给 3.0.0。
 - 构建 `min.js` 那条 rollup 配置（`sourcemap: false`）会打一条 `Rollup 'sourcemap' option must be set to generate source maps` 的提示，属已知无害噪声。
 - `cz-conventional-changelog` 是唯一还没换掉的陈旧依赖（只服务于 commitizen 交互式提交），可换 commitlint 或直接删。
