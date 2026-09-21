@@ -164,7 +164,12 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                     }
 
                     // still in the same tag group
-                    if (testBin.add(rect) === undefined) {
+                    const testRect = { ...rect, rot:false, data: { ...rect.data } }
+                    if (testBin.add(testRect) === undefined) {
+                        // IMPORTANT:
+    +                   // Use a cloned rect for test placement to avoid mutating
+    +                   // the original rect (especially `rot`) during bin probing
+        
                         // add the rects that could fit into the bins already
                         // do addArray()
                         this.sort(rects.slice(currentIdx, i), this.options.logic).forEach(r => bin.add(r));
