@@ -8,9 +8,15 @@
   "types": "dist/maxrects-packer.d.ts",
   "files": [
     "dist",
+    "src",
+    "assets/custom.css",
+    "assets/custom.js",
+    "assets/favicon.ico",
     "CHANGELOG.md",
-    "assets/favicon32.png",
-    "assets/preview.png"
+    "tsconfig.json",
+    "tsconfig.build.json",
+    "typedoc.json",
+    "UPGRADE_SUMMARY.md"
   ],
   "scripts": {
     "clean": "rimraf ./dist ./lib",
