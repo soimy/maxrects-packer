@@ -4,15 +4,12 @@
 let MaxRectsBin = require("../src/maxrects-bin").MaxRectsBin;
 let Rectangle = require("../src/geom/Rectangle").Rectangle;
 
-const EDGE_MAX_VALUE = 4096;
-const EDGE_MIN_VALUE = 128;
 const opt = {
     smart: true,
     pot: true,
     square: false,
     allowRotation: false,
-    tag: true,
-
+    tag: true
 };
 
 let bin;
@@ -34,7 +31,7 @@ describe("no padding", () => {
     });
 
     test("edge case: only rotated version fits and should be set", () => {
-        const edgeCaseBin = new MaxRectsBin(256, 1024, 0, {allowRotation: true, pot: false});
+        const edgeCaseBin = new MaxRectsBin(256, 1024, 0, { allowRotation: true, pot: false });
         edgeCaseBin.add(260, 80);
         edgeCaseBin.add(260, 80);
         edgeCaseBin.add(260, 80);
@@ -60,7 +57,6 @@ describe("no padding", () => {
         expect(bin.dirty).toBe(true); // modify rects is dirty
     });
 
-
     test("updates size correctly", () => {
         bin.add(200, 100, {});
         expect(bin.width).toBe(256);
@@ -68,39 +64,39 @@ describe("no padding", () => {
     });
 
     test("stores data correctly", () => {
-        bin.add(200, 100, {foo: "bar"});
+        bin.add(200, 100, { foo: "bar" });
         expect(bin.rects[0].data.foo).toBe("bar");
     });
 
     test("set rotation correctly", () => {
-        bin = new MaxRectsBin(1024, 1024, 0, {...opt, allowRotation: true});
-        bin.add({width: 512, height: 1024});
-        bin.add({width: 1024, height: 512});
+        bin = new MaxRectsBin(1024, 1024, 0, { ...opt, allowRotation: true });
+        bin.add({ width: 512, height: 1024 });
+        bin.add({ width: 1024, height: 512 });
         expect(bin.rects.length).toBe(2);
         expect(bin.rects[1].rot).toBe(true);
         bin.reset(true);
-        bin.add({width: 512, height: 1024});
-        bin.add({width: 1024, height: 512, rot: true});
+        bin.add({ width: 512, height: 1024 });
+        bin.add({ width: 1024, height: 512, rot: true });
         expect(bin.rects.length).toBe(2);
         expect(bin.rects[1].rot).toBe(false);
     });
 
     test("stores custom rect correctly", () => {
-        bin.add({width: 200, height: 100, foo: "bar"});
+        bin.add({ width: 200, height: 100, foo: "bar" });
         expect(bin.rects[0].foo).toBe("bar");
     });
 
     test("none tag bin reject all tagged rects on exclusive tag mode", () => {
-        bin.add({width: 200, height: 100});
-        bin.add({width: 200, height: 100, tag: "foo"});
-        bin.add({width: 200, height: 100, tag: "bar"});
+        bin.add({ width: 200, height: 100 });
+        bin.add({ width: 200, height: 100, tag: "foo" });
+        bin.add({ width: 200, height: 100, tag: "bar" });
         expect(bin.rects.length).toBe(1);
     });
 
     test("tagged bin reject different tagged rects on exclusive tag mode", () => {
         bin.tag = "foo";
-        let one = bin.add({width: 200, height: 100, tag: "foo"});
-        let two = bin.add({width: 200, height: 100, tag: "bar"});
+        bin.add({ width: 200, height: 100, tag: "foo" });
+        let two = bin.add({ width: 200, height: 100, tag: "bar" });
         expect(bin.rects.length).toBe(1);
         expect(bin.rects[0].tag).toBe("foo");
         expect(two).toBeUndefined();
@@ -109,8 +105,8 @@ describe("no padding", () => {
     test("tagged bin accept different tagged rects on non-exclusive tag mode", () => {
         bin.tag = "foo";
         bin.options.exclusiveTag = false;
-        let one = bin.add({width: 200, height: 100, tag: "foo"});
-        let two = bin.add({width: 200, height: 100, tag: "bar"});
+        bin.add({ width: 200, height: 100, tag: "foo" });
+        let two = bin.add({ width: 200, height: 100, tag: "bar" });
         expect(bin.rects.length).toBe(2);
         expect(bin.rects[0].tag).toBe("foo");
         expect(two).toBeDefined();
@@ -118,7 +114,7 @@ describe("no padding", () => {
 
     test("fits squares correctly", () => {
         let i = 0;
-        while(bin.add(100, 100, {num: i})) {
+        while (bin.add(100, 100, { num: i })) {
             // circuit breaker
             if (i++ === 1000) {
                 break;
@@ -135,9 +131,9 @@ describe("no padding", () => {
     });
 
     test("reset & deep reset", () => {
-        bin.add({width: 200, height: 100});
-        bin.add({width: 200, height: 100});
-        bin.add({width: 200, height: 100});
+        bin.add({ width: 200, height: 100 });
+        bin.add({ width: 200, height: 100 });
+        bin.add({ width: 200, height: 100 });
         expect(bin.rects.length).toBe(3);
         expect(bin.width).toBe(512);
         bin.reset();
@@ -155,9 +151,9 @@ describe("no padding", () => {
     });
 
     test("repack", () => {
-        let rect1 = bin.add({width: 512, height: 512, id: "one"});
-        let rect2 = bin.add({width: 512, height: 512, id: "two"});
-        let rect3 = bin.add({width: 512, height: 512, id: "three"});
+        bin.add({ width: 512, height: 512, id: "one" });
+        let rect2 = bin.add({ width: 512, height: 512, id: "two" });
+        bin.add({ width: 512, height: 512, id: "three" });
         rect2.width = 1024;
         rect2.height = 513;
         let unpacked = bin.repack();
@@ -187,11 +183,14 @@ describe("no padding", () => {
         expect(bin.width).toBeLessThanOrEqual(1024);
         expect(bin.height).toBeLessThanOrEqual(1024);
 
-        rects.forEach(rect1 => {
+        rects.forEach((rect1) => {
             // Make sure rects are not overlapping
-            rects.forEach(rect2 => {
+            rects.forEach((rect2) => {
                 if (rect1 !== rect2) {
-                    expect(rect1.collide(rect2)).toBe(false, "intersection detected: " + JSON.stringify(rect1) + " " + JSON.stringify(rect2));
+                    expect(rect1.collide(rect2)).toBe(
+                        false,
+                        "intersection detected: " + JSON.stringify(rect1) + " " + JSON.stringify(rect2)
+                    );
                 }
             });
 
@@ -229,7 +228,12 @@ describe("padding", () => {
     });
 
     test("edge case: multiple rects with slightly bigger size then maxWidth should be placed rotated", () => {
-        const edgeCaseBin = new MaxRectsBin(256, 1024, padding, {allowRotation: true, pot: false, square: false, smart: true});
+        const edgeCaseBin = new MaxRectsBin(256, 1024, padding, {
+            allowRotation: true,
+            pot: false,
+            square: false,
+            smart: true
+        });
         edgeCaseBin.add(260, 80);
         edgeCaseBin.add(260, 80);
         edgeCaseBin.add(260, 80);
@@ -261,14 +265,16 @@ describe("padding", () => {
         expect(bin.width).toBeLessThanOrEqual(1024);
         expect(bin.height).toBeLessThanOrEqual(1024);
 
-        rects.forEach(rect1 => {
+        rects.forEach((rect1) => {
             // Make sure rects are not overlapping
-            rects.forEach(rect2 => {
+            rects.forEach((rect2) => {
                 if (rect1 !== rect2) {
                     try {
                         expect(rect1.collide(rect2)).toBe(false);
-                    } catch (e) {
-                        throw new Error("intersection detected: " + JSON.stringify(rect1) + " " + JSON.stringify(rect2));
+                    } catch {
+                        throw new Error(
+                            "intersection detected: " + JSON.stringify(rect1) + " " + JSON.stringify(rect2)
+                        );
                     }
                 }
             });
@@ -287,7 +293,11 @@ let border = 5;
 
 describe("border", () => {
     beforeEach(() => {
-        const borderOpt = {...opt, ...{border: border, square: false}};
+        const borderOpt = {
+            ...opt,
+            border,
+            square: false
+        };
         bin = new MaxRectsBin(1024, 1024, padding, borderOpt);
     });
 
@@ -325,7 +335,11 @@ describe("border", () => {
         while (repeat > 0) {
             padding = Math.floor(Math.random() * 10);
             border = Math.floor(Math.random() * 20);
-            const borderOpt = {...opt, ...{border: border, square: false}};
+            const borderOpt = {
+                ...opt,
+                border,
+                square: false
+            };
             bin = new MaxRectsBin(1024, 1024, padding, borderOpt);
 
             let rects = [];
@@ -347,14 +361,16 @@ describe("border", () => {
             expect(bin.width).toBeLessThanOrEqual(1024);
             expect(bin.height).toBeLessThanOrEqual(1024);
 
-            rects.forEach(rect1 => {
+            rects.forEach((rect1) => {
                 // Make sure rects are not overlapping
-                rects.forEach(rect2 => {
+                rects.forEach((rect2) => {
                     if (rect1 !== rect2) {
                         try {
                             expect(rect1.collide(rect2)).toBe(false);
-                        } catch (e) {
-                            throw new Error("intersection detected: " + JSON.stringify(rect1) + " " + JSON.stringify(rect2));
+                        } catch {
+                            throw new Error(
+                                "intersection detected: " + JSON.stringify(rect1) + " " + JSON.stringify(rect2)
+                            );
                         }
                     }
                 });
@@ -365,14 +381,14 @@ describe("border", () => {
                 expect(rect1.x + rect1.width).toBeLessThanOrEqual(bin.width - bin.options.border);
                 expect(rect1.y + rect1.height).toBeLessThanOrEqual(bin.height - bin.options.border);
             });
-            repeat --;
+            repeat--;
         }
     });
 });
 
 describe("logic FILL_WIDTH", () => {
     beforeEach(() => {
-        bin = new MaxRectsBin(1024, 512, 0, {allowRotation: true, logic: 2, pot: false, square: false});
+        bin = new MaxRectsBin(1024, 512, 0, { allowRotation: true, logic: 2, pot: false, square: false });
     });
 
     test("sets all elements along width with the smallest height", () => {
@@ -417,9 +433,9 @@ describe("logic FILL_WIDTH", () => {
             [300, 100],
             [300, 100],
             [300, 100],
-            [100, 600],
+            [100, 600]
         ];
-        rects.forEach(rect => bin.add(rect[0], rect[1]));
+        rects.forEach((rect) => bin.add(rect[0], rect[1]));
         expect([bin.rects[0].x, bin.rects[0].y]).toEqual([0, 0]);
         expect([bin.rects[1].x, bin.rects[1].y]).toEqual([300, 0]);
         expect([bin.rects[2].x, bin.rects[2].y]).toEqual([600, 0]);
@@ -435,5 +451,4 @@ describe("logic FILL_WIDTH", () => {
         expect(bin.width).toBe(1000);
         expect(bin.height).toBe(400);
     });
-
 });

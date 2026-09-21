@@ -43,7 +43,7 @@ describe("Rectangle", () => {
         rect.y = 32;
         expect(rect.dirty).toBe(true);
         rect.setDirty(false);
-        rect.data = {foo: "bar"};
+        rect.data = { foo: "bar" };
         expect(rect.dirty).toBe(true);
     });
 

@@ -1,22 +1,19 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    // 发布产物保持 ES5 兼容；TS6 起 es5 目标被标记为 deprecated（TS7 将移除），
+    // 这里显式声明以保留现有兼容性，迁移决定见 AGENTS.md「已知坑」
     "target": "es5",
+    "ignoreDeprecations": "6.0",
     "module": "esnext",
+    "rootDir": "./src",
     "declaration": true,
-    "declarationDir": "./lib/types",
-    "outDir": "./lib",
+    "declarationDir": "./dist",
+    "outDir": "./dist",
     "removeComments": true,
     "types": [],
     "forceConsistentCasingInFileNames": true
   },
-  "include": [
-    "./src/**/*"
-  ],
-  "exclude": [
-    "./test/**/*",
-    "./node_modules",
-    "./lib",
-    "./dist"
-  ]
+  "include": ["./src/**/*"],
+  "exclude": ["./test/**/*", "./node_modules", "./lib", "./dist"]
 }

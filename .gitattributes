@@ -1,0 +1,11 @@
+# 统一以 LF 存储与检出，避免 CRLF/LF 混存导致 diff 噪声与工具行为差异
+* text=auto eol=lf
+
+# 二进制资源不要做行尾转换
+*.png binary
+*.ico binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.woff binary
+*.woff2 binary

@@ -66,15 +66,27 @@ packer.addArray(input);
 
 ```
 
-## Test
+## Development
 
 ```bash
-npm test
+npm ci                # add --include=dev when NODE_ENV=production is set
+npm test              # build + unit tests (jest)
+npm run typecheck     # native TypeScript 7 type check
+npm run lint          # oxlint
+npm run format        # oxfmt (CI runs npm run format:check)
+npm run cover         # coverage report
+npm run doc           # typedoc -> docs/
 ```
+
+Toolchain: rollup + @rollup/plugin-typescript for bundling, jest + ts-jest for tests, oxlint/oxfmt
+for linting and formatting. `typescript` is aliased to `@typescript/typescript6` (the JS compiler API
+used by typedoc / ts-jest / rollup plugins) while `@typescript/native` provides the native
+TypeScript 7 `tsc` used for type checking — the official TypeScript 6/7 side-by-side setup.
 
 ## API
 
-Note: maxrects-packer requires node >= 4.0.0
+Note: the published bundle stays ES5-compatible with zero runtime dependencies; the development
+toolchain requires Node >= 20.19 (oxlint).
 
 #### ```new MaxRectsPacker(maxWidth, maxHeight[, padding, options])```
 
