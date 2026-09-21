@@ -48,7 +48,8 @@
 ```bash
 npm ci                       # 本机 NODE_ENV=production 会让 npm 省略 devDeps，必须加 --include=dev
 npm test                     # = rimraf dist + rollup 构建 + jest
-npm run typecheck            # 原生 TypeScript 7：tsc --noEmit -p tsconfig.json
+npm run typecheck            # 原生 TypeScript 7；scripts/typecheck.mjs 会先断言 tsc 版本再跑
+npm run verify:package       # npm pack → 装进临时消费者 → 用包名验证 require/import（需先 build）
 npm run lint                 # oxlint（基线是 0 warning / 0 error）
 npm run lint:fix             # oxlint --fix
 npm run format               # oxfmt 写回；CI 用 npm run format:check 只检查
@@ -92,6 +93,8 @@ git worktree remove .worktrees/<branch>            # 用完清理
 - `typedoc` 目前只支持到 TS 6 的 JS API（peer `… || 6.0.x`），这就是 `typescript` 必须保持 6.x 别名的原因；等 typedoc 支持 TS 7 才能把别名换成真正的 `typescript@7`。
 - `MaxRectsBin.reset(true, true)` 会把 `options` 整体换成残缺对象：缺 `exclusiveTag`/`logic`，且 `square` 变成 `true`（与类默认值不同）。
 - `packer.add(w, h, undefined)` 且 `options.tag === true` 时抛 `TypeError`（`rect.data.tag`；单参数分支有 `&&` 守卫，这条没有）。
-- 打包/入口：`package.json` 是 `"type": "module"`，包内 `.js` 会被 Node 当 ESM 解析，所以 `main` 必须指向 `.cjs`（`dist/maxrects-packer.cjs`）——历史上 `main` 指过 UMD 的 `.js`，导致 `require()` 拿到空对象整整 3 年半。`npm run build` 后会自动跑 `scripts/verify-entry.mjs` 自检入口导出，别删这个 postbuild。目前仍没有 `exports` 字段，所以深路径导入（`maxrects-packer/dist/...`）可用；加 `exports` 会封闭深路径，属 breaking，留给 3.0.0。
+- 打包/入口：`package.json` 是 `"type": "module"`，包内 `.js` 会被 Node 当 ESM 解析，所以 `main` 必须指向 `.cjs`（`dist/maxrects-packer.cjs`）——历史上 `main` 指过 UMD 的 `.js`，导致 `require()` 拿到空对象整整 3 年半。入口有两道门禁：`postbuild` 跑 `scripts/verify-entry.mjs`（快，验文件路径），CI 跑 `npm run verify:package`（慢，`npm pack` 出真实 tarball 装进临时消费者，用**包名**验 `require`/`import`）。改入口、`files` 或产物名之后两处都会拦你。目前仍没有 `exports` 字段，所以深路径导入（`maxrects-packer/dist/...`）可用；加 `exports` 会封闭深路径，属 breaking，留给 3.0.0。
+- 发布内容由 `package.json` 的 `files` allowlist 决定（`dist` + `CHANGELOG.md` + README 用到的两张 png）；**没有 `.npmignore`**，npm 会回落到 `.gitignore`，而 `.gitignore` 里有 `dist`/`lib`——`files` 优先，所以 dist 仍会进包（已用 `npm pack --dry-run` 验证）。`clean` 同时删 `dist` 与历史遗留的 `lib`。
+- `package-lock.json` 的 `resolved` 必须指向 `registry.npmjs.org`：本机用户级 npm 配了国内镜像，用镜像重生成 lockfile 会把全部绝对 tarball URL 写成镜像地址，别的网络环境 `npm ci` 就会失败（PR #68 review 的 P1 就是它）。重生成后请确认 `grep -c mirrors.cloud.tencent.com package-lock.json` 为 0；必要时 `sed` 把主机名规范化回 npmjs（路径结构与 integrity 不变），并用**空缓存** `npm ci --registry=https://registry.npmjs.org --cache <空目录>` 复验。
 - 构建 `min.js` 那条 rollup 配置（`sourcemap: false`）会打一条 `Rollup 'sourcemap' option must be set to generate source maps` 的提示，属已知无害噪声。
 - `cz-conventional-changelog` 是唯一还没换掉的陈旧依赖（只服务于 commitizen 交互式提交），可换 commitlint 或直接删。

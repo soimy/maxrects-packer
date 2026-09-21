@@ -36,6 +36,8 @@ jobs:
     - run: npm run format:check
     - run: npm run typecheck
     - run: npm run cover
+    # 必须放在构建之后：它用 npm pack 出的真实 tarball 验证 require/import 包名
+    - run: npm run verify:package
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v5
       if: matrix.node-version == '24.x'

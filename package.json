@@ -6,8 +6,14 @@
   "main": "dist/maxrects-packer.cjs",
   "module": "dist/maxrects-packer.mjs",
   "types": "dist/maxrects-packer.d.ts",
+  "files": [
+    "dist",
+    "CHANGELOG.md",
+    "assets/favicon32.png",
+    "assets/preview.png"
+  ],
   "scripts": {
-    "clean": "rimraf ./dist",
+    "clean": "rimraf ./dist ./lib",
     "build": "rollup -c",
     "postbuild": "node scripts/verify-entry.mjs",
     "build:clean": "npm run clean && npm run build",
@@ -18,7 +24,8 @@
     "doc:serve": "cd docs && npx http-server",
     "test": "npm run build:clean && jest",
     "cover": "npm run build:clean && jest --coverage",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "typecheck": "node scripts/typecheck.mjs",
+    "verify:package": "node scripts/verify-package.mjs",
     "lint": "oxlint src test scripts",
     "lint:fix": "oxlint --fix src test scripts",
     "format": "oxfmt \"src/**/*.ts\" \"test/**/*.js\" \"scripts/**/*.mjs\" \"*.js\"",
