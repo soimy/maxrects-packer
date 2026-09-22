@@ -1,0 +1,128 @@
+name: Bug report
+description: Report a wrong packing result, a crash, or a broken import
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. **Please write in English.**
+
+        A minimal, runnable reproduction is what makes a packing bug fixable — include the rects you
+        fed in and the options you used, because the result is usually input-specific.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Preflight
+      options:
+        - label: I searched the existing issues and this is not a duplicate
+          required: true
+        - label: I reproduced this on the latest 2.x release
+          required: false
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the wrong behavior.
+      placeholder: The second bin is created even though the rects would fit in the first one.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: |
+        A self-contained snippet that reproduces the problem. Trim it down as far as you can — the
+        smaller the input, the faster this gets diagnosed.
+      render: javascript
+      placeholder: |
+        const { MaxRectsPacker } = require("maxrects-packer");
+
+        const packer = new MaxRectsPacker(1024, 1024, 0, {
+            smart: true,
+            pot: false,
+            square: false,
+            allowRotation: false,
+            tag: false,
+            exclusiveTag: true,
+            border: 0,
+        });
+        packer.addArray([
+            { width: 600, height: 20 },
+            { width: 600, height: 20 },
+        ]);
+
+        console.log(packer.bins.map((bin) => bin.rects));
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What you expected instead, and why — a link to the algorithm docs is welcome.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: The actual output. Include the full stack trace if it throws.
+      render: shell
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: maxrects-packer version
+      description: Run `npm ls maxrects-packer` or check your lockfile.
+      placeholder: 2.7.4
+    validations:
+      required: true
+
+  - type: dropdown
+    id: runtime
+    attributes:
+      label: How is the package consumed?
+      options:
+        - Node.js — CommonJS require()
+        - Node.js — ESM import
+        - Browser — bundler (Vite / webpack / rollup / esbuild)
+        - Browser — script tag (UMD bundle)
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Runtime and bundler versions
+      description: e.g. "Node 22.22.0" or "Vite 7.1 in Chrome 140". Skip if you already stated it above.
+      placeholder: Node 22.22.0
+    validations:
+      required: false
+
+  - type: input
+    id: options
+    attributes:
+      label: Packer options in use
+      description: Only the options you changed from the defaults matter.
+      placeholder: "{ pot: false, allowRotation: true, border: 2 }"
+    validations:
+      required: false
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: |
+        Bin dumps (`packer.save()`), a screenshot of the resulting atlas, related issues — anything
+        that helps narrow it down.
+    validations:
+      required: false

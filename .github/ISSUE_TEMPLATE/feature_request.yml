@@ -1,0 +1,69 @@
+name: Feature request
+description: Suggest a new capability or an improvement
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion. **Please write in English.**
+
+        Describe the packing problem you are trying to solve first — it often turns out that the
+        existing API already covers it, or that a different change solves it better than the API you
+        had in mind.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Preflight
+      options:
+        - label: I searched the existing issues and discussions and this is not a duplicate
+          required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: The use case and the pain, not the API. What are you packing, and what goes wrong today?
+      placeholder: |
+        I pack font glyphs into atlases and need to keep glyphs of one font in the same bin, but the
+        current tag grouping forces a new bin per tag even when there is room to share.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: The API or behavior you would like. A code sketch of the call site is ideal.
+      render: javascript
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds you tried, or other designs you rejected and why.
+    validations:
+      required: false
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Compatibility impact
+      description: |
+        Does this change existing behavior or signatures? `maxrects-packer` keeps its public API
+        compatible across 2.x, so a proposal that changes current behavior needs to be framed as an
+        opt-in option (or it will have to wait for 3.0.0).
+    validations:
+      required: false
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Benchmarks, references to similar implementations, example inputs, related issues.
+    validations:
+      required: false
