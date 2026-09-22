@@ -95,12 +95,11 @@ npx jest test/maxrects-packer.spec.js   # run a single spec (no rebuild needed)
   `npm run typecheck` runs TS 7 while the build, docs and tests run the TS 6 API. Both sides matter
   when you touch tsconfig: TS 7 removed `baseUrl` / `moduleResolution: node10` / `target: es5`, which
   is why `tsconfig.json` (type checking) stays clean, while `target: es5` in `tsconfig.build.json` is
-  kept quiet for TS 6 by `ignoreDeprecations: "6.0"`. **Known defect:** the committed
-  `package-lock.json` resolves that alias to the stock `typescript@6.0.3` tarball instead of
-  `@typescript/typescript6` (the sibling `@typescript/native` alias is recorded correctly), so
-  `npm ci` does not install the aliased package, `npm ls typescript` prints nothing, and neither
-  `npm ci` nor CI notices. Harmless today because both provide the TS 6 JS API, but the lockfile does
-  not express what `package.json` declares.
+  kept quiet for TS 6 by `ignoreDeprecations: "6.0"`. `@typescript/typescript6` is a forwarding
+  shim, not a compiler: `lib/typescript.js` is the single line
+  `module.exports = require("@typescript/old")`, and `@typescript/old` is its own dependency on the
+  stock `typescript@^6`. `require("typescript")` therefore still yields the TS 6 JS API, while
+  `node_modules/.bin/tsc6` is the unambiguous way to run TS 6 and `.bin/tsc` stays native TS 7.
 - Test specs are CommonJS-style JS that `require("../src/xxx")` straight from the TypeScript sources
   (ts-jest ESM preset) — **they do not test `dist`**. A broken build or a broken artifact is
   invisible to them, so compare `dist` by hand whenever you touch the build.
@@ -186,6 +185,22 @@ English keeps the project history usable for every contributor and every downstr
 - `typedoc` only supports the TS 6 JS API so far (peer `… || 6.0.x`), which is exactly why
   `typescript` has to stay aliased to 6.x; the alias can become a real `typescript@7` once typedoc
   supports TS 7.
+- **npm will not reconcile a changed package identity while the locked version still fits.** If a
+  dependency's spec starts naming a different package — the swap to an `npm:` alias — and the version
+  already in the lockfile still satisfies the new range, `npm install` silently reuses that node: it
+  reports `up to date`, the entry stays plain (no `name` field of its own), so `npm ci` installs the
+  pre-alias package and the alias never appears (its bin, `tsc6`, is missing from
+  `node_modules/.bin`). npm matches a locked node by "version satisfies range" and never re-checks
+  which package the spec now names, so it *does* reconcile as soon as the version no longer fits —
+  an exact `…@6.0.2` pin or a move to `^5.9.0` both update the entry. Reproduced on npm 10.9.8 and
+  12.0.2, with and without `--package-lock-only`;
+  [npm/cli#4592](https://github.com/npm/cli/issues/4592) is the same family of alias/lockfile bugs
+  and is still open. Remedy: delete the stale `node_modules/<name>` entry from `package-lock.json`,
+  re-run `npm install --package-lock-only`, then confirm the entry carries the alias target in its
+  `name` field — `scripts/typecheck.mjs` asserts exactly that, so CI catches a regression. `npm ls
+  <name>` is **not** a usable check here: this environment sets `NODE_ENV=production`, which hides
+  every devDependency from `npm ls` unless `--include=dev` is passed, so the tree looks empty in the
+  broken and the fixed state alike.
 - `MaxRectsBin.reset(true, true)` replaces `options` with an incomplete object: `exclusiveTag`/`logic`
   are missing and `square` becomes `true` (unlike the class default).
 - `packer.add(w, h, undefined)` throws `TypeError` when `options.tag === true` (`rect.data.tag`; the
