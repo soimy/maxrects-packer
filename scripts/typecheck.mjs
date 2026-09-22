@@ -1,12 +1,14 @@
-// typecheck 包装器：先断言 PATH 上的 tsc 就是 @typescript/native（原生 TS 7），再跑类型检查。
+// typecheck wrapper: assert that the tsc on PATH really is @typescript/native (native TS 7) before
+// running the type check.
 //
-// 背景：package.json 用 npm 别名装了两套 TypeScript——
-//   typescript          -> @typescript/typescript6（给 typedoc / ts-jest / rollup 插件用 JS API）
-//   @typescript/native  -> typescript@7（原生 tsc）
-// 两者都声明了名为 tsc 的 bin，npm 目前把 node_modules/.bin/tsc 链到原生那个，
-// 但 bin 冲突的消解顺序不是 npm 的文档化保证：一旦顺序变化，typecheck 会静默退回 TS 6
-// 而 CI 依旧全绿。所以这里显式断言版本，让"跑的是不是 TS 7"变成可验证的事实。
-// oxlint-disable no-console -- 本文件是 CLI 包装器，输出即结果
+// Background: package.json installs two TypeScript packages through npm aliases —
+//   typescript          -> @typescript/typescript6 (JS compiler API for typedoc / ts-jest / rollup)
+//   @typescript/native  -> typescript@7 (native tsc)
+// Both declare a bin named tsc, and npm currently links node_modules/.bin/tsc to the native one, but
+// how npm resolves bin conflicts is not a documented guarantee: if that order ever flips, typecheck
+// silently falls back to TS 6 while CI stays green. Asserting the version here turns "is this really
+// TS 7?" into a verifiable fact instead of an assumption.
+// oxlint-disable no-console -- this file is a CLI wrapper; its output is the result
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -23,17 +25,17 @@ try {
         .trim()
         .replace(/^Version\s+/, "");
 } catch (error) {
-    console.error(`typecheck 失败：无法执行 ${tscBin}（${error.message.split("\n")[0]}），请先 npm ci。`);
+    console.error(`typecheck failed: cannot run ${tscBin} (${error.message.split("\n")[0]}), run npm ci first.`);
     process.exit(1);
 }
 
 const major = (v) => v.split(".")[0];
 if (major(actual) !== major(expected)) {
-    console.error(`typecheck 失败：node_modules/.bin/tsc 跑的是 ${actual}，但 @typescript/native 是 ${expected}`);
-    console.error("说明 npm 的 bin 冲突消解没有选中原生 TypeScript，请检查两套 typescript 别名的安装结果。");
+    console.error(`typecheck failed: node_modules/.bin/tsc reports ${actual} but @typescript/native is ${expected}`);
+    console.error("npm's bin conflict resolution did not pick the native TypeScript — check the two aliases.");
     process.exit(1);
 }
-console.log(`tsc ${actual}（@typescript/native ${expected}）`);
+console.log(`tsc ${actual} (@typescript/native ${expected})`);
 
 try {
     execFileSync(tscBin, ["--noEmit", "-p", "tsconfig.json"], { stdio: "inherit", cwd: fileURLToPath(root) });

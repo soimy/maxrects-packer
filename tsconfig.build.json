@@ -1,8 +1,9 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    // 发布产物保持 ES5 兼容；TS6 起 es5 目标被标记为 deprecated（TS7 将移除），
-    // 这里显式声明以保留现有兼容性，迁移决定见 AGENTS.md「已知坑」
+    // The published bundle stays ES5-compatible. TS 6 deprecated the es5 target (TS 7 removes it),
+    // so it is declared explicitly here to keep the existing compatibility; see AGENTS.md
+    // "Known pitfalls" for the migration decision.
     "target": "es5",
     "ignoreDeprecations": "6.0",
     "module": "esnext",

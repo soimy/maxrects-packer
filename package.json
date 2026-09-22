@@ -15,8 +15,7 @@
     "CHANGELOG.md",
     "tsconfig.json",
     "tsconfig.build.json",
-    "typedoc.json",
-    "UPGRADE_SUMMARY.md"
+    "typedoc.json"
   ],
   "scripts": {
     "clean": "rimraf ./dist ./lib",

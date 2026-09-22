@@ -1,9 +1,11 @@
-// package 级入口门禁：把真实 tarball 装进一个临时消费者工程，再用**包名**验证入口。
+// Package-level entry gate: install the real tarball into a temporary consumer project, then verify
+// the entry points **by package name**.
 //
-// 为什么不能只验文件路径：这一系列 bug 的本质是 package metadata + Node 解析，
-// 而不是文件本身不可用（历史上 dist/*.js 都在、内容也对，只是 require('maxrects-packer') 拿到空对象）。
-// 因此这里必须走 npm pack -> 安装 -> require/import 包名的完整链路。
-// oxlint-disable no-console -- 本文件是 CI 门禁，输出即结果
+// Why checking file paths is not enough: this class of bug lives in package metadata plus Node's
+// resolution rules, not in the files themselves (dist/*.js existed and had the right contents, yet
+// require("maxrects-packer") returned an empty object). So the whole chain has to run here:
+// npm pack -> install -> require/import by package name.
+// oxlint-disable no-console -- this file is a CI gate; its output is the result
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -17,18 +19,18 @@ const workdir = mkdtempSync(join(tmpdir(), "maxrects-packer-verify-"));
 const run = (cmd, args, options = {}) => execFileSync(cmd, args, { encoding: "utf8", ...options }).trim();
 
 try {
-    // 1) 打出真实 tarball（这一步同时验证 package.json 的 files / main / module / types 自洽）
+    // 1) Produce the real tarball (this also checks that package.json files/main/module/types agree)
     const tarballName = run("npm", ["pack", "--pack-destination", workdir], { cwd: root }).split("\n").pop();
     const tarball = join(workdir, tarballName);
     console.log(`  ✓ npm pack -> ${tarballName}`);
 
-    // 2) 装进一个全新的消费者工程（就用临时目录本身）
+    // 2) Install into a brand-new consumer project (the temporary directory itself)
     execFileSync("npm", ["init", "-y"], { cwd: workdir, stdio: "ignore" });
     writeFileSync(join(workdir, "package.json"), JSON.stringify({ name: "consumer", private: true }, null, 2));
     run("npm", ["install", "--no-save", "--no-package-lock", "--no-audit", "--no-fund", tarball], { cwd: workdir });
-    console.log("  ✓ 已安装到临时消费者工程");
+    console.log("  ✓ installed into the temporary consumer project");
 
-    // 3) 用包名验证 CJS —— 这正是历史上坏掉的那条路径
+    // 3) Verify CJS by package name — this is the path that was broken historically
     const cjs = JSON.parse(
         run(
             "node",
@@ -43,11 +45,13 @@ try {
         )
     );
     const missingCjs = EXPECTED.filter((name) => !cjs.keys.includes(name));
-    if (missingCjs.length > 0) throw new Error(`require("maxrects-packer") 缺少导出: ${missingCjs.join(", ")}`);
-    if (cjs.bins !== 1) throw new Error(`require("maxrects-packer") 能加载但功能异常：期望 1 个 bin，得到 ${cjs.bins}`);
-    console.log(`  ✓ require("maxrects-packer") -> ${cjs.keys.length} 个导出，实跑打包正常`);
+    if (missingCjs.length > 0)
+        throw new Error(`require("maxrects-packer") is missing exports: ${missingCjs.join(", ")}`);
+    if (cjs.bins !== 1)
+        throw new Error(`require("maxrects-packer") loaded but misbehaves: expected 1 bin, got ${cjs.bins}`);
+    console.log(`  ✓ require("maxrects-packer") -> ${cjs.keys.length} exports, real packing run OK`);
 
-    // 4) 用包名验证 ESM（Node 会按 CJS 互操作加载 main，命名导出由 cjs-module-lexer 提供）
+    // 4) Verify ESM by package name (Node loads main through CJS interop; named exports come from cjs-module-lexer)
     const esmKeys = JSON.parse(
         run(
             "node",
@@ -62,12 +66,13 @@ try {
         )
     ).filter((key) => key !== "default");
     const missingEsm = EXPECTED.filter((name) => !esmKeys.includes(name));
-    if (missingEsm.length > 0) throw new Error(`import("maxrects-packer") 缺少具名导出: ${missingEsm.join(", ")}`);
-    console.log(`  ✓ import("maxrects-packer") -> ${esmKeys.length} 个具名导出`);
+    if (missingEsm.length > 0)
+        throw new Error(`import("maxrects-packer") is missing named exports: ${missingEsm.join(", ")}`);
+    console.log(`  ✓ import("maxrects-packer") -> ${esmKeys.length} named exports`);
 
-    console.log("package 入口门禁通过");
+    console.log("Package entry gate passed");
 } catch (error) {
-    console.error("package 入口门禁失败：");
+    console.error("Package entry gate failed:");
     console.error(`  ✗ ${error.message.split("\n")[0]}`);
     for (const stream of [error.stdout, error.stderr]) {
         if (stream) console.error(String(stream).trim());

@@ -16,10 +16,9 @@ export default {
     verbose: true,
     coverageDirectory: "./test/coverage",
     collectCoverageFrom: ["src/**/*.ts", "!src/**/*.d.ts"],
-    // 确保源码映射支持
+    // Coverage is collected on every run and rewrites test/coverage/ (gitignored)
     collectCoverage: true,
     coverageReporters: ["text", "lcov", "html"],
-    // 添加源码映射支持
     setupFilesAfterEnv: [],
     testMatch: ["<rootDir>/test/**/*.spec.js"]
 };

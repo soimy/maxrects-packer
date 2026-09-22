@@ -20,15 +20,15 @@
     "no-unneeded-ternary": "warn",
     "jsdoc/require-property-type": "warn",
 
-    // 公开 API 的 `data` 载荷刻意不约束类型（IRectangle 也带索引签名）
+    // The public API's `data` payload is deliberately untyped (IRectangle carries an index signature too)
     "typescript/no-explicit-any": "off",
-    // 受保护字段用 `_` 前缀是本库约定（Rectangle._width/_dirty 等）
+    // An `_` prefix on protected fields is this library's convention (Rectangle._width/_dirty, ...)
     "no-underscore-dangle": "off",
-    // 产物目标 ES5，且 MaxRectsBin.repack() 需要原地排序 rects
+    // The bundle targets ES5, and MaxRectsBin.repack() needs to sort rects in place
     "unicorn/no-array-sort": "off",
 
-    // test/maxrects-bin.spec.js 的 monkey 测试刻意在循环/条件里断言；
-    // test/efficiency.spec.js 的两张对照表刻意 test.skip，需要时手工放开
+    // test/maxrects-bin.spec.js asserts inside loops and conditionals on purpose;
+    // test/efficiency.spec.js keeps two comparison tables test.skip'd, un-skipped by hand when needed
     "jest/no-conditional-expect": "off",
     "jest/no-disabled-tests": "off"
   },

@@ -1,7 +1,7 @@
-# 统一以 LF 存储与检出，避免 CRLF/LF 混存导致 diff 噪声与工具行为差异
+# Store and check out everything as LF, so mixed CRLF/LF never causes diff noise or tool differences
 * text=auto eol=lf
 
-# 二进制资源不要做行尾转换
+# Binary assets must never be line-ending converted
 *.png binary
 *.ico binary
 *.jpg binary

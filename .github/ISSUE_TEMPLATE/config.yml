@@ -1,0 +1,16 @@
+# The forms below are guidance, not a gate: blank issues stay enabled so nobody is forced to fit
+# their report into a template.
+blank_issues_enabled: true
+contact_links:
+  - name: Question or usage help
+    url: https://github.com/soimy/maxrects-packer/discussions
+    about: Ask in GitHub Discussions — often faster than an issue for usage questions.
+  - name: API documentation
+    url: https://soimy.github.io/maxrects-packer/
+    about: Generated reference for every public class, method and option.
+  - name: Report a security issue
+    url: https://github.com/soimy/maxrects-packer/security/advisories/new
+    about: Please report vulnerabilities through GitHub's private reporting form instead of a public issue.
+  - name: Contributing guide
+    url: https://github.com/soimy/maxrects-packer/blob/master/CONTRIBUTING.md
+    about: Setup, commit conventions, code style and the PR checklist.
