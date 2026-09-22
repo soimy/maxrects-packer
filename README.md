@@ -83,10 +83,14 @@ for linting and formatting. `typescript` is aliased to `@typescript/typescript6`
 used by typedoc / ts-jest / rollup plugins) while `@typescript/native` provides the native
 TypeScript 7 `tsc` used for type checking — the official TypeScript 6/7 side-by-side setup.
 
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full contributor guide — setup, commit conventions,
+code style and the PR checklist. All repository communication (commit messages, PRs, issues) is in
+English.
+
 ## API
 
 Note: the published bundle stays ES5-compatible with zero runtime dependencies; the development
-toolchain requires Node >= 20.19 (oxlint).
+toolchain requires Node `^20.19.0 || >= 22.12.0` (the range `oxlint` and `oxfmt` declare).
 
 #### ```new MaxRectsPacker(maxWidth, maxHeight[, padding, options])```
 
