@@ -1,5 +1,5 @@
 "use strict";
-// oxlint-disable no-console -- 本文件刻意打印对照表
+// oxlint-disable no-console -- this file prints comparison tables on purpose
 
 let MaxRectsPacker = require("../src/maxrects-packer").MaxRectsPacker;
 let PACKING_LOGIC = require("../src/maxrects-packer").PACKING_LOGIC;
