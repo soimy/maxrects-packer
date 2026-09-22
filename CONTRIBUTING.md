@@ -70,20 +70,20 @@ modified content — including comments in `scripts/` and the config files — i
 git clone https://github.com/soimy/maxrects-packer.git
 cd maxrects-packer
 npm ci --include=dev     # --include=dev matters when NODE_ENV=production is set in your shell
-npm test                 # builds dist/ and runs the jest suite
+npm test                 # builds dist/ and runs the vitest suite
 ```
 
 If `npm test` passes, you are ready. Useful commands:
 
 ```bash
-npm test                              # clean build + full jest suite
-npx jest test/maxrects-bin.spec.js    # a single spec, no rebuild needed
+npm test                              # clean build + full vitest suite
+npx vitest run test/maxrects-bin.spec.js   # a single spec, no rebuild needed
 npm run typecheck                     # native TypeScript 7 type check
 npm run lint                          # oxlint (baseline: 0 warnings, 0 errors)
 npm run lint:fix                      # oxlint with autofix
 npm run format                        # oxfmt writes changes back
 npm run format:check                  # what CI runs
-npm run cover                         # jest with coverage -> test/coverage/
+npm run cover                         # vitest with coverage -> test/coverage/
 npm run verify:package                # pack a tarball and consume it by package name (build first)
 npm run doc                           # typedoc -> docs/
 ```
@@ -185,14 +185,15 @@ Formatting and linting are automated; do not hand-format or argue with the tools
 ## Tests
 
 ```bash
-npm test                 # the full gate: clean build + jest
-npx jest test/rectangle.spec.js   # fast iteration on one spec
+npm test                 # the full gate: clean build + vitest
+npx vitest run test/rectangle.spec.js   # fast iteration on one spec
 npm run cover            # coverage report
 ```
 
-- The specs are CommonJS-style JavaScript that `require("../src/…")` the TypeScript sources directly;
+- The specs are ESM JavaScript that `import` the TypeScript sources directly (`../src/…`, no file
+  extension) and pull `describe / test / expect / beforeEach` from `vitest` rather than from globals;
   they deliberately do **not** test `dist/`.
-- Baseline: 6 suites, 66 passing, 2 skipped, ~95% statement coverage. Do not lower it.
+- Baseline: 6 spec files, 66 passing, 2 skipped, ~95% statements (v8 provider). Do not lower it.
 - `test/maxrects-bin.spec.js` contains randomized "monkey" tests that assert no rect overlaps and
   none exceeds its bin. They are the main regression net for algorithm changes — keep them passing.
 - **Every bug fix needs a test that fails before the fix and passes after it.** For a bug that was

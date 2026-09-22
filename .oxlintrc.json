@@ -4,7 +4,7 @@
     "typescript",
     "import",
     "jsdoc",
-    "jest",
+    "vitest",
     "unicorn",
     "oxc",
     "node"
@@ -29,18 +29,19 @@
 
     // test/maxrects-bin.spec.js asserts inside loops and conditionals on purpose;
     // test/efficiency.spec.js keeps two comparison tables test.skip'd, un-skipped by hand when needed
-    "jest/no-conditional-expect": "off",
-    "jest/no-disabled-tests": "off"
+    "vitest/no-conditional-expect": "off",
+    "vitest/no-disabled-tests": "off",
+    // test/efficiency.spec.js's comparison test only prints a table, so this rule would fire on it.
+    // It has to be disabled at this level rather than in the test override: an override block cannot
+    // turn `vitest/expect-expect` off (checked on oxlint 1.83), unlike the jest entry it replaces.
+    "vitest/expect-expect": "off"
   },
   "overrides": [
     {
       "files": ["test/**/*.js"],
       "env": {
-        "jest": true,
+        "vitest": true,
         "node": true
-      },
-      "rules": {
-        "jest/expect-expect": "off"
       }
     }
   ]

@@ -1,8 +1,7 @@
 /* eslint-disable no-constant-condition */
-"use strict";
-
-let MaxRectsBin = require("../src/maxrects-bin").MaxRectsBin;
-let Rectangle = require("../src/geom/Rectangle").Rectangle;
+import { beforeEach, describe, expect, test } from "vitest";
+import { MaxRectsBin } from "../src/maxrects-bin";
+import { Rectangle } from "../src/geom/Rectangle";
 
 const opt = {
     smart: true,

@@ -1,8 +1,6 @@
-"use strict";
-
-let MaxRectsPacker = require("../src/maxrects-packer").MaxRectsPacker;
-let PACKING_LOGIC = require("../src/maxrects-packer").PACKING_LOGIC;
-let Rectangle = require("../src/geom/Rectangle").Rectangle;
+import { beforeEach, describe, expect, test } from "vitest";
+import { MaxRectsPacker, PACKING_LOGIC } from "../src/maxrects-packer";
+import { Rectangle } from "../src/geom/Rectangle";
 
 const opt = {
     smart: true,
