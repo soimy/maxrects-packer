@@ -6,13 +6,18 @@ Human contributors should start with [CONTRIBUTING.md](./CONTRIBUTING.md) instea
 ## Project
 
 `maxrects-packer` (v2.7.4, MIT, zero runtime dependencies) is a **MaxRects 2D bin packing** library
-written in TypeScript. It packs arbitrary `{width, height}` rectangles into the **fewest possible**
-bins that stay within `maxWidth × maxHeight` (sprite sheets / texture atlases).
+written in TypeScript. It aims to pack arbitrary `{width, height}` rectangles into as few bins as
+possible, each staying within `maxWidth × maxHeight` (sprite sheets / texture atlases).
 
+- **Packing is a heuristic, not an optimal solver — never claim a minimum bin count.** `addArray()`
+  sorts the input, `add()` first-fits each rect into the existing bins in order, and inside a bin
+  `findNode()` greedily takes the best-scoring free rectangle for `options.logic`. Nothing searches
+  for a global optimum, so a change may only ever claim "fewer bins than before **on these inputs**",
+  measured — never "the fewest possible".
 - Geometry only: it never reads or writes images or files and depends on no DOM/Node API, so it runs
   in the browser as well.
-- The target use case is WebGL/atlases: opening one more bin is always preferable to emitting a
-  single gigantic image.
+- The target use case is WebGL/atlases: opening another bin is preferred over emitting a single
+  gigantic image.
 - It is a rewrite of [Multi-Bin-Packer](https://github.com/marekventur/multi-bin-packer) and the
   public API is kept compatible, so do not change signatures casually.
 
