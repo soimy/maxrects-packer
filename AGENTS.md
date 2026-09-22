@@ -185,18 +185,22 @@ English keeps the project history usable for every contributor and every downstr
 - `typedoc` only supports the TS 6 JS API so far (peer `… || 6.0.x`), which is exactly why
   `typescript` has to stay aliased to 6.x; the alias can become a real `typescript@7` once typedoc
   supports TS 7.
-- **npm does not reconcile an `npm:` alias change in an existing lockfile.** Swapping a dependency
-  from a plain name to an alias (or back) and running `npm install` leaves the old resolution in
-  place — silently: it reports `up to date`, and the entry keeps the pre-alias package (with no
-  `name` field of its own), so `npm ci` installs that instead and the alias never appears (its bin,
-  `tsc6`, is missing from `node_modules/.bin`). Reproduced on npm 10.9.8 and 12.0.2, with and without
-  `--package-lock-only`; [npm/cli#4592](https://github.com/npm/cli/issues/4592) is the same family of
-  alias/lockfile bugs and is still open. Remedy: delete the stale `node_modules/<name>` entry from
-  `package-lock.json`, re-run `npm install --package-lock-only`, then confirm the entry carries the
-  alias target in its `name` field — `scripts/typecheck.mjs` asserts exactly that, so CI catches a
-  regression. `npm ls <name>` is **not** a usable check here: this environment sets
-  `NODE_ENV=production`, which hides every devDependency from `npm ls` unless `--include=dev` is
-  passed, so the tree looks empty in the broken and the fixed state alike.
+- **npm will not reconcile a changed package identity while the locked version still fits.** If a
+  dependency's spec starts naming a different package — the swap to an `npm:` alias — and the version
+  already in the lockfile still satisfies the new range, `npm install` silently reuses that node: it
+  reports `up to date`, the entry stays plain (no `name` field of its own), so `npm ci` installs the
+  pre-alias package and the alias never appears (its bin, `tsc6`, is missing from
+  `node_modules/.bin`). npm matches a locked node by "version satisfies range" and never re-checks
+  which package the spec now names, so it *does* reconcile as soon as the version no longer fits —
+  an exact `…@6.0.2` pin or a move to `^5.9.0` both update the entry. Reproduced on npm 10.9.8 and
+  12.0.2, with and without `--package-lock-only`;
+  [npm/cli#4592](https://github.com/npm/cli/issues/4592) is the same family of alias/lockfile bugs
+  and is still open. Remedy: delete the stale `node_modules/<name>` entry from `package-lock.json`,
+  re-run `npm install --package-lock-only`, then confirm the entry carries the alias target in its
+  `name` field — `scripts/typecheck.mjs` asserts exactly that, so CI catches a regression. `npm ls
+  <name>` is **not** a usable check here: this environment sets `NODE_ENV=production`, which hides
+  every devDependency from `npm ls` unless `--include=dev` is passed, so the tree looks empty in the
+  broken and the fixed state alike.
 - `MaxRectsBin.reset(true, true)` replaces `options` with an incomplete object: `exclusiveTag`/`logic`
   are missing and `square` becomes `true` (unlike the class default).
 - `packer.add(w, h, undefined)` throws `TypeError` when `options.tag === true` (`rect.data.tag`; the

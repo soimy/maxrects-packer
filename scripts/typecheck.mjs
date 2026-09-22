@@ -6,10 +6,12 @@
 //   @typescript/native  -> typescript@7 (native tsc)
 //
 // Two silent failures are turned into verifiable facts here:
-//   1. package-lock.json must record those aliases as aliases. npm does not reconcile an alias swap
-//      in an existing lockfile (see AGENTS.md, "Known pitfalls"): it reports "up to date" and keeps
-//      the pre-alias package, so npm ci installs something other than what package.json asks for
-//      while CI stays green.
+//   1. package-lock.json must record those aliases as aliases. npm will not reconcile a changed
+//      package identity while the locked version still fits the new range (see AGENTS.md, "Known
+//      pitfalls"): it reports "up to date" and keeps the pre-alias package, so npm ci installs
+//      something other than what package.json asks for while CI stays green. Only the package name
+//      is compared here, not the version — npm ci already fails on a lockfile version that does not
+//      satisfy the declared range ("Invalid: lock file's … does not satisfy …").
 //   2. node_modules/.bin/tsc must really be the native TS 7 binary. That link is contested: the
 //      `typescript` alias pulls in @typescript/old, which declares a `tsc` bin of its own, and how
 //      npm resolves such a conflict is not a documented guarantee. If the order ever flips,
