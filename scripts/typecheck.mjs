@@ -2,7 +2,7 @@
 // running the type check.
 //
 // Background: package.json installs two TypeScript packages through npm aliases —
-//   typescript          -> @typescript/typescript6 (JS compiler API for typedoc / ts-jest / rollup)
+//   typescript          -> @typescript/typescript6 (JS compiler API for typedoc / rollup)
 //   @typescript/native  -> typescript@7 (native tsc)
 //
 // Two silent failures are turned into verifiable facts here:

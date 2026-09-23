@@ -71,18 +71,18 @@ caller's rects
 
 ```bash
 npm ci --include=dev         # NODE_ENV=production makes npm skip devDeps, so --include=dev is required
-npm test                     # = rimraf dist + lib, rollup build, jest
+npm test                     # = rimraf dist + lib, rollup build, vitest run
 npm run typecheck            # native TypeScript 7; scripts/typecheck.mjs asserts the tsc version first
 npm run verify:package       # npm pack → install into a temp consumer → verify require/import by package name (build first)
 npm run lint                 # oxlint (baseline is 0 warnings / 0 errors)
 npm run lint:fix             # oxlint --fix
 npm run format               # oxfmt writes back; CI only checks, via npm run format:check
-npm run cover                # build + jest --coverage
+npm run cover                # build + vitest run --coverage
 npm run doc                  # typedoc → docs/ (not tracked by git)
-npx jest test/maxrects-packer.spec.js   # run a single spec (no rebuild needed)
+npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild needed)
 ```
 
-- Toolchain: rollup + `@rollup/plugin-typescript` for bundling, jest + ts-jest for tests,
+- Toolchain: rollup + `@rollup/plugin-typescript` for bundling, vitest for tests,
   oxlint/oxfmt for linting and formatting, `commit-and-tag-version` for releases.
 - **Lint enforcement**: `oxlint` reports warnings but **only errors fail CI**, even though the baseline
   is genuinely `0 warnings / 0 errors`. Four rules in `.oxlintrc.json` are deliberately set to `warn`
@@ -90,9 +90,10 @@ npx jest test/maxrects-packer.spec.js   # run a single spec (no rebuild needed)
   advisory only — `npm run lint` exits 0 with a warning present. Adding `--deny-warnings` to the
   `lint` script is what would make them blocking; that has not been done on purpose.
 - **Dual TypeScript (the official 6/7 side-by-side setup)**: the `typescript` alias points at
-  `@typescript/typescript6`, which provides the JS compiler API consumed by typedoc / ts-jest / the
+  `@typescript/typescript6`, which provides the JS compiler API consumed by typedoc and the
   rollup plugin; `@typescript/native` is native TS 7 and `node_modules/.bin/tsc` points at it. So
-  `npm run typecheck` runs TS 7 while the build, docs and tests run the TS 6 API. Both sides matter
+  `npm run typecheck` runs TS 7 while the build and docs run the TS 6 API — the tests do not, because
+  vitest transforms TypeScript with esbuild and never touches the compiler API. Both sides matter
   when you touch tsconfig: TS 7 removed `baseUrl` / `moduleResolution: node10` / `target: es5`, which
   is why `tsconfig.json` (type checking) stays clean, while `target: es5` in `tsconfig.build.json` is
   kept quiet for TS 6 by `ignoreDeprecations: "6.0"`. `@typescript/typescript6` is a forwarding
@@ -100,13 +101,16 @@ npx jest test/maxrects-packer.spec.js   # run a single spec (no rebuild needed)
   `module.exports = require("@typescript/old")`, and `@typescript/old` is its own dependency on the
   stock `typescript@^6`. `require("typescript")` therefore still yields the TS 6 JS API, while
   `node_modules/.bin/tsc6` is the unambiguous way to run TS 6 and `.bin/tsc` stays native TS 7.
-- Test specs are CommonJS-style JS that `require("../src/xxx")` straight from the TypeScript sources
-  (ts-jest ESM preset) — **they do not test `dist`**. A broken build or a broken artifact is
+- Test specs are ESM JavaScript that `import` straight from the TypeScript sources (`../src/xxx`,
+  extension-less) and take `describe / test / expect / beforeEach` from `vitest` explicitly instead of
+  from globals — **they do not test `dist`**. A broken build or a broken artifact is
   invisible to them, so compare `dist` by hand whenever you touch the build.
-- Baseline: `6 suites / 66 passed / 2 skipped`, ~95% statement coverage. `collectCoverage: true`
-  means **every test run rewrites `test/coverage/`** (gitignored) — including a single-spec run,
-  which leaves a misleading partial figure behind, so always read coverage from a full `npm run
-  cover`.
+- Baseline: `6 spec files / 66 passed / 2 skipped`, ~95% statements (v8 provider). Coverage is
+  **opt-in**: only `npm run cover` collects it and writes `test/coverage/` (gitignored), so a plain
+  `npm test` or a single-spec run leaves that directory alone. Read the real numbers from a full
+  `npm run cover`, and take the *gap* list from its JSON/lcov output rather than from the text table —
+  that table's `Uncovered Line #s` column omits lines the machine-readable report marks as never
+  executed (checked under both the old istanbul and the current v8 provider).
 - The two `test.skip`s in `test/efficiency.spec.js` are the bulk comparison table driven by
   `scenarios.json` + `ascii-table`; they only run once un-skipped by hand.
 - CI: `.github/workflows/node.js.yml` (Node 20/22/24: lint → format:check → typecheck → cover →
@@ -185,6 +189,12 @@ English keeps the project history usable for every contributor and every downstr
 - `typedoc` only supports the TS 6 JS API so far (peer `… || 6.0.x`), which is exactly why
   `typescript` has to stay aliased to 6.x; the alias can become a real `typescript@7` once typedoc
   supports TS 7.
+- **vitest is pinned to the 4.x line, and regenerating the lockfile with npm 10 needs a flag.** 5.x
+  requires Node `^22.12.0 || ^24.0.0 || >=26.0.0`, which would drop the Node 20 leg of the CI matrix;
+  4.x still accepts `^20`. And `npm install` on npm 10.9.8 dies inside arborist
+  (`Cannot read properties of null (reading 'edgesOut')` from `#loadPeerSet`) on vitest's peer set
+  unless it is run with `--legacy-peer-deps` — `npm ci` is unaffected and installs the committed
+  lockfile on npm 10, 11 and 12.
 - **npm will not reconcile a changed package identity while the locked version still fits.** If a
   dependency's spec starts naming a different package — the swap to an `npm:` alias — and the version
   already in the lockfile still satisfies the new range, `npm install` silently reuses that node: it

@@ -1,6 +1,5 @@
-"use strict";
-
-const Rectangle = require("../src/geom/Rectangle").Rectangle;
+import { describe, expect, test } from "vitest";
+import { Rectangle } from "../src/geom/Rectangle";
 
 const bigRect = new Rectangle(512, 512, 0, 0);
 const containedRect = new Rectangle(256, 256, 16, 128);

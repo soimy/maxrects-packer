@@ -1,7 +1,6 @@
-"use strict";
-
-let OversizedElementBin = require("../src/oversized-element-bin").OversizedElementBin;
-let Rectangle = require("../src/geom/Rectangle").Rectangle;
+import { describe, expect, test } from "vitest";
+import { OversizedElementBin } from "../src/oversized-element-bin";
+import { Rectangle } from "../src/geom/Rectangle";
 
 const oversizedRect = new Rectangle(2000, 2000);
 oversizedRect.data = { foo: "bar" };

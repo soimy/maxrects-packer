@@ -1,11 +1,8 @@
-"use strict";
 // oxlint-disable no-console -- this file prints comparison tables on purpose
-
-let MaxRectsPacker = require("../src/maxrects-packer").MaxRectsPacker;
-let PACKING_LOGIC = require("../src/maxrects-packer").PACKING_LOGIC;
-let AsciiTable = require("ascii-table");
-
-const SCENARIOS = require("./scenarios.json");
+import { describe, test } from "vitest";
+import { MaxRectsPacker, PACKING_LOGIC } from "../src/maxrects-packer";
+import AsciiTable from "ascii-table";
+import SCENARIOS from "./scenarios.json";
 
 let rectSizeSum = SCENARIOS.map((scenario) => {
     return scenario.reduce((memo, rect) => memo + rect.width * rect.height, 0);

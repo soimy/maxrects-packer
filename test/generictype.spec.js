@@ -1,5 +1,6 @@
-let MaxRectsPacker = require("../src/maxrects-packer").MaxRectsPacker;
-let Rectangle = require("../src/geom/Rectangle").Rectangle;
+import { beforeEach, expect, test } from "vitest";
+import { MaxRectsPacker } from "../src/maxrects-packer";
+import { Rectangle } from "../src/geom/Rectangle";
 
 class Block extends Rectangle {
     constructor(_width = 0, _height = 0, _x = 0, _y = 0, _rot = false) {

@@ -70,7 +70,7 @@ packer.addArray(input);
 
 ```bash
 npm ci                # add --include=dev when NODE_ENV=production is set
-npm test              # build + unit tests (jest)
+npm test              # build + unit tests (vitest)
 npm run typecheck     # native TypeScript 7 type check
 npm run lint          # oxlint
 npm run format        # oxfmt (CI runs npm run format:check)
@@ -78,9 +78,9 @@ npm run cover         # coverage report
 npm run doc           # typedoc -> docs/
 ```
 
-Toolchain: rollup + @rollup/plugin-typescript for bundling, jest + ts-jest for tests, oxlint/oxfmt
+Toolchain: rollup + @rollup/plugin-typescript for bundling, vitest for tests, oxlint/oxfmt
 for linting and formatting. `typescript` is aliased to `@typescript/typescript6` (the JS compiler API
-used by typedoc / ts-jest / rollup plugins) while `@typescript/native` provides the native
+used by typedoc / rollup plugins) while `@typescript/native` provides the native
 TypeScript 7 `tsc` used for type checking — the official TypeScript 6/7 side-by-side setup.
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full contributor guide — setup, commit conventions,
