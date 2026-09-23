@@ -1,4 +1,3 @@
-/* eslint-disable no-constant-condition */
 import { beforeEach, describe, expect, test } from "vitest";
 import { MaxRectsBin } from "../src/maxrects-bin";
 import { Rectangle } from "../src/geom/Rectangle";
@@ -12,6 +11,71 @@ const opt = {
 };
 
 let bin;
+
+// The monkey tests are the main regression net for the placement algorithm, so their input has to be
+// reproducible: `Math.random()` made a failure impossible to replay. Each of them draws from its own
+// seeded stream, which also makes the inputs independent of test order — shuffling the suite changes
+// nothing but the order. MONKEY_SEED shifts every stream when you want to explore other inputs.
+const SEED_BASE = Number(process.env.MONKEY_SEED ?? 0x5eed);
+const seeded = (offset) => mulberry32(SEED_BASE + offset);
+
+// Minimal dependency-free seeded PRNG (mulberry32).
+function mulberry32(seed) {
+    let state = seed >>> 0;
+    return () => {
+        state = (state + 0x6d2b79f5) >>> 0;
+        let t = state;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+
+/**
+ * Fills `target` with random rects until it refuses one, then asserts what must hold for every
+ * placement: no two rects overlap, and none leaves the bin's usable area (its border inset).
+ *
+ * @param target - the bin to fill
+ * @param random - a seeded PRNG, so a failure can be replayed
+ * @param seed - reported in the failure message, since MONKEY_SEED can move the stream
+ */
+function fillWithRandomRects(target, random, seed) {
+    const placed = [];
+    while (true) {
+        const width = Math.floor(random() * 200);
+        const height = Math.floor(random() * 200);
+        const rect = new Rectangle(width, height);
+
+        const position = target.add(rect);
+        if (!position) break;
+
+        expect(position.width).toBe(width);
+        expect(position.height).toBe(height);
+        placed.push(position);
+    }
+
+    expect(target.width).toBeLessThanOrEqual(target.maxWidth);
+    expect(target.height).toBeLessThanOrEqual(target.maxHeight);
+
+    const border = target.options.border ?? 0;
+    placed.forEach((rect1) => {
+        placed.forEach((rect2) => {
+            if (rect1 !== rect2) {
+                expect(
+                    rect1.collide(rect2),
+                    `seed ${seed}: intersection ${JSON.stringify(rect1)} ${JSON.stringify(rect2)}`
+                ).toBe(false);
+            }
+        });
+
+        expect(rect1.x).toBeGreaterThanOrEqual(border);
+        expect(rect1.y).toBeGreaterThanOrEqual(border);
+        expect(rect1.x + rect1.width).toBeLessThanOrEqual(target.width - border);
+        expect(rect1.y + rect1.height).toBeLessThanOrEqual(target.height - border);
+    });
+
+    return placed;
+}
 
 describe("no padding", () => {
     beforeEach(() => {
@@ -163,44 +227,11 @@ describe("no padding", () => {
     });
 
     test("monkey testing", () => {
-        let rects = [];
-        while (true) {
-            let width = Math.floor(Math.random() * 200);
-            let height = Math.floor(Math.random() * 200);
-            let rect = new Rectangle(width, height);
-
-            let position = bin.add(rect);
-            if (position) {
-                expect(position.width).toBe(width);
-                expect(position.height).toBe(height);
-                rects.push(position);
-            } else {
-                break;
-            }
-        }
-
-        expect(bin.width).toBeLessThanOrEqual(1024);
-        expect(bin.height).toBeLessThanOrEqual(1024);
-
-        rects.forEach((rect1) => {
-            // Make sure rects are not overlapping
-            rects.forEach((rect2) => {
-                if (rect1 !== rect2) {
-                    expect(rect1.collide(rect2)).toBe(
-                        false,
-                        "intersection detected: " + JSON.stringify(rect1) + " " + JSON.stringify(rect2)
-                    );
-                }
-            });
-
-            // Make sure no rect is outside bounds
-            expect(rect1.x + rect1.width).toBeLessThanOrEqual(bin.width);
-            expect(rect1.y + rect1.height).toBeLessThanOrEqual(bin.height);
-        });
+        fillWithRandomRects(bin, seeded(1), SEED_BASE + 1);
     });
 });
 
-let padding = 4;
+const padding = 4;
 
 describe("padding", () => {
     beforeEach(() => {
@@ -244,51 +275,11 @@ describe("padding", () => {
     });
 
     test("monkey testing", () => {
-        // bin = new MaxRectsBin(1024, 1024, 40);
-        let rects = [];
-        while (true) {
-            let width = Math.floor(Math.random() * 200);
-            let height = Math.floor(Math.random() * 200);
-            let rect = new Rectangle(width, height);
-
-            let position = bin.add(rect);
-            if (position) {
-                expect(position.width).toBe(width);
-                expect(position.height).toBe(height);
-                rects.push(position);
-            } else {
-                break;
-            }
-        }
-
-        expect(bin.width).toBeLessThanOrEqual(1024);
-        expect(bin.height).toBeLessThanOrEqual(1024);
-
-        rects.forEach((rect1) => {
-            // Make sure rects are not overlapping
-            rects.forEach((rect2) => {
-                if (rect1 !== rect2) {
-                    try {
-                        expect(rect1.collide(rect2)).toBe(false);
-                    } catch {
-                        throw new Error(
-                            "intersection detected: " + JSON.stringify(rect1) + " " + JSON.stringify(rect2)
-                        );
-                    }
-                }
-            });
-
-            // Make sure no rect is outside bounds
-            expect(rect1.x).toBeGreaterThanOrEqual(0);
-            expect(rect1.y).toBeGreaterThanOrEqual(0);
-            expect(rect1.x + rect1.width).toBeLessThanOrEqual(bin.width);
-            expect(rect1.y + rect1.height).toBeLessThanOrEqual(bin.height);
-        });
+        fillWithRandomRects(bin, seeded(2), SEED_BASE + 2);
     });
 });
 
-padding = 4;
-let border = 5;
+const border = 5;
 
 describe("border", () => {
     beforeEach(() => {
@@ -329,58 +320,17 @@ describe("border", () => {
         expect(bin.rects.length).toBe(0);
     });
 
-    let repeat = 5;
-    test(`super monkey testing (${repeat} loop)`, () => {
-        while (repeat > 0) {
-            padding = Math.floor(Math.random() * 10);
-            border = Math.floor(Math.random() * 20);
-            const borderOpt = {
-                ...opt,
-                border,
-                square: false
-            };
-            bin = new MaxRectsBin(1024, 1024, padding, borderOpt);
+    const SUPER_MONKEY_LOOPS = 5;
+    test(`super monkey testing (${SUPER_MONKEY_LOOPS} loop)`, () => {
+        for (let i = 0; i < SUPER_MONKEY_LOOPS; i++) {
+            // One stream per iteration, so the five rounds are independent of each other and of the
+            // order the suite runs in.
+            const random = seeded(10 + i);
+            const padding = Math.floor(random() * 10);
+            const border = Math.floor(random() * 20);
+            bin = new MaxRectsBin(1024, 1024, padding, { ...opt, border, square: false });
 
-            let rects = [];
-            while (true) {
-                let width = Math.floor(Math.random() * 200);
-                let height = Math.floor(Math.random() * 200);
-                let rect = new Rectangle(width, height);
-
-                let position = bin.add(rect);
-                if (position) {
-                    expect(position.width).toBe(width);
-                    expect(position.height).toBe(height);
-                    rects.push(position);
-                } else {
-                    break;
-                }
-            }
-
-            expect(bin.width).toBeLessThanOrEqual(1024);
-            expect(bin.height).toBeLessThanOrEqual(1024);
-
-            rects.forEach((rect1) => {
-                // Make sure rects are not overlapping
-                rects.forEach((rect2) => {
-                    if (rect1 !== rect2) {
-                        try {
-                            expect(rect1.collide(rect2)).toBe(false);
-                        } catch {
-                            throw new Error(
-                                "intersection detected: " + JSON.stringify(rect1) + " " + JSON.stringify(rect2)
-                            );
-                        }
-                    }
-                });
-
-                // Make sure no rect is outside bounds
-                expect(rect1.x).toBeGreaterThanOrEqual(bin.options.border);
-                expect(rect1.y).toBeGreaterThanOrEqual(bin.options.border);
-                expect(rect1.x + rect1.width).toBeLessThanOrEqual(bin.width - bin.options.border);
-                expect(rect1.y + rect1.height).toBeLessThanOrEqual(bin.height - bin.options.border);
-            });
-            repeat--;
+            fillWithRandomRects(bin, random, SEED_BASE + 10 + i);
         }
     });
 });
