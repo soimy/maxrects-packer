@@ -122,15 +122,32 @@ describe("#add", () => {
         expect(packer.bins[2].rects[0].data.tag).toBe("two");
     });
 
-    test("reads a tag from the rect itself, not only from rect.data", () => {
+    test("groups by a tag on the rect itself, not only by rect.data.tag", () => {
+        // Same scenario as "adds to bins with non-exclusive tag matching" above, but the tags live on
+        // the rect instead of in rect.data. The geometry matters: one rect is too big to join its
+        // group, so the grouping decides which rects share a bin. With three same-size rects that all
+        // fit anywhere, the assertions would pass even with grouping bypassed.
         packer = new MaxRectsPacker(1024, 1024, 0, { ...opt, tag: true, exclusiveTag: false });
         packer.addArray([
+            { width: 512, height: 512 },
             { width: 512, height: 512, tag: "one" },
+            { width: 512, height: 512, tag: "two" },
+            { width: 512, height: 512, tag: "two" },
+            { width: 512, height: 512, tag: "two" },
+            // Will break into its own bin
+            { width: 600, height: 600, tag: "two" },
+            { width: 512, height: 512, tag: "two" },
             { width: 512, height: 512, tag: "one" },
             { width: 512, height: 512 }
         ]);
-        expect(packer.bins).toHaveLength(1);
-        expect(packer.bins[0].rects).toHaveLength(3);
+
+        expect(packer.bins).toHaveLength(3);
+        expect(packer.bins[0].rects).toHaveLength(4);
+        expect(packer.bins[1].rects).toHaveLength(4);
+        expect(packer.bins[2].rects).toHaveLength(1);
+        expect(packer.bins[0].rects.map((rect) => rect.tag)).toEqual(["one", "one", "two", "two"]);
+        expect(packer.bins[1].rects.map((rect) => rect.tag)).toEqual(["two", "two", undefined, undefined]);
+        expect(packer.bins[2].rects[0].tag).toBe("two");
     });
 
     test("allows oversized elements to be added", () => {

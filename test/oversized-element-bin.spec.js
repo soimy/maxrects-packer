@@ -47,10 +47,14 @@ describe("OversizedElementBin", () => {
         expect(bin.repack()).toBeUndefined();
     });
 
-    test("#clone shares the oversized rect with the original", () => {
+    test("#clone holds the same rect object, not a copy", () => {
         const bin = new OversizedElementBin(2000, 2000, { foo: "bar" });
         const clone = bin.clone();
         expect(clone.width).toBe(2000);
+        expect(clone.rects[0]).toEqual(bin.rects[0]);
+        // Identity is asserted on purpose, not as an implementation detail: clone() passes the same
+        // object into the new bin, so `clone.rects[0].width = 100` is visible through the original as
+        // well. Pinning it means a change to isolate the clone has to be deliberate.
         expect(clone.rects[0]).toBe(bin.rects[0]);
     });
 
