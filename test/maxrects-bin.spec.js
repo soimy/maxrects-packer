@@ -1,3 +1,8 @@
+// oxlint-disable vitest/valid-expect -- `expect(value, message)` is part of vitest 4's own typed API:
+// @vitest/expect declares `<T>(actual: T, message?: string): Assertion<T>`, and that message is what
+// carries the replay instructions below. oxlint 1.83's vitest/valid-expect still rejects the second
+// argument, so the rule is narrower than the library it targets. This is a file-scoped directive, not
+// an off switch in .oxlintrc.json — removing these four lines brings the eight violations back.
 import { beforeEach, describe, expect, test } from "vitest";
 import { MaxRectsBin } from "../src/maxrects-bin";
 import { Rectangle } from "../src/geom/Rectangle";
@@ -15,9 +20,14 @@ let bin;
 // The monkey tests are the main regression net for the placement algorithm, so their input has to be
 // reproducible: `Math.random()` made a failure impossible to replay. Each of them draws from its own
 // seeded stream, which also makes the inputs independent of test order — shuffling the suite changes
-// nothing but the order. MONKEY_SEED shifts every stream when you want to explore other inputs.
+// nothing but the order.
 const SEED_BASE = Number(process.env.MONKEY_SEED ?? 0x5eed);
 const seeded = (offset) => mulberry32(SEED_BASE + offset);
+
+// Each stream is `mulberry32(SEED_BASE + offset)`, so a failure has to report the *base* seed and the
+// offset. Reporting the derived value would be a trap: passing it as MONKEY_SEED makes it the new base,
+// which selects a different stream and does not reproduce the failure.
+const replayInfo = (offset, label) => `[${label}] replay with MONKEY_SEED=${SEED_BASE} (this stream is base+${offset})`;
 
 // Minimal dependency-free seeded PRNG (mulberry32).
 function mulberry32(seed) {
@@ -35,11 +45,13 @@ function mulberry32(seed) {
  * Fills `target` with random rects until it refuses one, then asserts what must hold for every
  * placement: no two rects overlap, and none leaves the bin's usable area (its border inset).
  *
+ * Every assertion carries `replay`, so whichever one fails says how to reproduce that input.
+ *
  * @param target - the bin to fill
  * @param random - a seeded PRNG, so a failure can be replayed
- * @param seed - reported in the failure message, since MONKEY_SEED can move the stream
+ * @param replay - replay instructions from `replayInfo()`, attached to every assertion
  */
-function fillWithRandomRects(target, random, seed) {
+function fillWithRandomRects(target, random, replay) {
     const placed = [];
     while (true) {
         const width = Math.floor(random() * 200);
@@ -49,13 +61,13 @@ function fillWithRandomRects(target, random, seed) {
         const position = target.add(rect);
         if (!position) break;
 
-        expect(position.width).toBe(width);
-        expect(position.height).toBe(height);
+        expect(position.width, replay).toBe(width);
+        expect(position.height, replay).toBe(height);
         placed.push(position);
     }
 
-    expect(target.width).toBeLessThanOrEqual(target.maxWidth);
-    expect(target.height).toBeLessThanOrEqual(target.maxHeight);
+    expect(target.width, replay).toBeLessThanOrEqual(target.maxWidth);
+    expect(target.height, replay).toBeLessThanOrEqual(target.maxHeight);
 
     const border = target.options.border ?? 0;
     placed.forEach((rect1) => {
@@ -63,15 +75,15 @@ function fillWithRandomRects(target, random, seed) {
             if (rect1 !== rect2) {
                 expect(
                     rect1.collide(rect2),
-                    `seed ${seed}: intersection ${JSON.stringify(rect1)} ${JSON.stringify(rect2)}`
+                    `${replay}: intersection ${JSON.stringify(rect1)} ${JSON.stringify(rect2)}`
                 ).toBe(false);
             }
         });
 
-        expect(rect1.x).toBeGreaterThanOrEqual(border);
-        expect(rect1.y).toBeGreaterThanOrEqual(border);
-        expect(rect1.x + rect1.width).toBeLessThanOrEqual(target.width - border);
-        expect(rect1.y + rect1.height).toBeLessThanOrEqual(target.height - border);
+        expect(rect1.x, replay).toBeGreaterThanOrEqual(border);
+        expect(rect1.y, replay).toBeGreaterThanOrEqual(border);
+        expect(rect1.x + rect1.width, replay).toBeLessThanOrEqual(target.width - border);
+        expect(rect1.y + rect1.height, replay).toBeLessThanOrEqual(target.height - border);
     });
 
     return placed;
@@ -227,7 +239,7 @@ describe("no padding", () => {
     });
 
     test("monkey testing", () => {
-        fillWithRandomRects(bin, seeded(1), SEED_BASE + 1);
+        fillWithRandomRects(bin, seeded(1), replayInfo(1, "no padding / monkey testing"));
     });
 });
 
@@ -275,7 +287,7 @@ describe("padding", () => {
     });
 
     test("monkey testing", () => {
-        fillWithRandomRects(bin, seeded(2), SEED_BASE + 2);
+        fillWithRandomRects(bin, seeded(2), replayInfo(2, "padding / monkey testing"));
     });
 });
 
@@ -330,7 +342,7 @@ describe("border", () => {
             const border = Math.floor(random() * 20);
             bin = new MaxRectsBin(1024, 1024, padding, { ...opt, border, square: false });
 
-            fillWithRandomRects(bin, random, SEED_BASE + 10 + i);
+            fillWithRandomRects(bin, random, replayInfo(10 + i, `super monkey testing, iteration ${i}`));
         }
     });
 });
