@@ -1,8 +1,3 @@
-// oxlint-disable vitest/valid-expect -- `expect(value, message)` is part of vitest 4's own typed API:
-// @vitest/expect declares `<T>(actual: T, message?: string): Assertion<T>`, and that message is what
-// carries the replay instructions below. oxlint 1.83's vitest/valid-expect still rejects the second
-// argument, so the rule is narrower than the library it targets. This is a file-scoped directive, not
-// an off switch in .oxlintrc.json — removing these four lines brings the eight violations back.
 import { beforeEach, describe, expect, test } from "vitest";
 import { MaxRectsBin } from "../src/maxrects-bin";
 import { Rectangle } from "../src/geom/Rectangle";
