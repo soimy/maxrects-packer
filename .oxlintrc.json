@@ -31,6 +31,15 @@
     // test/efficiency.spec.js keeps two comparison tables test.skip'd, un-skipped by hand when needed
     "vitest/no-conditional-expect": "off",
     "vitest/no-disabled-tests": "off",
+    // test/maxrects-bin.spec.js passes `expect(value, message)` to attach the replay instructions to
+    // each assertion. vitest 4's own type declaration allows it — @vitest/expect declares
+    // `<T>(actual: T, message?: string): Assertion<T>` — while this rule defaults to maxArgs: 1 and
+    // counts a non-literal second argument against that limit. (A *string literal* second argument is
+    // treated as the jest-style message and exempted, so probing this rule with a literal shows no
+    // violation — the message in that file is a variable, which does trip it.) Raising the limit keeps
+    // every other check of the rule switched on — a missing matcher still fails, and so does a third
+    // argument — unlike disabling the rule for the file.
+    "vitest/valid-expect": ["error", { "maxArgs": 2 }],
     // test/efficiency.spec.js's comparison test only prints a table, so this rule would fire on it.
     // It has to be disabled at this level rather than in the test override: an override block cannot
     // turn `vitest/expect-expect` off (checked on oxlint 1.83), unlike the jest entry it replaces.

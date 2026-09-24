@@ -24,7 +24,7 @@ describe("Rectangle", () => {
         expect(rect.dirty).toBe(false);
     });
 
-    test("Dynamiclly changing value", () => {
+    test("Dynamically changing value", () => {
         const rect = new Rectangle(512, 512, 16);
         rect.width = 256;
         rect.y = 32;
