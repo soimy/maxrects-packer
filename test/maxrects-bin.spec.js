@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { MaxRectsBin } from "../src/maxrects-bin";
 import { Rectangle } from "../src/geom/Rectangle";
+import { EDGE_MAX_VALUE } from "../src/types";
 
 const opt = {
     smart: true,
@@ -236,9 +237,64 @@ describe("no padding", () => {
     test("monkey testing", () => {
         fillWithRandomRects(bin, seeded(1), replayInfo(1, "no padding / monkey testing"));
     });
+
+    test("rejects rects through the multi-argument add when tags disagree", () => {
+        bin.tag = "foo";
+        expect(bin.add(200, 100, { tag: "bar" })).toBeUndefined();
+        expect(bin.add(200, 100)).toBeUndefined();
+        expect(bin.add(200, 100, { tag: "foo" })).toBeDefined();
+        expect(bin.rects).toHaveLength(1);
+    });
+
+    test("deep reset drops the bin data and tag", () => {
+        bin.tag = "foo";
+        bin.data = { keep: false };
+        bin.add(200, 100, { tag: "foo" });
+        expect(bin.rects).toHaveLength(1);
+
+        bin.reset(true);
+
+        expect(bin.tag).toBeUndefined();
+        expect(bin.data).toBeUndefined();
+        expect(bin.rects).toHaveLength(0);
+    });
+
+    test("repack sorts equal-sized rects by hash, highest first", () => {
+        bin.add({ width: 512, height: 512, hash: "1" });
+        bin.add({ width: 512, height: 512, hash: "3" });
+        bin.add({ width: 512, height: 512, hash: "2" });
+        bin.repack();
+        expect(bin.rects.map((rect) => rect.hash)).toEqual(["3", "2", "1"]);
+    });
+
+    test("throws on wrong parameters", () => {
+        expect(() => bin.add(42)).toThrow("MacrectsBin.add(): Wrong parameters");
+    });
 });
 
 const padding = 4;
+
+describe("constructor", () => {
+    test("a non-smart bin starts at its full size", () => {
+        const fixed = new MaxRectsBin(1024, 512, 0, { ...opt, smart: false, pot: false });
+        expect(fixed.width).toBe(1024);
+        expect(fixed.height).toBe(512);
+    });
+
+    test("falls back to EDGE_MAX_VALUE when no size is given", () => {
+        const defaultBin = new MaxRectsBin();
+        expect(defaultBin.maxWidth).toBe(EDGE_MAX_VALUE);
+        expect(defaultBin.maxHeight).toBe(EDGE_MAX_VALUE);
+        expect(defaultBin.padding).toBe(0);
+    });
+
+    test("reset restores the full size of a non-smart bin", () => {
+        const fixed = new MaxRectsBin(1024, 512, 0, { ...opt, smart: false, pot: false });
+        fixed.reset();
+        expect(fixed.width).toBe(1024);
+        expect(fixed.height).toBe(512);
+    });
+});
 
 describe("padding", () => {
     beforeEach(() => {
@@ -325,6 +381,12 @@ describe("border", () => {
     test("adds rects with sizes close to the max", () => {
         expect(bin.add(1024, 1024)).toBeUndefined();
         expect(bin.rects.length).toBe(0);
+    });
+
+    test("reset keeps the border", () => {
+        bin.reset();
+        expect(bin.border).toBe(border);
+        expect(bin.width).toBe(0); // smart sizing starts empty again
     });
 
     const SUPER_MONKEY_LOOPS = 5;

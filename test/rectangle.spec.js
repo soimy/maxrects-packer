@@ -46,6 +46,18 @@ describe("Rectangle", () => {
         expect(rect.dirty).toBe(true);
     });
 
+    test("setDirty() defaults to marking the rect dirty", () => {
+        const rect = new Rectangle(512, 512);
+        rect.setDirty(false);
+        expect(rect.dirty).toBe(false);
+
+        rect.setDirty();
+        expect(rect.dirty).toBe(true);
+
+        rect.setDirty(false);
+        expect(rect.dirty).toBe(false);
+    });
+
     test("Rot flag functionality", () => {
         const rect = new Rectangle(512, 256);
         expect(rect.rot).toBe(false);
@@ -71,6 +83,18 @@ describe("Rectangle", () => {
         expect(rect.allowRotation).toBe(true);
         rect.allowRotation = false;
         expect(rect.allowRotation).toBe(false);
+    });
+
+    test("allowRotation setter ignores an unchanged value", () => {
+        const rect = new Rectangle(512, 256);
+        rect.allowRotation = true;
+        rect.setDirty(false);
+
+        rect.allowRotation = true; // unchanged: must not bump the dirty counter
+        expect(rect.dirty).toBe(false);
+
+        rect.allowRotation = false;
+        expect(rect.dirty).toBe(true);
     });
 
     test("data.allowRotation sync", () => {
