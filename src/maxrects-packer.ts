@@ -76,10 +76,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                     let bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
                     let tag = rect.data && rect.data.tag ? rect.data.tag : rect.tag ? rect.tag : undefined;
                     if (this.options.tag && tag) bin.tag = tag;
-                    // A bin that refuses the rect it was opened for (square/pot rounding cannot fit it)
-                    // is empty and useless, and the rect still has to be accounted for.
-                    if (bin.add(rect) === undefined) this.bins.push(new OversizedElementBin<T>(rect));
-                    else this.bins.push(bin);
+                    if (this.addToBin(bin, rect)) this.bins.push(bin);
                 }
             }
             return rect;
@@ -99,12 +96,25 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 if (!added) {
                     let bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
                     if (this.options.tag && rect.data.tag) bin.tag = rect.data.tag;
-                    if (bin.add(rect as T) === undefined) this.bins.push(new OversizedElementBin<T>(rect as T));
-                    else this.bins.push(bin);
+                    if (this.addToBin(bin, rect as T)) this.bins.push(bin);
                 }
             }
             return rect as T;
         }
+    }
+
+    /**
+     * Add a rect to a bin, giving the rect its own oversized bin when the bin refuses it. A bin only
+     * refuses a rect it cannot grow to fit (see `MaxRectsBin.place()`), and dropping such a rect is
+     * never an option — every caller that would otherwise ignore `bin.add()` has to come through here.
+     * @param bin - the bin that should take the rect
+     * @param rect - the rect to add
+     * @returns true when the bin took the rect
+     */
+    private addToBin(bin: MaxRectsBin<T>, rect: T): boolean {
+        if (bin.add(rect) !== undefined) return true;
+        this.bins.push(new OversizedElementBin<T>(rect));
+        return false;
     }
 
     /**
@@ -148,7 +158,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                         // all current tag memeber tested successfully
                         currentTag = tag;
                         // do addArray()
-                        this.sort(rects.slice(currentIdx, i), this.options.logic).forEach((r) => bin.add(r));
+                        this.sort(rects.slice(currentIdx, i), this.options.logic).forEach((r) => this.addToBin(bin, r));
                         currentIdx = i;
 
                         // recrusively addArray() with remaining rects
@@ -169,7 +179,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                     if (testBin.add(rect) === undefined) {
                         // add the rects that could fit into the bins already
                         // do addArray()
-                        this.sort(rects.slice(currentIdx, i), this.options.logic).forEach((r) => bin.add(r));
+                        this.sort(rects.slice(currentIdx, i), this.options.logic).forEach((r) => this.addToBin(bin, r));
                         currentIdx = i;
 
                         // current bin cannot contain all tag members
@@ -180,7 +190,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
 
                 // all rects tested
                 // do addArray() to the remaining tag group
-                this.sort(rects.slice(currentIdx), this.options.logic).forEach((r) => bin.add(r));
+                this.sort(rects.slice(currentIdx), this.options.logic).forEach((r) => this.addToBin(bin, r));
                 return true;
             });
 
@@ -190,9 +200,8 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 const bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
                 const tag = rect.data && rect.data.tag ? rect.data.tag : rect.tag ? rect.tag : undefined;
                 if (this.options.tag && this.options.exclusiveTag && tag) bin.tag = tag;
-                this.bins.push(bin);
                 // Add the rect to the newly created bin
-                bin.add(rect);
+                if (this.addToBin(bin, rect)) this.bins.push(bin);
                 currentIdx++;
                 this.addArray(rects.slice(currentIdx));
             }

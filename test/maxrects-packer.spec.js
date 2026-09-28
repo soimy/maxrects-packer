@@ -307,6 +307,24 @@ describe("#addArray", () => {
         expect(packer.bins).toHaveLength(1);
         expect(packer.bins[0].rects).toHaveLength(2);
     });
+
+    test("keeps a rect no square bin can hold in non-exclusive tag mode", () => {
+        // The tag grouping path opens bins of its own, so it has to report a refused rect as oversized
+        // exactly like `add()` does — otherwise the rect disappears between the two APIs.
+        packer = new MaxRectsPacker(1024, 2048, 0, {
+            ...opt,
+            tag: true,
+            exclusiveTag: false,
+            smart: true,
+            pot: true,
+            square: true,
+            allowRotation: true
+        });
+        packer.addArray([{ width: 2048, height: 55, tag: "one" }]);
+
+        expect(packer.rects).toHaveLength(1);
+        expect(packer.rects[0].oversized).toBe(true);
+    });
 });
 
 describe("#save & load", () => {

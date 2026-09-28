@@ -114,7 +114,7 @@ npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild ne
   extension-less) and take `describe / test / expect / beforeEach` from `vitest` explicitly instead of
   from globals — **they do not test `dist`**. A broken build or a broken artifact is
   invisible to them, so compare `dist` by hand whenever you touch the build.
-- Baseline: `7 spec files / 96 passed / 2 skipped`; v8 coverage is 99.77% statements, 98.41% branches,
+- Baseline: `7 spec files / 97 passed / 2 skipped`; v8 coverage is 99.77% statements, 98.42% branches,
   100% functions and lines. Coverage is **opt-in**: only `npm run cover` collects it and writes
   `test/coverage/` (gitignored), so a plain `npm test` or a single-spec run leaves that directory
   alone. Read the real numbers from a full `npm run cover`, and take the *gap* list from its JSON/lcov

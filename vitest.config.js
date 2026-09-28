@@ -15,7 +15,7 @@ export default defineConfig({
             include: ["src/**/*.ts"],
             exclude: ["src/**/*.d.ts"],
             reporter: ["text", "json", "lcov", "html"],
-            // Measured: 447/448 statements, 372/378 branches, 74/74 functions, 402/402 lines. The
+            // Measured: 449/450 statements, 376/382 branches, 75/75 functions, 402/402 lines. The
             // counts were identical on Node 22 and 24 when the thresholds were set and only moved
             // because a fix added covered code. The uncovered remainder is the dead code recorded in
             // DEFERRED_WORK.md, so these are a floor rather than a target — the little slack keeps a
