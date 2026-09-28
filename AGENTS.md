@@ -25,7 +25,7 @@ possible, each staying within `maxWidth × maxHeight` (sprite sheets / texture a
 
 | File | Responsibility |
 | --- | --- |
-| `src/index.ts` | The only barrel export. Runtime values: `Rectangle / MaxRectsPacker / PACKING_LOGIC / Bin / MaxRectsBin / OversizedElementBin`; types: `IRectangle / IOption / IBin` |
+| `src/index.ts` | The only barrel export. Runtime values: `Rectangle / MaxRectsPacker / PACKING_LOGIC / Bin / MaxRectsBin / OversizedElementBin`; types: `IRectangle / IOption / IBin`. The surface is pinned by `test/index.spec.js` — adding or renaming a public value means updating that list in the same commit |
 | `src/types.ts` | `IOption`, `PACKING_LOGIC` (MAX_AREA/MAX_EDGE/FILL_WIDTH), `EDGE_MAX_VALUE=4096`, `EDGE_MIN_VALUE=128` (**never used inside the library, but re-exported by `src/maxrects-packer.ts` and part of the public `.d.ts` — not dead code, do not delete**) |
 | `src/geom/Rectangle.ts` | `IRectangle` interface + `Rectangle`: `width/height/x/y/rot/data/allowRotation` all go through getters/setters and bump `_dirty` on every mutation; the `rot` setter swaps width/height, the `data` setter syncs `data.allowRotation` |
 | `src/abstract-bin.ts` | `IBin` / abstract `Bin<T>`: the `dirty` semantics and `setDirty()`; `add/reset/repack/clone` are left to subclasses |
@@ -77,7 +77,7 @@ npm run verify:package       # npm pack → install into a temp consumer → ver
 npm run lint                 # oxlint (baseline is 0 warnings / 0 errors)
 npm run lint:fix             # oxlint --fix
 npm run format               # oxfmt writes back; CI only checks, via npm run format:check
-npm run cover                # build + vitest run --coverage
+npm run cover                # build + vitest run --coverage + thresholds + coverage artifact self-check
 npm run doc                  # typedoc → docs/ (not tracked by git)
 npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild needed)
 ```
@@ -89,6 +89,10 @@ npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild ne
   (`no-console`, `no-unused-vars`, `no-unneeded-ternary`, `jsdoc/require-property-type`), so they are
   advisory only — `npm run lint` exits 0 with a warning present. Adding `--deny-warnings` to the
   `lint` script is what would make them blocking; that has not been done on purpose.
+  `vitest/expect-expect` is the exception that is an **error**, configured with
+  `assertFunctionNames: ["expect", "fillWithRandomRects"]` — the list replaces the default rather than
+  extending it, so a new helper that asserts on the caller's behalf has to be named there or the
+  rule fires on its tests.
 - **Dual TypeScript (the official 6/7 side-by-side setup)**: the `typescript` alias points at
   `@typescript/typescript6`, which provides the JS compiler API consumed by typedoc and the
   rollup plugin; `@typescript/native` is native TS 7 and `node_modules/.bin/tsc` points at it. So
@@ -105,14 +109,25 @@ npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild ne
   extension-less) and take `describe / test / expect / beforeEach` from `vitest` explicitly instead of
   from globals — **they do not test `dist`**. A broken build or a broken artifact is
   invisible to them, so compare `dist` by hand whenever you touch the build.
-- Baseline: `6 spec files / 66 passed / 2 skipped`, ~95% statements (v8 provider). Coverage is
-  **opt-in**: only `npm run cover` collects it and writes `test/coverage/` (gitignored), so a plain
-  `npm test` or a single-spec run leaves that directory alone. Read the real numbers from a full
-  `npm run cover`, and take the *gap* list from its JSON/lcov output rather than from the text table —
-  that table's `Uncovered Line #s` column omits lines the machine-readable report marks as never
-  executed (checked under both the old istanbul and the current v8 provider).
+- Baseline: `7 spec files / 94 passed / 2 skipped`; v8 coverage is 99.77% statements, 98.33% branches,
+  100% functions and lines. Coverage is **opt-in**: only `npm run cover` collects it and writes
+  `test/coverage/` (gitignored), so a plain `npm test` or a single-spec run leaves that directory
+  alone. Read the real numbers from a full `npm run cover`, and take the *gap* list from its JSON/lcov
+  output rather than from the text table — that table's `Uncovered Line #s` column omits lines the
+  machine-readable report marks as never executed (checked under both the old istanbul and the current
+  v8 provider).
+- **The numbers are gates, not measurements.** `test/index.spec.js` fails when the barrel's export
+  list, binding identity or `PACKING_LOGIC` numbering changes; `coverage.thresholds` in
+  `vitest.config.js` (99/98/99/99, deliberately below the measured values so a fraction of drift does
+  not fail a legitimate change) fails the run on a coverage drop; and `scripts/verify-coverage.mjs`
+  fails when `lcov.info` or `coverage-final.json` is missing or empty — vitest exits **0** when the
+  `coverage.reporter` key is wrong, so without that check a silently lost artifact stays green.
 - The two `test.skip`s in `test/efficiency.spec.js` are the bulk comparison table driven by
-  `scenarios.json` + `ascii-table`; they only run once un-skipped by hand.
+  `scenarios.json` + `ascii-table`; they only run once un-skipped by hand. The rest of that file does
+  assert: every candidate packs every scenario completely, `combined best of` really picks the better
+  logic, and no candidate reports an efficiency above 1 — except `1024x2048:1:Rot`, which is flagged
+  rather than excluded as a group (measured 1.06 on scenario 5; the defect behind it is recorded in
+  `DEFERRED_WORK.md`).
 - CI: `.github/workflows/node.js.yml` (Node 20/22/24: lint → format:check → typecheck → cover →
   verify:package); `release.yml` is triggered by `v*` tags.
 
