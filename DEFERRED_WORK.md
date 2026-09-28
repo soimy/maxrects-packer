@@ -43,6 +43,31 @@ from deleting the code in question and re-running the suite.
   (`expect(clone.rects[0]).toBe(bin.rects[0])`); `MaxRectsBin` has no clone spec at all, so a change
   there would be caught by nothing.
 
+## Rotation of plain `{width, height}` rects (found by the efficiency gate, separate PR)
+
+`test/efficiency.spec.js` asserts that no candidate reports an efficiency above 1, and exactly one has
+to be exempted from it: `1024x2048:1:Rot`, the only rotating candidate whose maxWidth differs from its
+maxHeight. It exceeds 1 in 9 of the 41 scenarios under MAX_EDGE and 10 under MAX_AREA, up to `Infinity`;
+the two square rotating candidates never do, which is why the exemption is a per-candidate flag rather
+than "every rotating candidate".
+
+Measured on `scenarios[5]` (64 rects) with the `1024x2048:1:Rot` candidate (smart + pot + square +
+allowRotation, MAX_EDGE): rect area 5,577,552 against bin area 5,242,880, i.e. **1.06**, and the worst
+bin reports `1024x1024` while its 13 rects reach **2048** in one axis — 1009x2048 if `rot` is taken to
+swap the dimensions, 2048x1841 if it is not. Either way the bin's reported size does not contain what
+the bin holds, which is worse than the efficiency number alone suggests.
+
+The rects come from `test/scenarios.json`, so they are plain `{width, height}` objects: none of them
+carries an own `_allowRotation`, so `MaxRectsBin.place()` takes `allowRotation` from the packer option
+(`src/maxrects-bin.ts:140-144`), `findNode()` returns a node with `rot: true`, and `place()` then writes
+`rect.rot = true` without swapping the dimensions (`src/maxrects-bin.ts:163-164`) — plain objects have
+no `rot` setter to do it for them. `updateBinSize()` goes on to size the bin from dimensions that no
+longer match the footprint actually occupied. This is the same root cause as the per-rect
+`allowRotation` pitfall in `AGENTS.md`, with a consequence that entry does not mention.
+
+Decide between swapping the dimensions for objects that lack the setter and refusing rotation for them;
+either way it is a behaviour change that needs its own PR.
+
 ## Documentation structure (planned, separate PR)
 
 The target layout for repository documentation:
