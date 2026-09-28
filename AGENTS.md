@@ -25,7 +25,7 @@ possible, each staying within `maxWidth × maxHeight` (sprite sheets / texture a
 
 | File | Responsibility |
 | --- | --- |
-| `src/index.ts` | The only barrel export. Runtime values: `Rectangle / MaxRectsPacker / PACKING_LOGIC / Bin / MaxRectsBin / OversizedElementBin`; types: `IRectangle / IOption / IBin`. The surface is pinned by `test/index.spec.js` — adding or renaming a public value means updating that list in the same commit |
+| `src/index.ts` | The only barrel export. Runtime values: `Rectangle / MaxRectsPacker / PACKING_LOGIC / Bin / MaxRectsBin / OversizedElementBin`; types: `IRectangle / IOption / IBin`. The surface is pinned by `test/index.spec.js` — adding or renaming a public value means updating that list in the same commit — and what consumers can actually import is checked by the type fixture in `npm run verify:package` against `package.json`'s `types` entry |
 | `src/types.ts` | `IOption`, `PACKING_LOGIC` (MAX_AREA/MAX_EDGE/FILL_WIDTH), `EDGE_MAX_VALUE=4096`, `EDGE_MIN_VALUE=128` (**never used inside the library, but re-exported by `src/maxrects-packer.ts` and part of the public `.d.ts` — not dead code, do not delete**) |
 | `src/geom/Rectangle.ts` | `IRectangle` interface + `Rectangle`: `width/height/x/y/rot/data/allowRotation` all go through getters/setters and bump `_dirty` on every mutation; the `rot` setter swaps width/height, the `data` setter syncs `data.allowRotation` |
 | `src/abstract-bin.ts` | `IBin` / abstract `Bin<T>`: the `dirty` semantics and `setDirty()`; `add/reset/repack/clone` are left to subclasses |
@@ -120,13 +120,15 @@ npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild ne
   list, binding identity or `PACKING_LOGIC` numbering changes; `coverage.thresholds` in
   `vitest.config.js` (99/98/99/99, deliberately below the measured values so a fraction of drift does
   not fail a legitimate change) fails the run on a coverage drop; and `scripts/verify-coverage.mjs`
-  fails when `lcov.info` or `coverage-final.json` is missing or empty — vitest exits **0** when the
-  `coverage.reporter` key is wrong, so without that check a silently lost artifact stays green.
+  fails when `lcov.info` or `coverage-final.json` is missing, unparseable or incomplete — vitest exits
+  **0** when the `coverage.reporter` key is wrong, so without that check a silently lost artifact stays
+  green.
 - The two `test.skip`s in `test/efficiency.spec.js` are the bulk comparison table driven by
   `scenarios.json` + `ascii-table`; they only run once un-skipped by hand. The rest of that file does
   assert: every candidate packs every scenario completely, `combined best of` really picks the better
-  logic, and no candidate reports an efficiency above 1 — except `1024x2048:1:Rot`, which is flagged
-  rather than excluded as a group (measured 1.06 on scenario 5; the defect behind it is recorded in
+  logic under the lexicographic rule it implements (fewer bins wins, efficiency only breaks a tie), and
+  no candidate reports an efficiency above 1 — except `1024x2048:1:Rot`, and only on the scenarios
+  where the overshoot is already measured, so a new one fails (the defect behind it is recorded in
   `DEFERRED_WORK.md`).
 - CI: `.github/workflows/node.js.yml` (Node 20/22/24: lint → format:check → typecheck → cover →
   verify:package); `release.yml` is triggered by `v*` tags.
@@ -241,10 +243,17 @@ English keeps the project history usable for every contributor and every downstr
 - Packaging / entry points: `package.json` is `"type": "module"`, so a `.js` file inside the package
   is parsed as ESM by Node — which is why `main` must point at `.cjs`
   (`dist/maxrects-packer.cjs`). Historically `main` pointed at the UMD `.js`, and `require()` returned
-  an empty object for three and a half years. Two gates protect the entry points: `postbuild` runs
+  an empty object for three and a half years. Three gates protect the entry points: `postbuild` runs
   `scripts/verify-entry.mjs` (fast, checks file paths) and CI runs `npm run verify:package` (slow —
   `npm pack`s a real tarball, installs it into a temp consumer and verifies `require`/`import` by
-  **package name**). Both will stop you after a change to the entry points, `files` or artifact names.
+  **package name**, then compiles a fixture against the published `types`). All of them will stop you
+  after a change to the entry points, `files` or artifact names.
+  The `types` field must name the **barrel's** declaration (`dist/index.d.ts`), not a module's: the
+  build emits one `.d.ts` per source module, and `dist/maxrects-packer.d.ts` — the declaration of
+  `src/maxrects-packer.ts` — only exports `MaxRectsPacker`, `PACKING_LOGIC` and `IOption`, which left
+  six of the nine documented exports unimportable from TypeScript until the type fixture landed.
+  A `node16`/`nodenext` consumer still needs `skipLibCheck: true`: the emitted declarations use
+  extensionless relative imports, which that resolution mode rejects (recorded in `DEFERRED_WORK.md`).
   There is still no `exports` field, so deep imports (`maxrects-packer/dist/...`) work; adding one
   would seal off deep paths, which is breaking and therefore reserved for 3.0.0.
 - Published content is decided by the `files` allowlist in `package.json`: `dist` + `src` +

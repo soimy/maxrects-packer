@@ -68,6 +68,30 @@ longer match the footprint actually occupied. This is the same root cause as the
 Decide between swapping the dimensions for objects that lack the setter and refusing rotation for them;
 either way it is a behaviour change that needs its own PR.
 
+## Published declarations need extensions for `node16`/`nodenext` consumers (separate PR)
+
+`package.json` now points `types` at the barrel's declaration, so the documented imports resolve — but
+only under a resolution mode that tolerates extensionless relative imports (`bundler`, which is what
+Vite and webpack use, and the historical `node10`). A consumer on `moduleResolution: node16` or
+`nodenext` with `skipLibCheck: false` still fails on the package's own `.d.ts` files, because
+`@rollup/plugin-typescript` emits one declaration per source module and keeps the specifiers
+extensionless while the package is `"type": "module"`:
+
+```text
+node_modules/maxrects-packer/dist/index.d.ts(1,39): error TS2834: Relative import paths need explicit file
+  extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'. Consider adding an
+  extension to the import path.
+node_modules/maxrects-packer/dist/index.d.ts(2,56): error TS2835: … Did you mean './maxrects-packer.mjs'?
+```
+
+Measured on the packed tarball: `bundler` passes with and without `skipLibCheck`, `nodenext` passes only
+with `skipLibCheck: true`. So the impact is limited to consumers who check library declarations, but the
+error is reported against this package. Fixing it means writing `.js`-suffixed specifiers in the emitted
+declarations — either the source imports plus a resolver in the rollup config (rollup does not map
+`./x.js` to `./x.ts` on its own) or a post-processing step over `dist/*.d.ts`. Replacing the per-module
+emit with a bundled declaration (what `rollup-plugin-typescript2` produced before PR #68) would remove
+the issue at the same time.
+
 ## Documentation structure (planned, separate PR)
 
 The target layout for repository documentation:
