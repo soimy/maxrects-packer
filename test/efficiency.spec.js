@@ -6,6 +6,14 @@ import SCENARIOS from "./scenarios.json";
 
 const rectSizeSum = SCENARIOS.map((scenario) => scenario.reduce((memo, rect) => memo + rect.width * rect.height, 0));
 
+// Scenario indices where `1024x2048:1:Rot` reports an efficiency above 1 today, measured per logic.
+// The assertion below fails when the overshoot reaches a scenario outside this list, so the defect
+// cannot silently get worse; a listed scenario that stops overshooting is not an error.
+const KNOWN_OVERSHOOT_SCENARIOS = {
+    [PACKING_LOGIC.MAX_EDGE]: [5, 9, 21, 24, 26, 33, 37, 39, 41],
+    [PACKING_LOGIC.MAX_AREA]: [5, 9, 21, 24, 26, 33, 35, 37, 39, 41]
+};
+
 // One table for both logics. The area and edge candidate lists used to be written out in full twice,
 // 85 lines each, identical apart from `logic`.
 const CANDIDATE_SHAPES = [
@@ -76,9 +84,12 @@ describe("Efficiency", () => {
                     // above 1 means a bin holds more area than it reports. Exactly one candidate does
                     // that today: `1024x2048:1:Rot`, the only rotating one whose maxWidth differs from
                     // its maxHeight, which is the shape the plain-object rotation defect needs
-                    // (DEFERRED_WORK.md). It is flagged instead of excluded as a group, so the two
-                    // square rotating candidates stay asserted.
-                    if (!candidate.efficiencyOvershoot) {
+                    // (DEFERRED_WORK.md). Only the scenarios measured so far are exempt, so the defect
+                    // cannot reach a new one unnoticed; a listed scenario that stops overshooting is
+                    // allowed to, which is the improvement direction.
+                    const knownOvershoot =
+                        candidate.efficiencyOvershoot && KNOWN_OVERSHOOT_SCENARIOS[logic].includes(scenarioIndex);
+                    if (!knownOvershoot) {
                         expect(result.efficiency, replay).toBeLessThanOrEqual(1);
                     }
                 });
@@ -113,15 +124,18 @@ describe("Efficiency", () => {
         );
         const rows = createRows(results);
 
-        // The table is only worth reading if the pick really is the better of the two logics:
-        // fewer bins wins, and on equal bins the higher efficiency does.
+        // The pick follows the selection above, which is lexicographic: fewer bins wins outright —
+        // even at a lower efficiency — and efficiency only decides an equal-bin tie. Demanding the
+        // highest efficiency unconditionally would reject a correct fewer-bin choice.
         results.forEach((candidateResults, candidateIndex) =>
             candidateResults.forEach((best, scenarioIndex) => {
                 const edge = edgeResults[candidateIndex][scenarioIndex];
                 const area = areaResults[candidateIndex][scenarioIndex];
                 const replay = `${AREA_CANDIDATES[candidateIndex].name} / scenario ${scenarioIndex}`;
-                expect(best.bins, replay).toBeLessThanOrEqual(Math.min(edge.bins, area.bins));
-                expect(best.efficiency, replay).toBeGreaterThanOrEqual(Math.max(edge.efficiency, area.efficiency));
+                expect(best.bins, replay).toBe(Math.min(edge.bins, area.bins));
+                if (edge.bins === area.bins) {
+                    expect(best.efficiency, replay).toBe(Math.max(edge.efficiency, area.efficiency));
+                }
             })
         );
 
