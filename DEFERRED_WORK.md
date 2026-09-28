@@ -49,7 +49,9 @@ from deleting the code in question and re-running the suite.
 to be exempted from it: `1024x2048:1:Rot`, the only rotating candidate whose maxWidth differs from its
 maxHeight. It exceeds 1 in 9 of the 41 scenarios under MAX_EDGE and 10 under MAX_AREA, up to `Infinity`;
 the two square rotating candidates never do, which is why the exemption is a per-candidate flag rather
-than "every rotating candidate".
+than "every rotating candidate". The flag alone is not enough, though: the test keys the exemption to a
+fingerprint of each scenario's rect sizes and caps it at the efficiency that input measures today, so
+replacing a fixture cannot inherit the exemption and a listed input cannot silently get worse.
 
 Measured on `scenarios[5]` (64 rects) with the `1024x2048:1:Rot` candidate (smart + pot + square +
 allowRotation, MAX_EDGE): rect area 5,577,552 against bin area 5,242,880, i.e. **1.06**, and the worst

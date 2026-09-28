@@ -127,8 +127,10 @@ npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild ne
   `scenarios.json` + `ascii-table`; they only run once un-skipped by hand. The rest of that file does
   assert: every candidate packs every scenario completely, `combined best of` really picks the better
   logic under the lexicographic rule it implements (fewer bins wins, efficiency only breaks a tie), and
-  no candidate reports an efficiency above 1 — except `1024x2048:1:Rot`, and only on the scenarios
-  where the overshoot is already measured, so a new one fails (the defect behind it is recorded in
+  no candidate reports an efficiency above 1 — except `1024x2048:1:Rot`, and only on the exact scenario
+  inputs where the overshoot is already measured: the exemption is keyed by a fingerprint of the rect
+  sizes and capped at the efficiency that input measures today, so a replaced fixture, a new
+  overshooting input and a worse overshoot on a known one all fail (the defect behind it is recorded in
   `DEFERRED_WORK.md`).
 - CI: `.github/workflows/node.js.yml` (Node 20/22/24: lint → format:check → typecheck → cover →
   verify:package); `release.yml` is triggered by `v*` tags.
