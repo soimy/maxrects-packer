@@ -33,8 +33,20 @@ const validateCoverageJson = (content) => {
     if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) return "is not a JSON object";
     const entries = Object.entries(parsed);
     if (entries.length === 0) return "has no file entries";
-    const broken = entries.find(([, value]) => !value || typeof value.path !== "string" || typeof value.s !== "object");
+    // `s` holds the per-statement hit counts: `null`, an array or a string all satisfy a typeof check
+    // while being unusable, and `{}` for every entry means the file carries no counts at all. An empty
+    // `s` is not an error by itself, though — a file with nothing to instrument is reported that way
+    // (`src/index.ts` is pure re-exports), so the counts are required from the report as a whole.
+    const broken = entries.find(
+        ([, value]) =>
+            !value ||
+            typeof value.path !== "string" ||
+            typeof value.s !== "object" ||
+            value.s === null ||
+            Array.isArray(value.s)
+    );
     if (broken) return `has an entry without a path or statement counts: ${broken[0]}`;
+    if (!entries.some(([, value]) => Object.keys(value.s).length > 0)) return "has no statement counts at all";
     return undefined;
 };
 
