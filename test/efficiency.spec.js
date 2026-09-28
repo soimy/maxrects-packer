@@ -1,5 +1,5 @@
 // oxlint-disable no-console -- this file prints comparison tables on purpose
-import { describe, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { MaxRectsPacker, PACKING_LOGIC } from "../src/maxrects-packer";
 import AsciiTable from "ascii-table";
 import SCENARIOS from "./scenarios.json";
@@ -11,7 +11,16 @@ const rectSizeSum = SCENARIOS.map((scenario) => scenario.reduce((memo, rect) => 
 const CANDIDATE_SHAPES = [
     { name: "1024x2048:0", width: 1024, height: 2048, padding: 0, square: false },
     { name: "1024x2048:1", width: 1024, height: 2048, padding: 1, square: false },
-    { name: "1024x2048:1:Rot", width: 1024, height: 2048, padding: 1, square: true, allowRotation: true },
+    // The only candidate that reports an efficiency above 1 today; see the assertion below.
+    {
+        name: "1024x2048:1:Rot",
+        width: 1024,
+        height: 2048,
+        padding: 1,
+        square: true,
+        allowRotation: true,
+        efficiencyOvershoot: true
+    },
     { name: "1024x1024:0", width: 1024, height: 1024, padding: 0, square: false },
     { name: "1024x1024:1", width: 1024, height: 1024, padding: 1, square: false },
     { name: "1024x1024:1:Rot", width: 1024, height: 1024, padding: 1, square: true, allowRotation: true },
@@ -20,17 +29,20 @@ const CANDIDATE_SHAPES = [
 ];
 
 const candidatesFor = (logic) =>
-    CANDIDATE_SHAPES.map(({ name, width, height, padding, square, allowRotation = false }) => ({
-        name,
-        factory: () =>
-            new MaxRectsPacker(width, height, padding, {
-                smart: true,
-                pot: true,
-                square,
-                allowRotation,
-                logic
-            })
-    }));
+    CANDIDATE_SHAPES.map(
+        ({ name, width, height, padding, square, allowRotation = false, efficiencyOvershoot = false }) => ({
+            name,
+            efficiencyOvershoot,
+            factory: () =>
+                new MaxRectsPacker(width, height, padding, {
+                    smart: true,
+                    pot: true,
+                    square,
+                    allowRotation,
+                    logic
+                })
+        })
+    );
 
 describe("Efficiency", () => {
     const AREA_CANDIDATES = candidatesFor(PACKING_LOGIC.MAX_AREA);
@@ -52,13 +64,35 @@ describe("Efficiency", () => {
         console.log(new AsciiTable({ heading, rows }).toString());
     });
 
+    test("every candidate packs every scenario completely, and never claims more area than it was given", () => {
+        for (const logic of [PACKING_LOGIC.MAX_EDGE, PACKING_LOGIC.MAX_AREA]) {
+            for (const candidate of candidatesFor(logic)) {
+                measureEfficiency(candidate.factory).forEach((result, scenarioIndex) => {
+                    const replay = `${candidate.name} / scenario ${scenarioIndex}`;
+                    // Nothing is ever dropped: a rect that does not fit goes into an
+                    // OversizedElementBin rather than being discarded.
+                    expect(result.placed, replay).toBe(SCENARIOS[scenarioIndex].length);
+                    // `usedSize` sums the bin areas and `rectSize` the rect areas, so an efficiency
+                    // above 1 means a bin holds more area than it reports. Exactly one candidate does
+                    // that today: `1024x2048:1:Rot`, the only rotating one whose maxWidth differs from
+                    // its maxHeight, which is the shape the plain-object rotation defect needs
+                    // (DEFERRED_WORK.md). It is flagged instead of excluded as a group, so the two
+                    // square rotating candidates stay asserted.
+                    if (!candidate.efficiencyOvershoot) {
+                        expect(result.efficiency, replay).toBeLessThanOrEqual(1);
+                    }
+                });
+            }
+        }
+    });
+
     test("combined best of", () => {
         const heading = ["#", "size"].concat(AREA_CANDIDATES.map((c) => c.name));
-        const results1 = EDGE_CANDIDATES.map((candidate) => measureEfficiency(candidate.factory));
-        const results2 = AREA_CANDIDATES.map((candidate) => measureEfficiency(candidate.factory));
-        const results = results1.map((scenario, scenarioIndex) =>
-            scenario.map((result1, resultIndex) => {
-                const result2 = results2[scenarioIndex][resultIndex];
+        const edgeResults = EDGE_CANDIDATES.map((candidate) => measureEfficiency(candidate.factory));
+        const areaResults = AREA_CANDIDATES.map((candidate) => measureEfficiency(candidate.factory));
+        const results = edgeResults.map((edge, candidateIndex) =>
+            edge.map((result1, scenarioIndex) => {
+                const result2 = areaResults[candidateIndex][scenarioIndex];
                 if (result1.bins < result2.bins) {
                     result1.method = "E";
                     return result1;
@@ -79,6 +113,18 @@ describe("Efficiency", () => {
         );
         const rows = createRows(results);
 
+        // The table is only worth reading if the pick really is the better of the two logics:
+        // fewer bins wins, and on equal bins the higher efficiency does.
+        results.forEach((candidateResults, candidateIndex) =>
+            candidateResults.forEach((best, scenarioIndex) => {
+                const edge = edgeResults[candidateIndex][scenarioIndex];
+                const area = areaResults[candidateIndex][scenarioIndex];
+                const replay = `${AREA_CANDIDATES[candidateIndex].name} / scenario ${scenarioIndex}`;
+                expect(best.bins, replay).toBeLessThanOrEqual(Math.min(edge.bins, area.bins));
+                expect(best.efficiency, replay).toBeGreaterThanOrEqual(Math.max(edge.efficiency, area.efficiency));
+            })
+        );
+
         console.log(new AsciiTable({ heading, rows }).toString());
     });
 });
@@ -91,8 +137,9 @@ function measureEfficiency(factory) {
         const bins = packer.bins.length;
         const rectSize = rectSizeSum[i];
         const usedSize = packer.bins.reduce((memo, bin) => memo + bin.width * bin.height, 0);
+        const placed = packer.bins.reduce((memo, bin) => memo + bin.rects.length, 0);
         const efficiency = rectSize / usedSize;
-        return { bins, rectSize, usedSize, efficiency };
+        return { bins, rectSize, usedSize, placed, efficiency };
     });
 }
 
