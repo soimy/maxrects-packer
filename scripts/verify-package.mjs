@@ -11,8 +11,24 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import ts from "typescript";
 
 const EXPECTED = ["Bin", "MaxRectsBin", "MaxRectsPacker", "OversizedElementBin", "PACKING_LOGIC", "Rectangle"];
+// The documented API, imported by package name — every name src/index.ts re-exports, used so the
+// fixture cannot pass on an unused import.
+const TYPE_FIXTURE = `import { Bin, MaxRectsBin, MaxRectsPacker, OversizedElementBin, PACKING_LOGIC, Rectangle } from "maxrects-packer";
+import type { IBin, IOption, IRectangle } from "maxrects-packer";
+
+const options: IOption = { smart: true, pot: true, square: false, allowRotation: false, tag: false, border: 0, logic: PACKING_LOGIC.MAX_EDGE };
+const packer = new MaxRectsPacker(64, 64, 0, options);
+packer.add(new Rectangle(16, 16));
+const saved: IBin[] = packer.save();
+const bins: Bin<Rectangle>[] = packer.bins;
+const bin = new MaxRectsBin(64, 64, 0, options);
+const oversized = new OversizedElementBin(128, 128, null);
+const rect: IRectangle = new Rectangle(8, 8);
+export const summary = [saved.length, bins.length, bin.width, oversized.width, rect.width];
+`;
 const root = fileURLToPath(new URL("..", import.meta.url));
 const workdir = mkdtempSync(join(tmpdir(), "maxrects-packer-verify-"));
 
@@ -72,6 +88,34 @@ try {
     if (missingEsm.length > 0)
         throw new Error(`import("maxrects-packer") is missing named exports: ${missingEsm.join(", ")}`);
     console.log(`  ✓ import("maxrects-packer") -> ${esmKeys.length} named exports`);
+
+    // 5) Verify the published types by package name. package.json "types" decides what a TypeScript
+    // consumer resolves, and it pointed at the declaration of src/maxrects-packer.ts instead of the
+    // barrel's, so six of the nine documented exports could not be imported while every runtime check
+    // above stayed green. Only compiling an import of them catches that.
+    writeFileSync(join(workdir, "consumer.ts"), TYPE_FIXTURE);
+    const program = ts.createProgram([join(workdir, "consumer.ts")], {
+        strict: true,
+        noEmit: true,
+        skipLibCheck: false,
+        target: ts.ScriptTarget.ES2019,
+        module: ts.ModuleKind.ESNext,
+        moduleResolution: ts.ModuleResolutionKind.Bundler
+    });
+    const errors = ts.getPreEmitDiagnostics(program).filter((d) => d.category === ts.DiagnosticCategory.Error);
+    if (errors.length > 0) {
+        for (const error of errors) {
+            const message = ts.flattenDiagnosticMessageText(error.messageText, " ");
+            const file = error.file ? error.file.fileName.replace(`${workdir}/`, "") : "";
+            const line =
+                error.file && error.start !== undefined
+                    ? error.file.getLineAndCharacterOfPosition(error.start).line + 1
+                    : 0;
+            console.error(`     ${file}:${line} ${message}`);
+        }
+        throw new Error(`the published types reject the documented imports (${errors.length} error(s))`);
+    }
+    console.log("  ✓ the published types accept the documented imports");
 
     console.log("Package entry gate passed");
 } catch (error) {
