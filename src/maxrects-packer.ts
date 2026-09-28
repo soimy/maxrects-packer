@@ -111,7 +111,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * @param rect - the rect to add
      * @returns true when the bin took the rect
      */
-    private addToBin(bin: MaxRectsBin<T>, rect: T): boolean {
+    private addToBin(bin: Bin<T>, rect: T): boolean {
         if (bin.add(rect) !== undefined) return true;
         this.bins.push(new OversizedElementBin<T>(rect));
         return false;
