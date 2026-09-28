@@ -145,7 +145,12 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         node = this.findNode(rect.width + this.padding, rect.height + this.padding, allowRotation);
 
         if (node) {
-            this.updateBinSize(node);
+            // A smart bin has to grow to the footprint of the node it picked. That growth is
+            // abandoned when pot/square rounding pushes it past maxWidth/maxHeight, and then the
+            // node does not fit this bin: fail the placement instead of reporting the rect inside a
+            // bin whose size does not contain it.
+            const fitted = !this.options.smart || this.updateBinSize(node, false) || this.stage.contain(node);
+            if (!fitted) return undefined;
             let numRectToProcess = this.freeRects.length;
             let i: number = 0;
             while (i < numRectToProcess) {
@@ -161,7 +166,17 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
             rect.x = node.x;
             rect.y = node.y;
             if (rect.rot === undefined) rect.rot = false;
-            rect.rot = node.rot ? !rect.rot : rect.rot;
+            const rotated = rect.rot;
+            const width = rect.width;
+            const height = rect.height;
+            rect.rot = node.rot ? !rotated : rotated;
+            // `Rectangle.rot` swaps width/height in its setter. An object without one — the plain
+            // `{width, height}` rects the README advertises — would keep reporting the unrotated
+            // footprint while claiming to be rotated, so swap it here.
+            if (rect.rot !== rotated && rect.width === width && rect.height === height) {
+                rect.width = height;
+                rect.height = width;
+            }
             this._dirty++;
             return rect as T;
         } else if (!this.verticalExpand) {
@@ -353,13 +368,19 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         }
     }
 
-    private updateBinSize(node: IRectangle): boolean {
+    /**
+     * Grow the bin so that it contains the given node.
+     * @param node - the node the bin has to contain
+     * @param considerRotation - whether the node may still be placed in either orientation, in which case the bin grows by the smaller of the two (default is true)
+     * @returns true when the bin was grown
+     */
+    private updateBinSize(node: IRectangle, considerRotation: boolean = true): boolean {
         if (!this.options.smart) return false;
         if (this.stage.contain(node)) return false;
         let tmpWidth: number = Math.max(this.width, node.x + node.width - this.padding + this.border);
         let tmpHeight: number = Math.max(this.height, node.y + node.height - this.padding + this.border);
         let tmpFits: boolean = !(tmpWidth > this.maxWidth || tmpHeight > this.maxHeight);
-        if (this.options.allowRotation) {
+        if (this.options.allowRotation && considerRotation) {
             // do extra test on rotated node whether it's a better choice
             const rotWidth: number = Math.max(this.width, node.x + node.height - this.padding + this.border);
             const rotHeight: number = Math.max(this.height, node.y + node.width - this.padding + this.border);

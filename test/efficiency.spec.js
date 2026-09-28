@@ -6,66 +6,14 @@ import SCENARIOS from "./scenarios.json";
 
 const rectSizeSum = SCENARIOS.map((scenario) => scenario.reduce((memo, rect) => memo + rect.width * rect.height, 0));
 
-// Identifies a scenario by its inputs — the rect sizes, in order — and not by its position in
-// SCENARIOS, so replacing the fixture at some index loses the exemption below instead of inheriting
-// it. addArray() writes x/y/rot onto those rect objects, so the keys are computed here, at module
-// load, before any packing runs.
-const scenarioKey = (scenario) => {
-    let hash = 2166136261;
-    for (const rect of scenario) {
-        for (const value of [rect.width, rect.height]) hash = Math.imul(hash ^ value, 16777619);
-    }
-    return `s${scenario.length}:${(hash >>> 0).toString(16)}`;
-};
-const SCENARIO_KEYS = SCENARIOS.map(scenarioKey);
-
-// The efficiency `1024x2048:1:Rot` measures today on the scenarios where it exceeds 1 — the one
-// rotating candidate whose maxWidth differs from its maxHeight, which is the shape the plain-object
-// rotation defect needs (DEFERRED_WORK.md). Keyed by scenario input, valued by that measurement
-// rounded up to three decimals: a listed scenario may improve (fall) but must not get worse, and an
-// input that is not listed here fails the assertion however it overshoots. `Infinity` is what a
-// scenario whose bins report no area at all measures, and nothing can exceed it.
-const KNOWN_OVERSHOOT_SCENARIOS = {
-    [PACKING_LOGIC.MAX_EDGE]: {
-        "s64:54f71aa7": 1.064,
-        "s39:8aa12824": 3.263,
-        "s4:ba423845": Infinity,
-        "s22:a4547eb7": 1.021,
-        "s23:1ac93981": 1.04,
-        "s92:2aa87737": 3.198,
-        "s65:1dbc2984": 3.589,
-        "s66:83887585": 1.063,
-        "s66:c663b57e": 1.69
-    },
-    [PACKING_LOGIC.MAX_AREA]: {
-        "s64:54f71aa7": 1.014,
-        "s39:8aa12824": 3.263,
-        "s4:ba423845": Infinity,
-        "s22:a4547eb7": 1.021,
-        "s23:1ac93981": 1.04,
-        "s92:2aa87737": 3.731,
-        "s66:54690913": 1.013,
-        "s65:1dbc2984": 3.589,
-        "s66:83887585": 1.063,
-        "s66:c663b57e": 1.69
-    }
-};
-
 // One table for both logics. The area and edge candidate lists used to be written out in full twice,
 // 85 lines each, identical apart from `logic`.
 const CANDIDATE_SHAPES = [
     { name: "1024x2048:0", width: 1024, height: 2048, padding: 0, square: false },
     { name: "1024x2048:1", width: 1024, height: 2048, padding: 1, square: false },
-    // The only candidate that reports an efficiency above 1 today; see the assertion below.
-    {
-        name: "1024x2048:1:Rot",
-        width: 1024,
-        height: 2048,
-        padding: 1,
-        square: true,
-        allowRotation: true,
-        efficiencyOvershoot: true
-    },
+    // The only shape whose maxWidth differs from its maxHeight while asking for square bins, so the
+    // only one where growing a bin can hit the maxWidth cap and leave it holding rects it cannot fit.
+    { name: "1024x2048:1:Rot", width: 1024, height: 2048, padding: 1, square: true, allowRotation: true },
     { name: "1024x1024:0", width: 1024, height: 1024, padding: 0, square: false },
     { name: "1024x1024:1", width: 1024, height: 1024, padding: 1, square: false },
     { name: "1024x1024:1:Rot", width: 1024, height: 1024, padding: 1, square: true, allowRotation: true },
@@ -74,20 +22,17 @@ const CANDIDATE_SHAPES = [
 ];
 
 const candidatesFor = (logic) =>
-    CANDIDATE_SHAPES.map(
-        ({ name, width, height, padding, square, allowRotation = false, efficiencyOvershoot = false }) => ({
-            name,
-            efficiencyOvershoot,
-            factory: () =>
-                new MaxRectsPacker(width, height, padding, {
-                    smart: true,
-                    pot: true,
-                    square,
-                    allowRotation,
-                    logic
-                })
-        })
-    );
+    CANDIDATE_SHAPES.map(({ name, width, height, padding, square, allowRotation = false }) => ({
+        name,
+        factory: () =>
+            new MaxRectsPacker(width, height, padding, {
+                smart: true,
+                pot: true,
+                square,
+                allowRotation,
+                logic
+            })
+    }));
 
 describe("Efficiency", () => {
     const AREA_CANDIDATES = candidatesFor(PACKING_LOGIC.MAX_AREA);
@@ -117,16 +62,12 @@ describe("Efficiency", () => {
                     // Nothing is ever dropped: a rect that does not fit goes into an
                     // OversizedElementBin rather than being discarded.
                     expect(result.placed, replay).toBe(SCENARIOS[scenarioIndex].length);
+                    // A bin that reports less than it holds shows up as a rect outside its own bin, so
+                    // count those first: they are the failure the efficiency below can only hint at.
+                    expect(result.escaping, replay).toBe(0);
                     // `usedSize` sums the bin areas and `rectSize` the rect areas, so an efficiency
-                    // above 1 means a bin holds more area than it reports. No candidate may exceed 1,
-                    // except `1024x2048:1:Rot` on the exact scenario inputs recorded above — and there
-                    // only up to the ceiling it measures today, so a listed input can improve but
-                    // cannot get worse, and an unlisted input that overshoots fails.
-                    const ceiling =
-                        (candidate.efficiencyOvershoot
-                            ? KNOWN_OVERSHOOT_SCENARIOS[logic][SCENARIO_KEYS[scenarioIndex]]
-                            : undefined) ?? 1;
-                    expect(result.efficiency, replay).toBeLessThanOrEqual(ceiling);
+                    // above 1 means a bin holds more area than it reports. No candidate may exceed 1.
+                    expect(result.efficiency, replay).toBeLessThanOrEqual(1);
                 });
             }
         }
@@ -181,14 +122,23 @@ describe("Efficiency", () => {
 function measureEfficiency(factory) {
     return SCENARIOS.map((scenario, i) => {
         const packer = factory();
-        packer.addArray(scenario);
+        // addArray() writes x/y/rot back onto the rect objects and a rotated rect carries swapped
+        // dimensions afterwards, so every candidate has to run on its own copy of the fixture —
+        // otherwise a candidate would measure what the previous one left behind.
+        packer.addArray(scenario.map((rect) => ({ ...rect })));
 
         const bins = packer.bins.length;
         const rectSize = rectSizeSum[i];
         const usedSize = packer.bins.reduce((memo, bin) => memo + bin.width * bin.height, 0);
         const placed = packer.bins.reduce((memo, bin) => memo + bin.rects.length, 0);
+        const escaping = packer.bins.reduce(
+            (memo, bin) =>
+                memo +
+                bin.rects.filter((rect) => rect.x + rect.width > bin.width || rect.y + rect.height > bin.height).length,
+            0
+        );
         const efficiency = rectSize / usedSize;
-        return { bins, rectSize, usedSize, placed, efficiency };
+        return { bins, rectSize, usedSize, placed, escaping, efficiency };
     });
 }
 

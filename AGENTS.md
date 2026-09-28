@@ -64,6 +64,11 @@ caller's rects
 6. **Size accounting**: the initial freeRect is `maxWidth + padding - border*2`; placement probes with
    `rect.width + padding`; inside `updateBinSize`, pot/square are rounded first and only then
    validated against `maxWidth/maxHeight`, and growth is abandoned when that check fails.
+   A bin never holds a rect it cannot contain: `place()` refuses the placement when the bin cannot
+   grow to the node it picked (which is what a `square` cap below `maxHeight` makes possible), and
+   `MaxRectsPacker.add()` then puts that rect in an `OversizedElementBin` instead of dropping it.
+   The other half of the same rule: a rotated rect reports the footprint it occupies, so `place()`
+   swaps width/height itself for objects whose `rot` has no setter.
 7. **Generics**: `MaxRectsPacker<T extends IRectangle>` / `MaxRectsBin<T>` accept instances of custom
    classes and preserve their extra properties as-is.
 
@@ -109,7 +114,7 @@ npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild ne
   extension-less) and take `describe / test / expect / beforeEach` from `vitest` explicitly instead of
   from globals — **they do not test `dist`**. A broken build or a broken artifact is
   invisible to them, so compare `dist` by hand whenever you touch the build.
-- Baseline: `7 spec files / 94 passed / 2 skipped`; v8 coverage is 99.77% statements, 98.33% branches,
+- Baseline: `7 spec files / 96 passed / 2 skipped`; v8 coverage is 99.77% statements, 98.41% branches,
   100% functions and lines. Coverage is **opt-in**: only `npm run cover` collects it and writes
   `test/coverage/` (gitignored), so a plain `npm test` or a single-spec run leaves that directory
   alone. Read the real numbers from a full `npm run cover`, and take the *gap* list from its JSON/lcov
@@ -127,11 +132,11 @@ npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild ne
   `scenarios.json` + `ascii-table`; they only run once un-skipped by hand. The rest of that file does
   assert: every candidate packs every scenario completely, `combined best of` really picks the better
   logic under the lexicographic rule it implements (fewer bins wins, efficiency only breaks a tie), and
-  no candidate reports an efficiency above 1 — except `1024x2048:1:Rot`, and only on the exact scenario
-  inputs where the overshoot is already measured: the exemption is keyed by a fingerprint of the rect
-  sizes and capped at the efficiency that input measures today, so a replaced fixture, a new
-  overshooting input and a worse overshoot on a known one all fail (the defect behind it is recorded in
-  `DEFERRED_WORK.md`).
+  no candidate reports an efficiency above 1 or leaves a rect outside the bin it was put in — a bin
+  that reports less than it holds is what both of those catch. Each candidate packs its **own copy** of
+  the fixture, because `addArray()` writes `x/y/rot` back onto the rect objects and a rotated rect
+  carries swapped dimensions afterwards, so a shared fixture would let one candidate measure what the
+  previous one left behind.
 - CI: `.github/workflows/node.js.yml` (Node 20/22/24: lint → format:check → typecheck → cover →
   verify:package); `release.yml` is triggered by `v*` tags.
 
@@ -241,7 +246,9 @@ English keeps the project history usable for every contributor and every downstr
   `options.allowRotation` alone, so a per-rect `allowRotation: true` **cannot** rescue a rect that
   only fits when rotated while the packer option is `false` — it goes straight to
   `OversizedElementBin`. Measured on the built bundle; the spec named "Per rectangle allow rotation"
-  only covers rects that already fit unrotated, so it does not catch this.
+  only covers rects that already fit unrotated, so it does not catch this. What a *rotated* plain rect
+  reports is no longer part of the gap: `place()` swaps its width/height itself, so it describes the
+  footprint it occupies just like a `Rectangle` does (invariant 6).
 - Packaging / entry points: `package.json` is `"type": "module"`, so a `.js` file inside the package
   is parsed as ESM by Node — which is why `main` must point at `.cjs`
   (`dist/maxrects-packer.cjs`). Historically `main` pointed at the UMD `.js`, and `require()` returned

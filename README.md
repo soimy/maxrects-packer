@@ -143,7 +143,9 @@ Array of rects for a specific bin. Every rect has ```x```, ```y```, ```width```,
 
 ## Support for 90-degree rotation packing
 
-If `options.allowRotation` is set to `true`, packer will attempt to do an extra test in `findNode()` on rotated `Rectangle`. If the rotated one gives the best score, the given `Rectangle` will be rotated in the `Rectangle.rot` set to `true`.
+If `options.allowRotation` is set to `true`, packer will attempt to do an extra test in `findNode()` on rotated `Rectangle`. If the rotated one gives the best score, the given `Rectangle` will be rotated in the `Rectangle.rot` set to `true`. A plain `{width, height}` object cannot swap its own dimensions, so the packer swaps them for it: either way `width`/`height` describe the footprint the rect occupies, and `rot` tells whether it was rotated to get there.
+
+A rect whose rotated footprint fits while no valid bin can hold it — with `square: true` and a `maxHeight` above `maxWidth`, the square bin a tall rect needs exceeds `maxWidth` — is reported as oversized instead (see below) rather than placed into a bin too small for it.
 
 ## Support for tag based group packing
 

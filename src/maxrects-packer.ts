@@ -76,8 +76,10 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                     let bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
                     let tag = rect.data && rect.data.tag ? rect.data.tag : rect.tag ? rect.tag : undefined;
                     if (this.options.tag && tag) bin.tag = tag;
-                    bin.add(rect);
-                    this.bins.push(bin);
+                    // A bin that refuses the rect it was opened for (square/pot rounding cannot fit it)
+                    // is empty and useless, and the rect still has to be accounted for.
+                    if (bin.add(rect) === undefined) this.bins.push(new OversizedElementBin<T>(rect));
+                    else this.bins.push(bin);
                 }
             }
             return rect;
@@ -97,8 +99,8 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 if (!added) {
                     let bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
                     if (this.options.tag && rect.data.tag) bin.tag = rect.data.tag;
-                    bin.add(rect as T);
-                    this.bins.push(bin);
+                    if (bin.add(rect as T) === undefined) this.bins.push(new OversizedElementBin<T>(rect as T));
+                    else this.bins.push(bin);
                 }
             }
             return rect as T;
