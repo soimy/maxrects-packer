@@ -25,18 +25,23 @@ from deleting the code in question and re-running the suite.
 - **`bin.tag = tag` in `addArray()` can never run** (`src/maxrects-packer.ts:190`). The enclosing block
   is only entered when `options.tag && !options.exclusiveTag` (line 120), yet this condition also
   requires `exclusiveTag`, so it is always false — and the `tag` computed just above it (line 189) is
-  never read. Consequence: a bin created in non-exclusive mode never carries a tag, which the existing
-  spec asserts (`expect(packer.bins[0].tag).toBeUndefined()`). Decide whether that is intended: the
-  dead line looks like a feature that was never wired up, not merely cruft.
+  never read. Consequence: a bin created by `addArray()` in non-exclusive mode never carries a tag,
+  which is what the existing spec asserts (`expect(packer.bins[0].tag).toBeUndefined()` — that spec
+  goes through `addArray()`). Bins created by `add()` are unaffected: lines 78 and 99 tag them whenever
+  `options.tag` is set, `exclusiveTag` or not, and a later `addArray()` will happily place
+  differently-tagged rects into such a tagged bin. Decide whether that difference between the two paths
+  is intended: the dead line looks like a feature that was never wired up, not merely cruft.
 - **`OversizedElementBin`'s two-argument fallback is unreachable through the declared API**
   (`src/oversized-element-bin.ts:30`). `args.length > 2 ? args[2] : null` needs a two-argument
   construction, but the declared overload is `(width, height, data)`. Either widen the overload or drop
   the fallback.
 - **Both `clone()` implementations hand out the same rect objects** (`src/oversized-element-bin.ts:52`
-  and `MaxRectsBin.clone()`). Measured on both classes: `clone.rects[0].width = 100` changes the
+  and `src/maxrects-bin.ts:124`). Measured on both classes: `clone.rects[0].width = 100` changes the
   original's rect as well, so mutating a clone silently mutates the source bin. `clone()` reads like a
   copy operation, which is what makes this surprising. Either document the sharing as intended or copy
-  the rects — the specs assert the current sharing deliberately, so a change here has to update them.
+  the rects — but only `OversizedElementBin` has a spec pinning the identity
+  (`expect(clone.rects[0]).toBe(bin.rects[0])`); `MaxRectsBin` has no clone spec at all, so a change
+  there would be caught by nothing.
 
 ## Documentation structure (planned, separate PR)
 
@@ -57,7 +62,8 @@ Three things have to change together, and the first two are traps rather than co
   be invisible to git. It needs to ignore the generated site only — `docs/*` plus re-includes for
   `*.md`, `docs/spec/` and `docs/plans/`.
 - **`npm run doc:clean` is `rimraf docs && mkdir docs`**, which would **delete the tracked
-  documentation** along with the generated site. It has to preserve the two categorized directories.
+  documentation** along with the generated site. It has to preserve all three tracked categories —
+  `docs/spec/`, `docs/plans/` and the root-level `docs/*.md` notes — not just the two directories.
 - `npm run doc:publish` uploads the whole `docs/` tree to gh-pages, so `docs/spec` and `docs/plans`
   would be published as plain markdown next to the site — decide whether that is wanted or whether the
   publish step should be narrowed to the generated output.
