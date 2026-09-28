@@ -12,6 +12,32 @@ const root = new URL("..", import.meta.url);
 const REQUIRED = ["test/coverage/lcov.info", "test/coverage/coverage-final.json"];
 const failures = [];
 
+// An artifact has to be *usable*, not merely present: an empty file, a truncated one and a record
+// that was opened but never closed all pass an existence check while carrying nothing downstream.
+const validateLcov = (content) => {
+    const sources = content.match(/^SF:(.+)$/gm) ?? [];
+    if (sources.length === 0) return "has no SF: source record";
+    const closed = content.match(/^end_of_record$/gm) ?? [];
+    if (closed.length < sources.length)
+        return `has ${sources.length} SF: record(s) but only ${closed.length} closed one(s)`;
+    return undefined;
+};
+
+const validateCoverageJson = (content) => {
+    let parsed;
+    try {
+        parsed = JSON.parse(content);
+    } catch {
+        return "is not valid JSON";
+    }
+    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) return "is not a JSON object";
+    const entries = Object.entries(parsed);
+    if (entries.length === 0) return "has no file entries";
+    const broken = entries.find(([, value]) => !value || typeof value.path !== "string" || typeof value.s !== "object");
+    if (broken) return `has an entry without a path or statement counts: ${broken[0]}`;
+    return undefined;
+};
+
 for (const file of REQUIRED) {
     let content;
     try {
@@ -20,11 +46,9 @@ for (const file of REQUIRED) {
         failures.push(`${file} was not written`);
         continue;
     }
-    // An empty artifact would satisfy an existence check and still be useless downstream: lcov.info
-    // without a single `SF:` record carries nothing for Codecov, and `{}` carries nothing for triage.
-    const ok = file.endsWith(".info") ? content.includes("SF:") : content.trim().length > 2;
-    if (ok) console.log(`  ✓ ${file} → ${content.length} bytes`);
-    else failures.push(`${file} is empty or has no records`);
+    const problem = file.endsWith(".info") ? validateLcov(content) : validateCoverageJson(content);
+    if (problem) failures.push(`${file} ${problem}`);
+    else console.log(`  ✓ ${file} → ${content.length} bytes`);
 }
 
 if (failures.length > 0) {
