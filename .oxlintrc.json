@@ -27,9 +27,10 @@
     // The bundle targets ES5, and MaxRectsBin.repack() needs to sort rects in place
     "unicorn/no-array-sort": "off",
 
-    // test/maxrects-bin.spec.js asserts inside loops and conditionals on purpose;
-    // test/efficiency.spec.js keeps two comparison tables test.skip'd, un-skipped by hand when needed
+    // test/maxrects-bin.spec.js and test/efficiency.spec.js assert inside loops and conditionals on
+    // purpose: one assertion per rect / scenario / candidate, each carrying the input that produced it
     "vitest/no-conditional-expect": "off",
+    // test/efficiency.spec.js keeps two comparison tables test.skip'd, un-skipped by hand when needed
     "vitest/no-disabled-tests": "off",
     // test/maxrects-bin.spec.js passes `expect(value, message)` to attach the replay instructions to
     // each assertion. vitest 4's own type declaration allows it — @vitest/expect declares
@@ -40,10 +41,12 @@
     // every other check of the rule switched on — a missing matcher still fails, and so does a third
     // argument — unlike disabling the rule for the file.
     "vitest/valid-expect": ["error", { "maxArgs": 2 }],
-    // test/efficiency.spec.js's comparison test only prints a table, so this rule would fire on it.
-    // It has to be disabled at this level rather than in the test override: an override block cannot
-    // turn `vitest/expect-expect` off (checked on oxlint 1.83), unlike the jest entry it replaces.
-    "vitest/expect-expect": "off"
+    // The three monkey tests assert through `fillWithRandomRects` (the helper holds the overlap and
+    // out-of-bounds assertions for every rect it packs), which the rule cannot see into, so the
+    // assertion-name list has to name the helper too — it replaces the default `["expect"]`, it does
+    // not extend it. `test.skip` is not inspected, which is why test/efficiency.spec.js's two table
+    // dumps do not need an entry here.
+    "vitest/expect-expect": ["error", { "assertFunctionNames": ["expect", "fillWithRandomRects"] }]
   },
   "overrides": [
     {

@@ -28,7 +28,7 @@
     "doc:publish": "gh-pages --nojekyll -m \"[ci skip] Updates\" -d docs",
     "doc:serve": "cd docs && npx http-server",
     "test": "npm run build:clean && vitest run",
-    "cover": "npm run build:clean && vitest run --coverage",
+    "cover": "npm run build:clean && rimraf test/coverage && vitest run --coverage && node scripts/verify-coverage.mjs",
     "typecheck": "node scripts/typecheck.mjs",
     "verify:package": "node scripts/verify-package.mjs",
     "lint": "oxlint src test scripts",

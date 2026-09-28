@@ -14,7 +14,19 @@ export default defineConfig({
             reportsDirectory: "./test/coverage",
             include: ["src/**/*.ts"],
             exclude: ["src/**/*.d.ts"],
-            reporter: ["text", "json", "lcov", "html"]
+            reporter: ["text", "json", "lcov", "html"],
+            // Measured identically on Node 22 and 24: 437/438 statements, 355/361 branches, 74/74
+            // functions, 395/395 lines. The uncovered remainder is the dead code recorded in
+            // DEFERRED_WORK.md, so these are a floor rather than a target — the little slack keeps a
+            // legitimate change from failing over a fraction, and raising them belongs to the change
+            // that earns it. `src/index.ts` reports 0% across the board without dragging these
+            // numbers down: a file of pure re-exports has no statement for v8 to instrument.
+            thresholds: {
+                statements: 99,
+                branches: 98,
+                functions: 99,
+                lines: 99
+            }
         }
     }
 });
