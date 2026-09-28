@@ -255,3 +255,12 @@ English keeps the project history usable for every contributor and every downstr
   `Rollup 'sourcemap' option must be set to generate source maps` — known, harmless noise.
 - `cz-conventional-changelog` is the last stale dependency (it only powers interactive commits via
   commitizen); it can be swapped for commitlint or dropped entirely.
+
+## Deferred work
+
+Findings that need a deliberate change later — unreachable or redundant code, behaviour questions, and
+the planned `docs/` restructure — are recorded in [DEFERRED_WORK.md](./DEFERRED_WORK.md). None of them
+is fixed on the spot: each is a behaviour decision with its own PR.
+
+Keep day-to-day records in that file rather than growing this one. This file describes how the
+repository works and what to watch out for; it is not a log.
