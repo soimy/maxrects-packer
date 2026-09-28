@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/maxrects-packer.cjs",
   "module": "dist/maxrects-packer.mjs",
-  "types": "dist/maxrects-packer.d.ts",
+  "types": "dist/index.d.ts",
   "files": [
     "dist",
     "src",

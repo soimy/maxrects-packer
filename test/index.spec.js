@@ -16,6 +16,10 @@ const RUNTIME_EXPORTS = ["Bin", "MaxRectsBin", "MaxRectsPacker", "OversizedEleme
 // (`npx esbuild --loader=ts --format=esm < src/index.ts` prints all nine names). The bundle that
 // actually ships is built by rollup + tsc, which drop them: importing `dist/maxrects-packer.mjs`
 // reports the six names above and nothing else.
+// Those two `undefined` keys are a transform artifact, not the consumer contract, so they are pinned
+// only far enough to keep a typo'd or dropped re-export from hiding among them. What a consumer can
+// actually import is checked by `npm run verify:package`, which compiles a fixture against the
+// `types` entry in package.json.
 const TYPE_ONLY_EXPORTS = ["IBin", "IOption", "IRectangle"];
 
 describe("public API surface", () => {
