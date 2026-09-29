@@ -20,7 +20,7 @@
   "scripts": {
     "clean": "rimraf ./dist ./lib",
     "build": "rollup -c",
-    "postbuild": "node scripts/verify-entry.mjs",
+    "postbuild": "node scripts/fix-declaration-extensions.mjs && node scripts/verify-entry.mjs",
     "build:clean": "npm run clean && npm run build",
     "doc": "typedoc && touch docs/.nojekyll && cp assets/favicon.ico docs/ && cp assets/favicon.png docs/assets/",
     "doc:clean": "rimraf docs && mkdir docs",

@@ -261,16 +261,23 @@ English keeps the project history usable for every contributor and every downstr
   is parsed as ESM by Node — which is why `main` must point at `.cjs`
   (`dist/maxrects-packer.cjs`). Historically `main` pointed at the UMD `.js`, and `require()` returned
   an empty object for three and a half years. Three gates protect the entry points: `postbuild` runs
-  `scripts/verify-entry.mjs` (fast, checks file paths) and CI runs `npm run verify:package` (slow —
-  `npm pack`s a real tarball, installs it into a temp consumer and verifies `require`/`import` by
-  **package name**, then compiles a fixture against the published `types`). All of them will stop you
-  after a change to the entry points, `files` or artifact names.
+  `scripts/fix-declaration-extensions.mjs` (rewrites the relative specifiers in `dist/**/*.d.ts`, see
+  below) and then `scripts/verify-entry.mjs` (fast, checks file paths), while CI runs
+  `npm run verify:package` (slow — `npm pack`s a real tarball, installs it into a temp consumer and
+  verifies `require`/`import` by **package name**, then compiles a fixture against the published
+  `types` under both `bundler` and `nodenext`). All of them will stop you after a change to the entry
+  points, `files` or artifact names.
   The `types` field must name the **barrel's** declaration (`dist/index.d.ts`), not a module's: the
   build emits one `.d.ts` per source module, and `dist/maxrects-packer.d.ts` — the declaration of
   `src/maxrects-packer.ts` — only exports `MaxRectsPacker`, `PACKING_LOGIC` and `IOption`, which left
   six of the nine documented exports unimportable from TypeScript until the type fixture landed.
-  A `node16`/`nodenext` consumer still needs `skipLibCheck: true`: the emitted declarations use
-  extensionless relative imports, which that resolution mode rejects (recorded in `DEFERRED_WORK.md`).
+  The emitted declarations carry explicit `.js` extensions — `scripts/fix-declaration-extensions.mjs`
+  writes them from `postbuild` — because the package is `"type": "module"`: without them, a
+  `node16`/`nodenext` consumer with `skipLibCheck: false` fails inside this package's own `.d.ts` files
+  with TS2834/TS2835. `bundler` and the historical `node10` never needed them, and the extension costs
+  them nothing: `node10` (and TypeScript 4.6 with it) resolves `./x.js` to `./x.d.ts` as well. Measured
+  after the rewrite: `bundler`, `node16` and `nodenext`, each with `skipLibCheck: false`, and
+  `node10`/CommonJS all compile the type fixture; `npm run verify:package` gates the first two.
   There is still no `exports` field, so deep imports (`maxrects-packer/dist/...`) work; adding one
   would seal off deep paths, which is breaking and therefore reserved for 3.0.0.
 - Published content is decided by the `files` allowlist in `package.json`: `dist` + `src` +
