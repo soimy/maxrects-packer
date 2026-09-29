@@ -76,8 +76,11 @@ export class Rectangle implements IRectangle {
      * be redefined at all — overwriting any of those leaves the copy's methods reading stale state or
      * moving the original. Plain values, and a key the copy does not define, come from the source: a
      * `clone()` that rebuilds only the dimensions leaves the constructor's defaults in exactly those
-     * fields (payload, placement, per-item rotation) and omits the methods that read `this`. Accessors of
-     * the source never travel, since the source's reads and writes the source through its closure — which is what keeps the payload, the placement, the per-item rotation
+     * fields (payload, placement, per-item rotation) and omits the methods that read `this`. Neither
+     * accessors nor functions created in the source's scope (arrow and bound functions, which have no
+     * `prototype`) travel: both read and write the source wherever they are called. What a class closes
+     * over the source in some other way — an ordinary function doing it, say — cannot be told apart from a
+     * `this`-based method from the outside, and such a class has to say so through its own `clone()` — which is what keeps the payload, the placement, the per-item rotation
      * permission and anything added since construction from being lost when a `clone()` rebuilds just
      * the dimensions, leaving the constructor's defaults in those plain data fields.
      *
@@ -109,9 +112,15 @@ export class Rectangle implements IRectangle {
                 // the copy, and a non-configurable property cannot be redefined at all. Overwriting any of
                 // those would leave the copy's methods reading stale state.
                 if (own && (!("value" in own) || !own.configurable || typeof own.value === "function")) continue;
+                // A function created in the source's scope — an arrow or a bound function — has no
+                // `prototype` and reads that scope wherever it is called, so calling it on the copy would
+                // reach back into the original. An ordinary function is the shape of a `this`-based method,
+                // which works on the copy; a class that closes over the source some other way has to say so
+                // through its own `clone()`.
+                if (typeof descriptor.value === "function" && descriptor.value.prototype === undefined) continue;
                 // Everything else is state, and the state belongs to the bin: a `clone()` that rebuilds only
                 // the dimensions leaves the constructor's defaults there (payload, per-item rotation), and a
-                // method it left out — one reading `this`, which works on the copy — is restored with them.
+                // `this`-based method it left out is restored with them.
                 Object.defineProperty(copy, key, descriptor);
             }
         } else {

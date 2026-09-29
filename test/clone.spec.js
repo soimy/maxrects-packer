@@ -443,6 +443,22 @@ describe("clone", () => {
         expect(rect.x).toBe(0);
     });
 
+    test("keeps an arrow or bound method out of the copy", () => {
+        // A function created in the source's scope reads that scope wherever it is called, so restoring it
+        // would let a method call on a rect in the cloned bin change the original.
+        const bin = new MaxRectsBin(256, 256, 0, opt);
+        const rect = { width: 100, height: 50 };
+        rect.scale = () => {
+            rect.width *= 2;
+        };
+        rect.clone = () => ({ width: rect.width, height: rect.height });
+        bin.add(rect);
+
+        const copy = bin.clone().rects[0];
+        expect(copy.scale).toBeUndefined();
+        expect(rect.width).toBe(100);
+    });
+
     test("restores an own method the copy was not given", () => {
         // A method that reads `this` works on the copy, so a `clone()` that rebuilds only the dimensions
         // should not leave the copy without it — callers of `bin.clone().rects[0].describe()` would throw.
