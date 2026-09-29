@@ -93,21 +93,37 @@ try {
         throw new Error(`import("maxrects-packer") is missing named exports: ${missingEsm.join(", ")}`);
     console.log(`  ✓ import("maxrects-packer") -> ${esmKeys.length} named exports`);
 
-    // 5) Verify the published types by package name. package.json "types" decides what a TypeScript
-    // consumer resolves, and it pointed at the declaration of src/maxrects-packer.ts instead of the
-    // barrel's, so six of the nine documented exports could not be imported while every runtime check
-    // above stayed green. Only compiling an import of them catches that.
+    // 5) Verify the published types by package name, in every resolution mode a consumer can use.
+    // package.json "types" decides what a TypeScript consumer resolves, and it pointed at the
+    // declaration of src/maxrects-packer.ts instead of the barrel's, so six of the nine documented
+    // exports could not be imported while every runtime check above stayed green. Only compiling an
+    // import of them catches that. The declarations have to satisfy the strictest modes: this package
+    // is `"type": "module"`, so its relative imports need explicit extensions under node16/nodenext
+    // (postbuild writes them) or a consumer with skipLibCheck: false sees TS2834/TS2835.
+    // The consumer project is ESM so that node16 and nodenext read the fixture as ESM too.
+    writeFileSync(
+        join(workdir, "package.json"),
+        JSON.stringify({ name: "consumer", private: true, type: "module" }, null, 2)
+    );
     writeFileSync(join(workdir, "consumer.ts"), TYPE_FIXTURE);
-    const program = ts.createProgram([join(workdir, "consumer.ts")], {
-        strict: true,
-        noEmit: true,
-        skipLibCheck: false,
-        target: ts.ScriptTarget.ES2019,
-        module: ts.ModuleKind.ESNext,
-        moduleResolution: ts.ModuleResolutionKind.Bundler
-    });
-    const errors = ts.getPreEmitDiagnostics(program).filter((d) => d.category === ts.DiagnosticCategory.Error);
-    if (errors.length > 0) {
+
+    const MODES = [
+        { name: "bundler", module: ts.ModuleKind.ESNext, moduleResolution: ts.ModuleResolutionKind.Bundler },
+        { name: "node16", module: ts.ModuleKind.Node16, moduleResolution: ts.ModuleResolutionKind.Node16 },
+        { name: "nodenext", module: ts.ModuleKind.NodeNext, moduleResolution: ts.ModuleResolutionKind.NodeNext }
+    ];
+    const compileFixture = ({ module, moduleResolution }) => {
+        const program = ts.createProgram([join(workdir, "consumer.ts")], {
+            strict: true,
+            noEmit: true,
+            skipLibCheck: false,
+            target: ts.ScriptTarget.ES2019,
+            module,
+            moduleResolution
+        });
+        return ts.getPreEmitDiagnostics(program).filter((d) => d.category === ts.DiagnosticCategory.Error);
+    };
+    const reportErrors = (errors) => {
         for (const error of errors) {
             const message = ts.flattenDiagnosticMessageText(error.messageText, " ");
             const file = error.file ? error.file.fileName.replace(`${workdir}/`, "") : "";
@@ -117,9 +133,18 @@ try {
                     : 0;
             console.error(`     ${file}:${line} ${message}`);
         }
-        throw new Error(`the published types reject the documented imports (${errors.length} error(s))`);
+    };
+
+    for (const mode of MODES) {
+        const errors = compileFixture(mode);
+        if (errors.length > 0) {
+            reportErrors(errors);
+            throw new Error(
+                `the published types reject the documented imports under ${mode.name} (${errors.length} error(s))`
+            );
+        }
     }
-    console.log("  ✓ the published types accept the documented imports");
+    console.log(`  ✓ the published types accept the documented imports (${MODES.map((mode) => mode.name).join(", ")})`);
 
     console.log("Package entry gate passed");
 } catch (error) {
