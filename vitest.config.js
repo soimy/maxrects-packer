@@ -15,9 +15,9 @@ export default defineConfig({
             include: ["src/**/*.ts"],
             exclude: ["src/**/*.d.ts"],
             reporter: ["text", "json", "lcov", "html"],
-            // Measured: 437/437 statements, 338/338 branches, 75/75 functions, 402/402 lines — every
-            // metric at 100%, because removing the dead code recorded in DEFERRED_WORK.md removed the
-            // last uncovered range (the counts were identical on Node 22 and 24 when the thresholds
+            // Measured: 437/437 statements, 340/340 branches, 75/75 functions, 393/393 lines — every
+            // metric at 100%, because removing the dead code recorded in DEFERRED_WORK.md took the last
+            // uncovered range with it (the counts were identical on Node 22 and 24 when the thresholds
             // were set). The thresholds stay a notch below the measurement on purpose: they are a
             // floor, so a legitimate change that adds an uncovered error path is a review point
             // rather than a red CI run. `src/index.ts` reports 0% across the board without dragging
