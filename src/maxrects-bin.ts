@@ -115,11 +115,20 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         this._dirty = 0;
     }
 
+    /**
+     * Copy this bin. The copy packs copies of the same rects, so neither bin can reach the other's
+     * state: mutating a rect one of them holds, or adding to one bin, leaves the other alone. The rect
+     * copies are shallow (`Rectangle.Clone`), so a payload stored in `rect.data` is still shared.
+     *
+     * @returns a bin with the same size, options, tag, data and rects
+     */
     public clone(): MaxRectsBin<T> {
         let clonedBin: MaxRectsBin<T> = new MaxRectsBin<T>(this.maxWidth, this.maxHeight, this.padding, this.options);
         for (let rect of this.rects) {
-            clonedBin.add(rect);
+            clonedBin.add(Rectangle.Clone(rect));
         }
+        clonedBin.tag = this.tag;
+        clonedBin.data = this.data;
         return clonedBin;
     }
 

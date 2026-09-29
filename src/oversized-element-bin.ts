@@ -62,8 +62,15 @@ export class OversizedElementBin<T extends IRectangle = Rectangle> extends Bin<T
     repack(): T[] | undefined {
         return undefined;
     }
+    /**
+     * Copy this bin around a copy of its rect, so mutating one bin's rect leaves the other's alone. The
+     * copy is shallow (`Rectangle.Clone`), so a payload stored in `rect.data` is still shared.
+     *
+     * @returns a bin holding a copy of the same rect, with the same size, data and tag
+     */
     clone(): Bin<T> {
-        let clonedBin: OversizedElementBin<T> = new OversizedElementBin<T>(this.rects[0]);
+        let clonedBin: OversizedElementBin<T> = new OversizedElementBin<T>(Rectangle.Clone(this.rects[0]));
+        clonedBin.tag = this.tag;
         return clonedBin;
     }
 }

@@ -62,6 +62,19 @@ export class Rectangle implements IRectangle {
     }
 
     /**
+     * Copy a rect object without going through its setters: the prototype and every own property are
+     * kept, so a `Rectangle` stays a `Rectangle`, a custom rect class keeps its identity and its extra
+     * fields, and a plain `{width, height}` object stays plain. The copy is shallow — an object held in
+     * `rect.data`, or in any custom field, is shared with the original.
+     *
+     * @param rect - the rect to copy
+     * @returns a new object carrying the same own properties
+     */
+    public static Clone<T extends IRectangle>(rect: T): T {
+        return Object.assign(Object.create(Object.getPrototypeOf(rect)), rect) as T;
+    }
+
+    /**
      * Get the area (w * h) of the rectangle
      *
      * @returns The area of the rectangle

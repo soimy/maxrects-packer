@@ -31,7 +31,10 @@ const oversized = new OversizedElementBin(128, 128, null);
 // somebody narrows it back to a required parameter.
 const oversizedWithoutData = new OversizedElementBin(128, 128);
 const rect: IRectangle = new Rectangle(8, 8);
-export const summary = [saved.length, bins.length, bin.width, oversized.width, oversizedWithoutData.width, rect.width];
+// The copy helper the bins' clone() uses is part of the public surface, so its declaration is pinned
+// too: a static that lost its generic, or its parameter, fails on this line.
+const copied: Rectangle = Rectangle.Clone(new Rectangle(4, 4));
+export const summary = [saved.length, bins.length, bin.width, oversized.width, oversizedWithoutData.width, rect.width, copied.width];
 `;
 const root = fileURLToPath(new URL("..", import.meta.url));
 const workdir = mkdtempSync(join(tmpdir(), "maxrects-packer-verify-"));

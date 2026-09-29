@@ -294,6 +294,109 @@ describe("no padding", () => {
     });
 });
 
+describe("clone", () => {
+    const geometry = (rects) => rects.map((rect) => [rect.x, rect.y, rect.width, rect.height]);
+    const placements = (target) => target.rects.map((rect) => [rect.x, rect.y, rect.width, rect.height, rect.rot]);
+
+    test("copies the state and gives the copy its own rects", () => {
+        const bin = new MaxRectsBin(256, 128, 0, { ...opt, allowRotation: true });
+        bin.add(new Rectangle(100, 100));
+        bin.add(new Rectangle(80, 120));
+
+        const clone = bin.clone();
+        expect(clone.width).toBe(bin.width);
+        expect(clone.height).toBe(bin.height);
+        expect(clone.options).toEqual(bin.options);
+        expect(geometry(clone.freeRects)).toEqual(geometry(bin.freeRects));
+        expect(clone.rects).toEqual(bin.rects);
+        expect(clone.rects[0]).not.toBe(bin.rects[0]);
+        expect(clone.freeRects[0]).not.toBe(bin.freeRects[0]);
+    });
+
+    test("keeps the two bins out of each other's state", () => {
+        const bin = new MaxRectsBin(256, 128, 0, opt);
+        bin.add(new Rectangle(100, 100));
+        const clone = bin.clone();
+
+        // Each bin only reaches the rects it holds itself.
+        clone.rects[0].width = 999;
+        expect(bin.rects[0].width).toBe(100);
+        bin.rects[0].height = 777;
+        expect(clone.rects[0].height).toBe(100);
+
+        // Growing one bin leaves the other where it was.
+        clone.add(new Rectangle(10, 10));
+        expect(clone.rects).toHaveLength(2);
+        expect(bin.rects).toHaveLength(1);
+    });
+
+    test("keeps the prototype and the extra properties of a custom rect", () => {
+        class Atlas {
+            constructor(width, height, name) {
+                this.width = width;
+                this.height = height;
+                this.name = name;
+            }
+        }
+        const bin = new MaxRectsBin(256, 128, 0, opt);
+        const atlas = new Atlas(100, 100, "sheet");
+        bin.add(atlas);
+
+        const clone = bin.clone();
+        expect(clone.rects[0]).not.toBe(atlas);
+        expect(clone.rects[0]).toBeInstanceOf(Atlas);
+        expect(clone.rects[0].name).toBe("sheet");
+        expect(clone.rects[0].x).toBe(atlas.x);
+        expect(clone.rects[0].y).toBe(atlas.y);
+        // The copy is shallow: the payload object itself is shared.
+        expect(clone.rects[0].data).toBe(atlas.data);
+    });
+
+    test("copies the tag and the data", () => {
+        const bin = new MaxRectsBin(256, 128, 0, opt);
+        bin.add(new Rectangle(100, 100));
+        bin.tag = "one";
+        bin.data = { name: "sheet" };
+
+        const clone = bin.clone();
+        expect(clone.tag).toBe("one");
+        expect(clone.data).toBe(bin.data);
+    });
+
+    test("reproduces the placements of a bin with rotated rects", () => {
+        // The copy is re-packed rather than memcpy'd, so this is the check that the replay lands where
+        // the source did — rotation included.
+        const bin = new MaxRectsBin(256, 256, 0, { ...opt, allowRotation: true });
+        bin.add(new Rectangle(200, 100));
+        bin.add(new Rectangle(100, 200));
+        expect(bin.rects[1].rot).toBe(true); // the fixture has to rotate a rect, or this proves nothing
+
+        expect(placements(bin.clone())).toEqual(placements(bin));
+    });
+
+    test("reproduces the source placements over seeded bins", () => {
+        // The single fixture above samples the property; this sweeps it. A copy strategy that changed
+        // the replayed input — a rect's dimensions swapped by rotation, say — would show up here as a
+        // different placement, while a shrunken user count would hide it in one fixture.
+        let seed = 42;
+        const random = () => {
+            seed = (seed * 1103515245 + 12345) % 2147483648;
+            return seed / 2147483648;
+        };
+        for (const allowRotation of [false, true]) {
+            for (let round = 0; round < 40; round++) {
+                const bin = new MaxRectsBin(1024, 1024, 1, { ...opt, allowRotation });
+                for (let i = 0; i < 30; i++) {
+                    bin.add(new Rectangle(50 + Math.floor(random() * 900), 50 + Math.floor(random() * 900)));
+                }
+                expect(placements(bin.clone()), `allowRotation=${allowRotation} round=${round}`).toEqual(
+                    placements(bin)
+                );
+            }
+        }
+    });
+});
+
 const padding = 4;
 
 describe("constructor", () => {
