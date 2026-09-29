@@ -63,10 +63,11 @@ describe("OversizedElementBin", () => {
     });
 
     test("a two-argument construction leaves data null", () => {
-        // JavaScript callers can construct this without `data` even though the typed overload requires
-        // it, and the placeholder bin is public API — so the default is `null`, pinned here to keep the
-        // next reader from deleting the fallback as unreachable code. `Rectangle.data` ignores `null`,
-        // which is why the inner rect keeps its empty object.
+        // The two-argument form is declared (`data?: any`) and supported in TypeScript as well as in
+        // JavaScript: leaving `data` out makes the bin report `null`. Pinned so the next reader does not
+        // delete the fallback as unreachable code — that is exactly how it was removed once, back when
+        // only JavaScript callers could reach it. `Rectangle.data` ignores `null`, which is why the
+        // inner rect keeps its empty object.
         const bin = new OversizedElementBin(2000, 2000);
         expect(bin.data).toBeNull();
         expect(bin.rects[0].data).toEqual({});
