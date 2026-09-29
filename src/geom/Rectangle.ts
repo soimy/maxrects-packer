@@ -69,12 +69,15 @@ export class Rectangle implements IRectangle {
      *
      * A rect class that keeps its state out of reach of a copy — behind an ECMAScript `#private` field —
      * cannot be copied this way and has to hand out a `clone()` method instead, which is used whenever
-     * it exists. What that method returns decides how the copy is *built*; the state a bin owns still
-     * comes from the source. Only plain values travel: an accessor or a function is behaviour rather than
-     * state, and the source's copy of it reads and writes the *source* — an accessor through its closure,
-     * a function through whatever it closes over — which would hand the copy the original's coordinates.
-     * A property the copy declares non-configurable is left alone as well, since it cannot be redefined
-     * at all. Every other own property of the source is applied — which is what keeps the payload, the placement, the per-item rotation
+     * it exists. What that method returns decides how the copy is *built*, the bin's state fills in the
+     * rest, and the rule between them is about what the copy already holds. What the copy defines for
+     * itself wins where it is not a plain value: an accessor is how it keeps its own state (`#private`
+     * fields included), a function is behaviour bound to the copy, and a non-configurable property cannot
+     * be redefined at all — overwriting any of those leaves the copy's methods reading stale state or
+     * moving the original. Plain values, and a key the copy does not define, come from the source: a
+     * `clone()` that rebuilds only the dimensions leaves the constructor's defaults in exactly those
+     * fields (payload, placement, per-item rotation) and omits the methods that read `this`. Accessors of
+     * the source never travel, since the source's reads and writes the source through its closure — which is what keeps the payload, the placement, the per-item rotation
      * permission and anything added since construction from being lost when a `clone()` rebuilds just
      * the dimensions, leaving the constructor's defaults in those plain data fields.
      *
@@ -97,17 +100,18 @@ export class Rectangle implements IRectangle {
             const descriptors = Object.getOwnPropertyDescriptors(rect) as Record<string | symbol, PropertyDescriptor>;
             for (const key of Reflect.ownKeys(descriptors)) {
                 const descriptor = descriptors[key];
-                // Only plain values travel. An accessor, or a function, is behaviour rather than state, and
-                // the source's copy of it reads and writes the *source*: an accessor through its closure, a
-                // function through whatever it was bound to or closes over. Taking either would give the
-                // copy the source's coordinates or make a second clone of the copy read the original's.
-                if (!("value" in descriptor) || typeof descriptor.value === "function") continue;
+                // An accessor never travels: the source's reads and writes the source through its closure, so
+                // putting it on the copy would hand the copy the original's coordinates.
+                if (!("value" in descriptor)) continue;
                 const own = Object.getOwnPropertyDescriptor(copy, key);
-                // The copy's own decision wins where it cannot be redefined at all.
-                if (own && !own.configurable) continue;
-                // Anything else is plain state, and the state belongs to the bin: a `clone()` that rebuilds
-                // only the dimensions leaves the constructor's defaults in those fields (the payload, the
-                // per-item rotation permission), which must not win over the source's.
+                // What the copy defines itself wins where it is not a plain value: an accessor it built is
+                // how it keeps its own state (`#private` fields included), a function is behaviour bound to
+                // the copy, and a non-configurable property cannot be redefined at all. Overwriting any of
+                // those would leave the copy's methods reading stale state.
+                if (own && (!("value" in own) || !own.configurable || typeof own.value === "function")) continue;
+                // Everything else is state, and the state belongs to the bin: a `clone()` that rebuilds only
+                // the dimensions leaves the constructor's defaults there (payload, per-item rotation), and a
+                // method it left out — one reading `this`, which works on the copy — is restored with them.
                 Object.defineProperty(copy, key, descriptor);
             }
         } else {
