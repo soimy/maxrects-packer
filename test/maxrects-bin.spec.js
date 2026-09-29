@@ -574,6 +574,36 @@ describe("clone", () => {
         expect([copy.x, copy.y, copy.rot]).toEqual([rect.x, rect.y, rect.rot]);
     });
 
+    test("keeps plain coordinates a custom clone() returned instead of the source's accessors", () => {
+        // The source holds `x`/`y` in own accessors over its closure, and its `clone()` hands out plain
+        // coordinates. Adopting those accessors would put the source's closure behind the copy's
+        // coordinates, so moving the copy would move the original.
+        const bin = new MaxRectsBin(256, 256, 0, opt);
+        const rect = closureRect();
+        rect.clone = () => ({ width: 100, height: 100, x: 0, y: 0 });
+        bin.add(rect);
+        const sourcePlacement = [rect.x, rect.y];
+
+        const copy = bin.clone().rects[0];
+        expect(Object.getOwnPropertyDescriptor(copy, "x").get).toBeUndefined();
+        copy.x = 999;
+        copy.y = 999;
+        expect([rect.x, rect.y]).toEqual(sourcePlacement);
+    });
+
+    test("keeps the clone function a custom clone() gave the copy", () => {
+        // `clone` is behaviour bound to the object it closes over. Taking the source's function would make
+        // a second clone of the copy read the original's state instead of the copy's.
+        const bin = new MaxRectsBin(256, 256, 0, opt);
+        const rect = closureRect();
+        bin.add(rect);
+
+        const copy = bin.clone().rects[0];
+        copy.x = 50;
+        expect(copy.clone().x).toBe(50);
+        expect(rect.x).toBe(0);
+    });
+
     test("restores the state a subclass clone() left at its constructor defaults", () => {
         // A `Rectangle` subclass that rebuilds only the dimensions starts from the constructor's `_data` and
         // `_allowRotation` defaults. Those are plain own data properties, so they are bin state rather than
@@ -633,6 +663,24 @@ describe("clone", () => {
         clone.rects[0].y = 777;
         expect(rect.y).toBe(0);
         expect(clone.rects[0].y).toBe(777);
+    });
+
+    test("keeps a non-configurable data property the copy declares", () => {
+        // It cannot be redefined, so the copy's own value stands rather than the merge throwing. Both sides
+        // freeze it, which is what makes the outcome visible.
+        const makeRect = (label) => {
+            const rect = { width: 100, height: 100 };
+            Object.defineProperty(rect, "label", { value: label, enumerable: true, configurable: false });
+            rect.clone = () => makeRect("copy");
+            return rect;
+        };
+        const bin = new MaxRectsBin(256, 256, 0, opt);
+        const rect = makeRect("source");
+        bin.add(rect);
+
+        const copy = bin.clone().rects[0];
+        expect(copy.label).toBe("copy");
+        expect(rect.label).toBe("source");
     });
 
     test("does not adopt an accessor the copy left out", () => {

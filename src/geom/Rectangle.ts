@@ -70,10 +70,11 @@ export class Rectangle implements IRectangle {
      * A rect class that keeps its state out of reach of a copy — behind an ECMAScript `#private` field —
      * cannot be copied this way and has to hand out a `clone()` method instead, which is used whenever
      * it exists. What that method returns decides how the copy is *built*; the state a bin owns still
-     * comes from the source. An accessor, or a property the copy declares non-configurable, is left
-     * alone: replacing an accessor with the source's would put the source's closure back in charge of
-     * the copy, and a non-configurable property cannot be redefined at all. Every other own property of
-     * the source is applied — which is what keeps the payload, the placement, the per-item rotation
+     * comes from the source. Only plain values travel: an accessor or a function is behaviour rather than
+     * state, and the source's copy of it reads and writes the *source* — an accessor through its closure,
+     * a function through whatever it closes over — which would hand the copy the original's coordinates.
+     * A property the copy declares non-configurable is left alone as well, since it cannot be redefined
+     * at all. Every other own property of the source is applied — which is what keeps the payload, the placement, the per-item rotation
      * permission and anything added since construction from being lost when a `clone()` rebuilds just
      * the dimensions, leaving the constructor's defaults in those plain data fields.
      *
@@ -96,14 +97,18 @@ export class Rectangle implements IRectangle {
             const descriptors = Object.getOwnPropertyDescriptors(rect) as Record<string | symbol, PropertyDescriptor>;
             for (const key of Reflect.ownKeys(descriptors)) {
                 const descriptor = descriptors[key];
+                // Only plain values travel. An accessor, or a function, is behaviour rather than state, and
+                // the source's copy of it reads and writes the *source*: an accessor through its closure, a
+                // function through whatever it was bound to or closes over. Taking either would give the
+                // copy the source's coordinates or make a second clone of the copy read the original's.
+                if (!("value" in descriptor) || typeof descriptor.value === "function") continue;
                 const own = Object.getOwnPropertyDescriptor(copy, key);
-                // An accessor, or a non-configurable property, is the copy's own decision and stays: the
-                // first would bring the source's closure along with it, the second cannot be redefined at
-                // all. Everything else is plain state, and the state belongs to the bin: a `clone()` that
-                // rebuilds only the dimensions leaves the constructor's defaults in those fields (the
-                // payload, the per-item rotation permission), which must not win over the source's.
-                if (own && (!("value" in own) || !own.configurable)) continue;
-                if (own || "value" in descriptor) Object.defineProperty(copy, key, descriptor);
+                // The copy's own decision wins where it cannot be redefined at all.
+                if (own && !own.configurable) continue;
+                // Anything else is plain state, and the state belongs to the bin: a `clone()` that rebuilds
+                // only the dimensions leaves the constructor's defaults in those fields (the payload, the
+                // per-item rotation permission), which must not win over the source's.
+                Object.defineProperty(copy, key, descriptor);
             }
         } else {
             copy = Object.create(Object.getPrototypeOf(rect)) as T;

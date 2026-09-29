@@ -86,12 +86,13 @@ caller's rects
    `Rectangle.Clone` copies *own property descriptors* rather than assigned values, so a rect keeping
    extra fields, or the backing fields behind `width`/`height`, non-enumerable still arrives intact. A
    class with its own `clone()` decides how the copy is *built*, while the state a bin owns comes from
-   the source: every own property of the original is applied **except** an accessor, or a property the
-   copy declares non-configurable — replacing an accessor would put the source's closure back in charge
-   of the copy, and a non-configurable property cannot be redefined at all. That combination is what
-   keeps a `clone()` which rebuilds only the dimensions from losing the payload, the placement, the
-   per-item rotation permission or anything added since construction (they would otherwise sit at the
-   constructor's defaults) without handing the copy's own accessors to the source. Two shapes are **not**
+   the source: every own property of the original is applied **except** an accessor, a function, or a
+   property the copy declares non-configurable — an accessor or function is behaviour, and the source's
+   copy of it reads and writes the source, while a non-configurable property cannot be redefined at
+   all. That combination is what keeps a `clone()` which rebuilds only the dimensions from losing the
+   payload, the placement, the per-item rotation permission or anything added since construction (they
+   would otherwise sit at the constructor's defaults) without handing the copy's own accessors,
+   functions or frozen properties to the source. Two shapes are **not**
    covered: a rect that keeps its state in an own accessor closing over the source and provides no
    `clone()` — indistinguishable from outside from an accessor reading `this`, so it stays shared with
    the copy — and one whose state is out of reach entirely (an ECMAScript `#private` field behind
@@ -140,7 +141,7 @@ npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild ne
   extension-less) and take `describe / test / expect / beforeEach` from `vitest` explicitly instead of
   from globals — **they do not test `dist`**. A broken build or a broken artifact is
   invisible to them, so compare `dist` by hand whenever you touch the build.
-- Baseline: `7 spec files / 117 passed / 2 skipped`; v8 coverage is 100% on statements, branches,
+- Baseline: `7 spec files / 120 passed / 2 skipped`; v8 coverage is 100% on statements, branches,
   functions and lines — removing the dead code recorded in `DEFERRED_WORK.md` took the last uncovered
   range with it, so no file has a gap left to read. Coverage is **opt-in**: only `npm run cover`
   collects it and writes `test/coverage/` (gitignored), so a plain `npm test` or a single-spec run
