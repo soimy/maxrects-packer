@@ -242,10 +242,11 @@ English keeps the project history usable for every contributor and every downstr
 - `packer.add(w, h, undefined)` throws `TypeError` when `options.tag === true` (`rect.data.tag`; the
   single-argument branch has an `&&` guard, this one does not).
 - **`OversizedElementBin`'s two-argument construction is a supported tolerance, not dead code.** The
-  typed overload is `(width, height, data)`, but the class is public and a JavaScript caller can leave
-  `data` out; the bin then reports `data: null`, and its inner rect keeps `{}` because `Rectangle.data`
-  ignores `null`. `test/oversized-element-bin.spec.js` pins that default — a dead-code pass removed the
-  fallback as unreachable and this review had to put it back.
+  second overload declares `data?: any` so TypeScript callers can use the form JavaScript has always
+  had; leaving `data` out makes the bin report `null`, and its inner rect keeps `{}` because
+  `Rectangle.data` ignores `null`. `test/oversized-element-bin.spec.js` pins that default and the type
+  fixture in `npm run verify:package` pins the declaration — a dead-code pass removed the fallback as
+  unreachable and this review had to put it back.
 - **Per-rect `allowRotation` is much narrower than it looks.** Only `MaxRectsBin.place()` honours it,
   and only when the rect object itself carries an own `_allowRotation` property — true for `Rectangle`
   instances (its `data` setter maintains it) but **not** for the plain `{width, height}` objects the

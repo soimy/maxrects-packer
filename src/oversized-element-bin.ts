@@ -22,10 +22,10 @@ export class OversizedElementBin<T extends IRectangle = Rectangle> extends Bin<T
      * Build a placeholder bin for an element that does not exist as a rect yet.
      * @param width - width of the element
      * @param height - height of the element
-     * @param data - data attached to the element; only the typed overload requires it, and a
-     * JavaScript caller that leaves it out keeps the original default of `null`
+     * @param data - data attached to the element; optional, because the runtime has always accepted a
+     * two-argument construction and the bin then reports `data: null`
      */
-    constructor(width: number, height: number, data: any);
+    constructor(width: number, height: number, data?: any);
     constructor(...args: any[]) {
         super();
         if (args.length === 1) {
@@ -39,8 +39,8 @@ export class OversizedElementBin<T extends IRectangle = Rectangle> extends Bin<T
         } else {
             this.width = args[0];
             this.height = args[1];
-            // A two-argument construction is reachable from JavaScript, where the typed overload cannot
-            // insist on `data`: keep it at `null` rather than letting it fall through to `undefined`.
+            // A two-argument construction is supported (and declared, so TypeScript callers can use it):
+            // leaving `data` out keeps the original `null` rather than falling through to `undefined`.
             this.data = args.length > 2 ? args[2] : null;
             const rect: IRectangle = new Rectangle(this.width, this.height);
             rect.oversized = true;
