@@ -15,7 +15,7 @@ export default defineConfig({
             include: ["src/**/*.ts"],
             exclude: ["src/**/*.d.ts"],
             reporter: ["text", "json", "lcov", "html"],
-            // Measured: 455/455 statements, 344/344 branches, 76/76 functions, 411/411 lines — every
+            // Measured: 457/457 statements, 344/344 branches, 76/76 functions, 413/413 lines — every
             // metric at 100%, because removing the dead code recorded in DEFERRED_WORK.md took the last
             // uncovered range with it (the counts were identical on Node 22 and 24 when the thresholds
             // were set). The thresholds stay a notch below the measurement on purpose: they are a

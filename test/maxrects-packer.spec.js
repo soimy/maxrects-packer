@@ -325,6 +325,49 @@ describe("#addArray", () => {
         expect(packer.rects).toHaveLength(1);
         expect(packer.rects[0].oversized).toBe(true);
     });
+
+    test("does not let an uncopyable bin abort the tag grouping", () => {
+        // Grouping probes a candidate bin by copying it, and `clone()` now throws rather than returning
+        // an incomplete copy. An uncopyable bin — here one holding a rect class whose state no shallow
+        // copy can reach — must count as "this group does not fit it", so the search reaches the next
+        // bin instead of failing the whole call.
+        class PrivateRect {
+            #width;
+            #height;
+            constructor(width, height) {
+                this.#width = width;
+                this.#height = height;
+            }
+            get width() {
+                return this.#width;
+            }
+            set width(value) {
+                this.#width = value;
+            }
+            get height() {
+                return this.#height;
+            }
+            set height(value) {
+                this.#height = value;
+            }
+        }
+        packer = new MaxRectsPacker(1024, 1024, 0, { ...opt, tag: true, exclusiveTag: false });
+        packer.add(new PrivateRect(900, 900));
+        packer.add(new Rectangle(200, 200)); // opens the second bin
+        expect(packer.bins).toHaveLength(2);
+        expect(() => packer.bins[0].clone()).toThrow("give its class a clone() method");
+
+        expect(() =>
+            packer.addArray([
+                { width: 300, height: 300, data: { tag: "one" } },
+                { width: 300, height: 300, data: { tag: "one" } }
+            ])
+        ).not.toThrow();
+
+        expect(packer.bins).toHaveLength(2);
+        expect(packer.bins[0].rects).toHaveLength(1);
+        expect(packer.bins[1].rects).toHaveLength(3);
+    });
 });
 
 describe("#save & load", () => {

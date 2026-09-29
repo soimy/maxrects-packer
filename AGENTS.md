@@ -52,7 +52,9 @@ caller's rects
    the same tag, and an untagged bin refuses tagged rects. The check lives in `MaxRectsBin.place()`,
    which every path reaches — `MaxRectsBin.add()` deliberately does not pre-check, so a refused rect
    is simply the `undefined` `place()` returns. `exclusiveTag: false` takes the grouping + recursion
-   path inside `addArray()`.
+   path inside `addArray()`, which probes a candidate bin by **copying** it: a bin whose `clone()`
+   throws (invariant 8) counts as one the group does not fit, so a single uncopyable bin can never
+   fail the whole `addArray()` call.
 3. **`next()` only affects what comes after**: it sets `_currentBinIndex = bins.length`, so earlier
    bins stop accepting new elements and every lookup starts at that index.
 4. **Dirty propagation**: mutating a `Rectangle` property increments `_dirty`; `Bin.dirty` is true
@@ -132,7 +134,7 @@ npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild ne
   extension-less) and take `describe / test / expect / beforeEach` from `vitest` explicitly instead of
   from globals — **they do not test `dist`**. A broken build or a broken artifact is
   invisible to them, so compare `dist` by hand whenever you touch the build.
-- Baseline: `7 spec files / 112 passed / 2 skipped`; v8 coverage is 100% on statements, branches,
+- Baseline: `7 spec files / 113 passed / 2 skipped`; v8 coverage is 100% on statements, branches,
   functions and lines — removing the dead code recorded in `DEFERRED_WORK.md` took the last uncovered
   range with it, so no file has a gap left to read. Coverage is **opt-in**: only `npm run cover`
   collects it and writes `test/coverage/` (gitignored), so a plain `npm test` or a single-spec run
