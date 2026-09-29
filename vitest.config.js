@@ -15,13 +15,13 @@ export default defineConfig({
             include: ["src/**/*.ts"],
             exclude: ["src/**/*.d.ts"],
             reporter: ["text", "json", "lcov", "html"],
-            // Measured: 449/450 statements, 376/382 branches, 75/75 functions, 402/402 lines. The
-            // counts were identical on Node 22 and 24 when the thresholds were set and only moved
-            // because a fix added covered code. The uncovered remainder is the dead code recorded in
-            // DEFERRED_WORK.md, so these are a floor rather than a target — the little slack keeps a
-            // legitimate change from failing over a fraction, and raising them belongs to the change
-            // that earns it. `src/index.ts` reports 0% across the board without dragging these
-            // numbers down: a file of pure re-exports has no statement for v8 to instrument.
+            // Measured: 437/437 statements, 340/340 branches, 75/75 functions, 393/393 lines — every
+            // metric at 100%, because removing the dead code recorded in DEFERRED_WORK.md took the last
+            // uncovered range with it (the counts were identical on Node 22 and 24 when the thresholds
+            // were set). The thresholds stay a notch below the measurement on purpose: they are a
+            // floor, so a legitimate change that adds an uncovered error path is a review point
+            // rather than a red CI run. `src/index.ts` reports 0% across the board without dragging
+            // these numbers down: a file of pure re-exports has no statement for v8 to instrument.
             thresholds: {
                 statements: 99,
                 branches: 98,

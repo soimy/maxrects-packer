@@ -61,4 +61,18 @@ describe("OversizedElementBin", () => {
     test("constructor rejects a non-object single argument", () => {
         expect(() => new OversizedElementBin(2000)).toThrow("OversizedElementBin: Wrong parameters");
     });
+
+    test("a two-argument construction leaves data null", () => {
+        // The two-argument form is declared (`data?: any`) and supported in TypeScript as well as in
+        // JavaScript: leaving `data` out makes the bin report `null`. Pinned so the next reader does not
+        // delete the fallback as unreachable code — that is exactly how it was removed once, back when
+        // only JavaScript callers could reach it. `Rectangle.data` ignores `null`, which is why the
+        // inner rect keeps its empty object.
+        const bin = new OversizedElementBin(2000, 2000);
+        expect(bin.data).toBeNull();
+        expect(bin.rects[0].data).toEqual({});
+        expect(bin.rects[0].oversized).toBeTruthy();
+        expect(bin.width).toBe(2000);
+        expect(bin.height).toBe(2000);
+    });
 });

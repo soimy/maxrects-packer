@@ -51,21 +51,15 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         if (args.length === 1) {
             if (typeof args[0] !== "object") throw new Error("MacrectsBin.add(): Wrong parameters");
             rect = args[0] as T;
-            // Check if rect.tag match bin.tag, if bin.tag not defined, it will accept any rect
-            let tag = rect.data && rect.data.tag ? rect.data.tag : rect.tag ? rect.tag : undefined;
-            if (this.options.tag && this.options.exclusiveTag && this.tag !== tag) return undefined;
         } else {
             data = args.length > 2 ? args[2] : null;
-            // Check if data.tag match bin.tag, if bin.tag not defined, it will accept any rect
-            if (this.options.tag && this.options.exclusiveTag) {
-                if (data && this.tag !== data.tag) return undefined;
-                if (!data && this.tag) return undefined;
-            }
             rect = new Rectangle(args[0], args[1]);
             rect.data = data;
             rect.setDirty(false);
         }
 
+        // The tag gate is in place(), which every path reaches; a rect this bin refuses comes back
+        // from there as undefined.
         const result = this.place(rect);
         if (result) this.rects.push(result);
         return result;
@@ -298,45 +292,42 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
     }
 
     private splitNode(freeRect: IRectangle, usedNode: IRectangle): boolean {
-        // Test if usedNode intersect with freeRect
+        // Test if usedNode intersect with freeRect. `collide()` is the four overlap tests that used to
+        // guard each split below, so reaching this line already proves both of them.
         if (!freeRect.collide(usedNode)) return false;
 
         // Do vertical split
-        if (usedNode.x < freeRect.x + freeRect.width && usedNode.x + usedNode.width > freeRect.x) {
-            // New node at the top side of the used node
-            if (usedNode.y > freeRect.y && usedNode.y < freeRect.y + freeRect.height) {
-                let newNode: Rectangle = new Rectangle(freeRect.width, usedNode.y - freeRect.y, freeRect.x, freeRect.y);
-                this.freeRects.push(newNode);
-            }
-            // New node at the bottom side of the used node
-            if (usedNode.y + usedNode.height < freeRect.y + freeRect.height) {
-                let newNode = new Rectangle(
-                    freeRect.width,
-                    freeRect.y + freeRect.height - (usedNode.y + usedNode.height),
-                    freeRect.x,
-                    usedNode.y + usedNode.height
-                );
-                this.freeRects.push(newNode);
-            }
+        // New node at the top side of the used node
+        if (usedNode.y > freeRect.y && usedNode.y < freeRect.y + freeRect.height) {
+            let newNode: Rectangle = new Rectangle(freeRect.width, usedNode.y - freeRect.y, freeRect.x, freeRect.y);
+            this.freeRects.push(newNode);
+        }
+        // New node at the bottom side of the used node
+        if (usedNode.y + usedNode.height < freeRect.y + freeRect.height) {
+            let newNode = new Rectangle(
+                freeRect.width,
+                freeRect.y + freeRect.height - (usedNode.y + usedNode.height),
+                freeRect.x,
+                usedNode.y + usedNode.height
+            );
+            this.freeRects.push(newNode);
         }
 
         // Do Horizontal split
-        if (usedNode.y < freeRect.y + freeRect.height && usedNode.y + usedNode.height > freeRect.y) {
-            // New node at the left side of the used node.
-            if (usedNode.x > freeRect.x && usedNode.x < freeRect.x + freeRect.width) {
-                let newNode = new Rectangle(usedNode.x - freeRect.x, freeRect.height, freeRect.x, freeRect.y);
-                this.freeRects.push(newNode);
-            }
-            // New node at the right side of the used node.
-            if (usedNode.x + usedNode.width < freeRect.x + freeRect.width) {
-                let newNode = new Rectangle(
-                    freeRect.x + freeRect.width - (usedNode.x + usedNode.width),
-                    freeRect.height,
-                    usedNode.x + usedNode.width,
-                    freeRect.y
-                );
-                this.freeRects.push(newNode);
-            }
+        // New node at the left side of the used node.
+        if (usedNode.x > freeRect.x && usedNode.x < freeRect.x + freeRect.width) {
+            let newNode = new Rectangle(usedNode.x - freeRect.x, freeRect.height, freeRect.x, freeRect.y);
+            this.freeRects.push(newNode);
+        }
+        // New node at the right side of the used node.
+        if (usedNode.x + usedNode.width < freeRect.x + freeRect.width) {
+            let newNode = new Rectangle(
+                freeRect.x + freeRect.width - (usedNode.x + usedNode.width),
+                freeRect.height,
+                usedNode.x + usedNode.width,
+                freeRect.y
+            );
+            this.freeRects.push(newNode);
         }
         return true;
     }

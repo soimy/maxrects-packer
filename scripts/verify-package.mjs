@@ -26,8 +26,12 @@ const saved: IBin[] = packer.save();
 const bins: Bin<Rectangle>[] = packer.bins;
 const bin = new MaxRectsBin(64, 64, 0, options);
 const oversized = new OversizedElementBin(128, 128, null);
+// The data argument is optional in the runtime (a JavaScript caller can leave it out and gets null),
+// so the published declaration has to accept the two-argument form too — this line is what fails if
+// somebody narrows it back to a required parameter.
+const oversizedWithoutData = new OversizedElementBin(128, 128);
 const rect: IRectangle = new Rectangle(8, 8);
-export const summary = [saved.length, bins.length, bin.width, oversized.width, rect.width];
+export const summary = [saved.length, bins.length, bin.width, oversized.width, oversizedWithoutData.width, rect.width];
 `;
 const root = fileURLToPath(new URL("..", import.meta.url));
 const workdir = mkdtempSync(join(tmpdir(), "maxrects-packer-verify-"));

@@ -49,9 +49,10 @@ caller's rects
    in and return that same object (only the multi-argument overloads construct an internal
    `new Rectangle`).
 2. **Tag grouping**: with `exclusiveTag: true` (the default) a tagged rect may only enter a bin with
-   the same tag, and an untagged bin refuses tagged rects — there is one such check in
-   `MaxRectsBin.add()` and another in `place()`, so both must change together. `exclusiveTag: false`
-   takes the grouping + recursion path inside `addArray()`.
+   the same tag, and an untagged bin refuses tagged rects. The check lives in `MaxRectsBin.place()`,
+   which every path reaches — `MaxRectsBin.add()` deliberately does not pre-check, so a refused rect
+   is simply the `undefined` `place()` returns. `exclusiveTag: false` takes the grouping + recursion
+   path inside `addArray()`.
 3. **`next()` only affects what comes after**: it sets `_currentBinIndex = bins.length`, so earlier
    bins stop accepting new elements and every lookup starts at that index.
 4. **Dirty propagation**: mutating a `Rectangle` property increments `_dirty`; `Bin.dirty` is true
@@ -114,13 +115,14 @@ npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild ne
   extension-less) and take `describe / test / expect / beforeEach` from `vitest` explicitly instead of
   from globals — **they do not test `dist`**. A broken build or a broken artifact is
   invisible to them, so compare `dist` by hand whenever you touch the build.
-- Baseline: `7 spec files / 97 passed / 2 skipped`; v8 coverage is 99.77% statements, 98.42% branches,
-  100% functions and lines. Coverage is **opt-in**: only `npm run cover` collects it and writes
-  `test/coverage/` (gitignored), so a plain `npm test` or a single-spec run leaves that directory
-  alone. Read the real numbers from a full `npm run cover`, and take the *gap* list from its JSON/lcov
-  output rather than from the text table — that table's `Uncovered Line #s` column omits lines the
-  machine-readable report marks as never executed (checked under both the old istanbul and the current
-  v8 provider).
+- Baseline: `7 spec files / 98 passed / 2 skipped`; v8 coverage is 100% on statements, branches,
+  functions and lines — removing the dead code recorded in `DEFERRED_WORK.md` took the last uncovered
+  range with it, so no file has a gap left to read. Coverage is **opt-in**: only `npm run cover`
+  collects it and writes `test/coverage/` (gitignored), so a plain `npm test` or a single-spec run
+  leaves that directory alone. Read the real numbers from a full `npm run cover`, and take the *gap*
+  list from its JSON/lcov output rather than from the text table — that table's `Uncovered Line #s`
+  column omits lines the machine-readable report marks as never executed (checked under both the old
+  istanbul and the current v8 provider).
 - **The numbers are gates, not measurements.** `test/index.spec.js` fails when the barrel's export
   list, binding identity or `PACKING_LOGIC` numbering changes; `coverage.thresholds` in
   `vitest.config.js` (99/98/99/99, deliberately below the measured values so a fraction of drift does
@@ -239,6 +241,12 @@ English keeps the project history usable for every contributor and every downstr
   are missing and `square` becomes `true` (unlike the class default).
 - `packer.add(w, h, undefined)` throws `TypeError` when `options.tag === true` (`rect.data.tag`; the
   single-argument branch has an `&&` guard, this one does not).
+- **`OversizedElementBin`'s two-argument construction is a supported tolerance, not dead code.** The
+  second overload declares `data?: any` so TypeScript callers can use the form JavaScript has always
+  had; leaving `data` out makes the bin report `null`, and its inner rect keeps `{}` because
+  `Rectangle.data` ignores `null`. `test/oversized-element-bin.spec.js` pins that default and the type
+  fixture in `npm run verify:package` pins the declaration — a dead-code pass removed the fallback as
+  unreachable and this review had to put it back.
 - **Per-rect `allowRotation` is much narrower than it looks.** Only `MaxRectsBin.place()` honours it,
   and only when the rect object itself carries an own `_allowRotation` property — true for `Rectangle`
   instances (its `data` setter maintains it) but **not** for the plain `{width, height}` objects the

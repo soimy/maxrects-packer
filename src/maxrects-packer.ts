@@ -198,9 +198,8 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
             if (!targetBin) {
                 const rect = rects[currentIdx];
                 const bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
-                const tag = rect.data && rect.data.tag ? rect.data.tag : rect.tag ? rect.tag : undefined;
-                if (this.options.tag && this.options.exclusiveTag && tag) bin.tag = tag;
-                // Add the rect to the newly created bin
+                // Add the rect to the newly created bin. No tag is set: this branch is non-exclusive
+                // mode, where a bin may hold several tag groups and its own tag never gates anything.
                 if (this.addToBin(bin, rect)) this.bins.push(bin);
                 currentIdx++;
                 this.addArray(rects.slice(currentIdx));
