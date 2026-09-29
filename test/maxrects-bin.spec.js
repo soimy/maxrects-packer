@@ -459,6 +459,87 @@ describe("clone", () => {
         expect(() => bin.clone()).toThrow("repack the bin before cloning it");
     });
 
+    test("copies non-enumerable own properties", () => {
+        // A rect is free to keep its extra fields — or the backing fields behind width/height — out of
+        // enumeration. `Object.assign` would drop those, and a hidden `width` would then read as
+        // `undefined` and be blamed on a rect that "can no longer be placed".
+        class HiddenRect {
+            constructor(width, height, label) {
+                Object.defineProperty(this, "width", { value: width, enumerable: false, writable: true });
+                Object.defineProperty(this, "height", { value: height, enumerable: false, writable: true });
+                Object.defineProperty(this, "label", { value: label, enumerable: false, writable: true });
+            }
+        }
+        const bin = new MaxRectsBin(256, 256, 0, opt);
+        const rect = new HiddenRect(100, 100, "hidden");
+        expect(bin.add(rect)).toBeDefined();
+
+        const clone = bin.clone();
+        expect(clone.rects).toHaveLength(1);
+        expect(clone.rects[0]).not.toBe(rect);
+        expect(clone.rects[0].label).toBe("hidden");
+        expect(Object.getOwnPropertyDescriptor(clone.rects[0], "label").enumerable).toBe(false);
+        expect([clone.rects[0].x, clone.rects[0].y]).toEqual([rect.x, rect.y]);
+    });
+
+    test("reports a rect whose placement is out of reach", () => {
+        // The size is a plain field here and only `x`/`y` sit behind `#private`, so a size-only check
+        // would wave this copy through and then die on the setter the replay uses.
+        class PrivatePlacementRect {
+            #x = 0;
+            #y = 0;
+            constructor(width, height) {
+                this.width = width;
+                this.height = height;
+            }
+            get x() {
+                return this.#x;
+            }
+            set x(value) {
+                this.#x = value;
+            }
+            get y() {
+                return this.#y;
+            }
+            set y(value) {
+                this.#y = value;
+            }
+        }
+        const bin = new MaxRectsBin(256, 256, 0, opt);
+        bin.add(new PrivatePlacementRect(100, 100));
+
+        expect(() => bin.clone()).toThrow("give its class a clone() method");
+    });
+
+    test("keeps what a narrow custom clone() leaves out", () => {
+        // A class whose clone() rebuilds only the dimensions is the tempting implementation; the copy
+        // still has to carry the payload, the placement and the extra fields the bin holds it with.
+        class MinimalRect {
+            constructor(width, height) {
+                this.width = width;
+                this.height = height;
+            }
+            clone() {
+                const copy = new MinimalRect(this.width, this.height);
+                copy.cloneWasCalled = true;
+                return copy;
+            }
+        }
+        const bin = new MaxRectsBin(256, 256, 0, opt);
+        const rect = new MinimalRect(100, 100);
+        // A payload without a `tag`: `opt` tags exclusively, and an untagged bin refuses a tagged rect.
+        rect.data = { sheet: "atlas-1" };
+        rect.extra = "custom metadata";
+        expect(bin.add(rect)).toBeDefined();
+
+        const copy = bin.clone().rects[0];
+        expect(copy.cloneWasCalled).toBe(true); // the class's own clone() is still what builds the base
+        expect(copy).not.toBe(rect);
+        expect(copy.data).toBe(rect.data);
+        expect(copy.extra).toBe("custom metadata");
+        expect([copy.x, copy.y, copy.rot]).toEqual([rect.x, rect.y, rect.rot]);
+    });
+
     test("reproduces the placements of a bin with rotated rects", () => {
         // The copy is re-packed rather than memcpy'd, so this is the check that the replay lands where
         // the source did — rotation included.

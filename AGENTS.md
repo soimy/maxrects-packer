@@ -80,10 +80,15 @@ caller's rects
    rotated fixture and sweeps 80 seeded bins). That replay runs with the tag gate **off** and restores
    the source's `options`/`tag`/`data` afterwards: a bin can hold rects its own gate would now refuse
    — it was tagged after it was filled, or it carries several tags in non-exclusive mode — and
-   re-running the gate would give back a copy with fewer rects than the original. Two cases fail
-   loudly instead of silently: `Rectangle.Clone` reports a rect class that hides its width or height
-   behind an ECMAScript `#private` field and offers no `clone()` of its own, and `MaxRectsBin.clone()`
-   reports a bin holding a rect it can no longer place.
+   re-running the gate would give back a copy with fewer rects than the original.
+   `Rectangle.Clone` copies *own property descriptors* rather than assigned values, so a rect keeping
+   extra fields, or the backing fields behind `width`/`height`, non-enumerable still arrives intact;
+   a class with its own `clone()` supplies the base object and the original's own properties are
+   applied on top, so a `clone()` that rebuilds only the dimensions does not drop the payload, the
+   placement or anything added since construction. Two cases fail loudly instead of silently: a rect
+   class that hides state the copy cannot reach (an ECMAScript `#private` field behind `width`,
+   `height`, `x`, `y`, `rot` or `data`) and offers no `clone()` of its own, and a bin holding a rect it
+   can no longer place.
 
 ## Commands
 
@@ -127,7 +132,7 @@ npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild ne
   extension-less) and take `describe / test / expect / beforeEach` from `vitest` explicitly instead of
   from globals — **they do not test `dist`**. A broken build or a broken artifact is
   invisible to them, so compare `dist` by hand whenever you touch the build.
-- Baseline: `7 spec files / 109 passed / 2 skipped`; v8 coverage is 100% on statements, branches,
+- Baseline: `7 spec files / 112 passed / 2 skipped`; v8 coverage is 100% on statements, branches,
   functions and lines — removing the dead code recorded in `DEFERRED_WORK.md` took the last uncovered
   range with it, so no file has a gap left to read. Coverage is **opt-in**: only `npm run cover`
   collects it and writes `test/coverage/` (gitignored), so a plain `npm test` or a single-spec run

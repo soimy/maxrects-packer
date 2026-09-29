@@ -34,7 +34,13 @@ const rect: IRectangle = new Rectangle(8, 8);
 // The copy helper the bins' clone() uses is part of the public surface, so its declaration is pinned
 // too: a static that lost its generic, or its parameter, fails on this line.
 const copied: Rectangle = Rectangle.Clone(new Rectangle(4, 4));
-export const summary = [saved.length, bins.length, bin.width, oversized.width, oversizedWithoutData.width, rect.width, copied.width];
+// The generic has to survive: a subclass must come back as that subclass, extra field included, or
+// this line stops compiling.
+class SheetRect extends Rectangle {
+    label = "sheet";
+}
+const copiedSheet: SheetRect = Rectangle.Clone(new SheetRect(4, 4));
+export const summary = [saved.length, bins.length, bin.width, oversized.width, oversizedWithoutData.width, rect.width, copied.width, copiedSheet.label];
 `;
 const root = fileURLToPath(new URL("..", import.meta.url));
 const workdir = mkdtempSync(join(tmpdir(), "maxrects-packer-verify-"));
