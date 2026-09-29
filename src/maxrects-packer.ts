@@ -146,7 +146,17 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
             let currentTag: any;
             let currentIdx: number = 0;
             let targetBin = this.bins.slice(this._currentBinIndex).find((bin) => {
-                let testBin = bin.clone();
+                let testBin: Bin<T>;
+                try {
+                    testBin = bin.clone();
+                } catch {
+                    // A bin that cannot be copied cannot be probed either, and `clone()` is deliberate
+                    // about throwing (a rect it can no longer place, or a rect class whose state a copy
+                    // cannot reach). Treat it as "this group does not fit this bin": the search goes on,
+                    // and a new bin is opened below if nothing else takes the group. Letting it through
+                    // would turn one un-copyable bin into a failed `addArray()` call.
+                    return false;
+                }
                 for (let i = currentIdx; i < rects.length; i++) {
                     const rect = rects[i];
                     const tag = rect.data && rect.data.tag ? rect.data.tag : rect.tag ? rect.tag : undefined;

@@ -62,6 +62,46 @@ export class Rectangle implements IRectangle {
     }
 
     /**
+     * Copy a rect object without going through its setters: the prototype and every own property are
+     * kept — non-enumerable ones included — so a `Rectangle` stays a `Rectangle`, a custom rect class
+     * keeps its identity and its extra fields, and a plain `{width, height}` object stays plain. The
+     * copy is shallow — an object held in `rect.data`, or in any custom field, is shared.
+     *
+     * A rect class that keeps its state out of reach of a copy — behind an ECMAScript `#private` field —
+     * cannot be copied this way and has to hand out a `clone()` method instead, which is used whenever
+     * it exists. Its result is only the base: the original's own properties are applied on top, because
+     * a `clone()` that rebuilds just the dimensions would otherwise drop the payload, the placement and
+     * anything added since construction. When no `clone()` exists the copy would throw on the first
+     * field it cannot reach, so that is reported here rather than from inside a bin placing the copy.
+     *
+     * @param rect - the rect to copy
+     * @returns a new object carrying the same own properties, or whatever `rect.clone()` returns
+     */
+    public static Clone<T extends IRectangle>(rect: T): T {
+        const copier = (rect as { clone?: () => T }).clone;
+        const copy =
+            typeof copier === "function" ? copier.call(rect) : (Object.create(Object.getPrototypeOf(rect)) as T);
+        // Descriptors rather than `Object.assign`: a rect may keep extra fields, or the backing fields
+        // behind `width`/`height`, non-enumerable, and assignment would drop those silently.
+        Object.defineProperties(copy, Object.getOwnPropertyDescriptors(rect));
+        try {
+            // Every field the packing replay reads or writes, not just the size: a class backing `x`, `y`,
+            // `rot` or `data` with a `#private` field passes a size-only check and then dies inside a bin.
+            void copy.width;
+            void copy.height;
+            void copy.x;
+            void copy.y;
+            void copy.rot;
+            void copy.data;
+        } catch {
+            throw new Error(
+                "Rectangle.Clone(): the rect keeps its state out of reach of a copy (an ECMAScript #private field, say) — give its class a clone() method"
+            );
+        }
+        return copy;
+    }
+
+    /**
      * Get the area (w * h) of the rectangle
      *
      * @returns The area of the rectangle

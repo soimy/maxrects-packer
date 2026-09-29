@@ -47,15 +47,27 @@ describe("OversizedElementBin", () => {
         expect(bin.repack()).toBeUndefined();
     });
 
-    test("#clone holds the same rect object, not a copy", () => {
+    test("#clone holds a copy of the rect, not the rect itself", () => {
         const bin = new OversizedElementBin(2000, 2000, { foo: "bar" });
         const clone = bin.clone();
         expect(clone.width).toBe(2000);
         expect(clone.rects[0]).toEqual(bin.rects[0]);
-        // Identity is asserted on purpose, not as an implementation detail: clone() passes the same
-        // object into the new bin, so `clone.rects[0].width = 100` is visible through the original as
-        // well. Pinning it means a change to isolate the clone has to be deliberate.
-        expect(clone.rects[0]).toBe(bin.rects[0]);
+        // clone() used to hand out the same object, so mutating the clone silently mutated the source
+        // bin. It copies now: neither bin reaches the other's rect, and only the payload is shared,
+        // because the copy is shallow.
+        expect(clone.rects[0]).not.toBe(bin.rects[0]);
+        expect(clone.rects[0].data).toBe(bin.rects[0].data);
+
+        clone.rects[0].width = 100;
+        expect(bin.rects[0].width).toBe(2000);
+        bin.rects[0].height = 50;
+        expect(clone.rects[0].height).toBe(2000);
+    });
+
+    test("#clone copies the tag", () => {
+        const bin = new OversizedElementBin(2000, 2000, { foo: "bar" });
+        bin.tag = "one";
+        expect(bin.clone().tag).toBe("one");
     });
 
     test("constructor rejects a non-object single argument", () => {

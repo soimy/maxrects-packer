@@ -115,11 +115,39 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         this._dirty = 0;
     }
 
+    /**
+     * Copy this bin. The copy packs copies of the same rects, so neither bin can reach the other's
+     * state: mutating a rect one of them holds, or adding to one bin, leaves the other alone. The rect
+     * copies are shallow (`Rectangle.Clone`), so a payload stored in `rect.data` is still shared, and a
+     * rect class that cannot be copied that way reports it from `Rectangle.Clone()`.
+     *
+     * It throws when the copy cannot hold a rect this bin holds — only reachable when a placed rect has
+     * been resized into something the bin can no longer place. Reporting it beats handing back a bin
+     * that quietly holds fewer rects than the original.
+     *
+     * @returns a bin with the same size, options, tag, data and rects
+     */
     public clone(): MaxRectsBin<T> {
-        let clonedBin: MaxRectsBin<T> = new MaxRectsBin<T>(this.maxWidth, this.maxHeight, this.padding, this.options);
+        // The replay runs with the tag gate off. The source already settled which rects it accepts — in
+        // exclusive mode that is its own tag, but a bin tagged after it was filled, or one carrying
+        // several tags in non-exclusive mode, holds rects its own gate would now refuse, and re-running
+        // it would give back a copy with fewer rects than the original. `options`, `tag` and `data` are
+        // restored to the source's below.
+        let clonedBin: MaxRectsBin<T> = new MaxRectsBin<T>(this.maxWidth, this.maxHeight, this.padding, {
+            ...this.options,
+            exclusiveTag: false
+        });
         for (let rect of this.rects) {
-            clonedBin.add(rect);
+            const copy = Rectangle.Clone(rect);
+            if (clonedBin.add(copy) === undefined) {
+                throw new Error(
+                    "MaxRectsBin.clone(): the bin holds a rect it can no longer place, so the copy would be incomplete — repack the bin before cloning it"
+                );
+            }
         }
+        clonedBin.options = { ...this.options };
+        clonedBin.tag = this.tag;
+        clonedBin.data = this.data;
         return clonedBin;
     }
 

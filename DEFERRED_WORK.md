@@ -8,17 +8,10 @@ tree is adjusted; the reason it cannot move yet is the last section below.
 
 ## Code changes (found while closing the test-coverage gaps, PR #73)
 
-One code path has no test coverage because it aliases instead of copying, plus one behaviour question
-the measurements raised while the dead code around it was removed. The measurements come from the
-coverage report and from deleting the code in question and re-running the suite.
+One behaviour question the measurements raised while the dead code around it was removed. The
+measurements came from the coverage report and from deleting the code in question and re-running the
+suite.
 
-- **Both `clone()` implementations hand out the same rect objects** (`src/oversized-element-bin.ts:52`
-  and `src/maxrects-bin.ts:118`). Measured on both classes: `clone.rects[0].width = 100` changes the
-  original's rect as well, so mutating a clone silently mutates the source bin. `clone()` reads like a
-  copy operation, which is what makes this surprising. Either document the sharing as intended or copy
-  the rects — but only `OversizedElementBin` has a spec pinning the identity
-  (`expect(clone.rects[0]).toBe(bin.rects[0])`); `MaxRectsBin` has no clone spec at all, so a change
-  there would be caught by nothing.
 - **`add()` tags a non-exclusive bin with only the first rect's tag** (`src/maxrects-packer.ts:78`).
   In non-exclusive mode one bin may hold several tag groups — `test/maxrects-packer.spec.js` pins a bin
   whose rects carry `one`, `one`, `two`, `two` — so that tag names just one of them, and `save()`
