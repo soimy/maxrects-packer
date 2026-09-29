@@ -298,6 +298,40 @@ describe("clone", () => {
     const geometry = (rects) => rects.map((rect) => [rect.x, rect.y, rect.width, rect.height]);
     const placements = (target) => target.rects.map((rect) => [rect.x, rect.y, rect.width, rect.height, rect.rot]);
 
+    // A rect whose x/y are own accessors over state only its own closure can see, with a clone() that builds
+    // that state for the copy. Whether the copy keeps those accessors is the whole question: replacing them
+    // with the source's puts the source's closure in charge of the copy.
+    const closureRect = ({ freezeCopy = false } = {}) => {
+        const make = (x = 0, y = 0) => {
+            const state = { x, y };
+            const rect = { width: 100, height: 100 };
+            for (const axis of ["x", "y"]) {
+                Object.defineProperty(rect, axis, {
+                    get: () => state[axis],
+                    set: (value) => {
+                        state[axis] = value;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+            }
+            rect.clone = () => {
+                const copy = make(state.x, state.y);
+                if (freezeCopy) {
+                    for (const axis of ["x", "y"]) {
+                        Object.defineProperty(copy, axis, {
+                            ...Object.getOwnPropertyDescriptor(copy, axis),
+                            configurable: false
+                        });
+                    }
+                }
+                return copy;
+            };
+            return rect;
+        };
+        return make();
+    };
+
     test("copies the state and gives the copy its own rects", () => {
         const bin = new MaxRectsBin(256, 128, 0, { ...opt, allowRotation: true });
         bin.add(new Rectangle(100, 100));
@@ -538,6 +572,59 @@ describe("clone", () => {
         expect(copy.data).toBe(rect.data);
         expect(copy.extra).toBe("custom metadata");
         expect([copy.x, copy.y, copy.rot]).toEqual([rect.x, rect.y, rect.rot]);
+    });
+
+    test("keeps the placement accessors a custom clone() built for the copy", () => {
+        // Filling the copy's gaps from the source must not reach into what the copy already defines: the
+        // source's accessor closes over the *source's* state, so putting it back on the copy would make
+        // writing to the clone write to the original — the aliasing this whole change removes.
+        const bin = new MaxRectsBin(256, 256, 0, opt);
+        const rect = closureRect();
+        bin.add(rect);
+        const sourcePlacement = [rect.x, rect.y];
+
+        const clone = bin.clone();
+        const copy = clone.rects[0];
+        expect(Object.getOwnPropertyDescriptor(copy, "x").set).not.toBe(Object.getOwnPropertyDescriptor(rect, "x").set);
+
+        copy.x = 999;
+        copy.y = 999;
+        expect([rect.x, rect.y]).toEqual(sourcePlacement);
+
+        clone.repack();
+        expect([rect.x, rect.y]).toEqual(sourcePlacement);
+        expect(clone.rects[0]).toBe(copy);
+    });
+
+    test("leaves a non-configurable property of a custom clone() alone", () => {
+        // The copy declares its own x/y as non-configurable, so merging the source's descriptors over them
+        // would throw (`Cannot redefine property: x`) instead of copying anything.
+        const bin = new MaxRectsBin(256, 256, 0, opt);
+        const rect = closureRect({ freezeCopy: true });
+        bin.add(rect);
+
+        const clone = bin.clone();
+        expect(clone.rects).toHaveLength(1);
+        expect(clone.rects[0]).not.toBe(rect);
+
+        clone.rects[0].y = 777;
+        expect(rect.y).toBe(0);
+        expect(clone.rects[0].y).toBe(777);
+    });
+
+    test("does not adopt an accessor the copy left out", () => {
+        // An accessor of the source that the copy does not define is not filled in: it would bring the
+        // source's closure with it. Coordinates do not need it — the replay writes the placement.
+        const bin = new MaxRectsBin(256, 256, 0, opt);
+        const rect = closureRect();
+        rect.clone = () => ({ width: 100, height: 100 });
+        bin.add(rect);
+        const sourcePlacement = [rect.x, rect.y];
+
+        const copy = bin.clone().rects[0];
+        expect(Object.getOwnPropertyDescriptor(copy, "x").get).toBeUndefined(); // plain data, not the source's getter
+        expect([copy.x, copy.y]).toEqual(sourcePlacement);
+        expect(rect.x).toBe(sourcePlacement[0]);
     });
 
     test("reproduces the placements of a bin with rotated rects", () => {

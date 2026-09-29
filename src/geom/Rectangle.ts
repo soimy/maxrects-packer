@@ -69,21 +69,42 @@ export class Rectangle implements IRectangle {
      *
      * A rect class that keeps its state out of reach of a copy — behind an ECMAScript `#private` field —
      * cannot be copied this way and has to hand out a `clone()` method instead, which is used whenever
-     * it exists. Its result is only the base: the original's own properties are applied on top, because
-     * a `clone()` that rebuilds just the dimensions would otherwise drop the payload, the placement and
-     * anything added since construction. When no `clone()` exists the copy would throw on the first
-     * field it cannot reach, so that is reported here rather than from inside a bin placing the copy.
+     * it exists. What that method returns has the last word on the copy: the original's own **data**
+     * properties are only filled in where the copy does not define them itself, which is what keeps the
+     * payload, the placement and anything added since construction from being dropped by a `clone()` that
+     * rebuilds just the dimensions. Redefining what the copy already defines would be worse than useless:
+     * an accessor the class built for the copy would be replaced by the source's, whose closure reads and
+     * writes the *source*, and a property the copy declares non-configurable cannot be redefined at all.
+     *
+     * When no `clone()` exists the copy is a prototype-only shell, so every own descriptor is taken over
+     * as-is. A rect that keeps its state in an **own accessor closing over the source** — rather than in
+     * own data reached through a prototype accessor — is then still shared with the original: which of
+     * the two a given accessor is cannot be told from the outside, so such a class has to provide
+     * `clone()` as well. A rect whose state is simply out of reach (a `#private` field) fails on the first
+     * field the copy cannot read, and that is reported here rather than from inside a bin placing it.
      *
      * @param rect - the rect to copy
      * @returns a new object carrying the same own properties, or whatever `rect.clone()` returns
      */
     public static Clone<T extends IRectangle>(rect: T): T {
         const copier = (rect as { clone?: () => T }).clone;
-        const copy =
-            typeof copier === "function" ? copier.call(rect) : (Object.create(Object.getPrototypeOf(rect)) as T);
-        // Descriptors rather than `Object.assign`: a rect may keep extra fields, or the backing fields
-        // behind `width`/`height`, non-enumerable, and assignment would drop those silently.
-        Object.defineProperties(copy, Object.getOwnPropertyDescriptors(rect));
+        let copy: T;
+        if (typeof copier === "function") {
+            copy = copier.call(rect);
+            // Typed for symbol keys as well: a rect may carry them, and they are copied like any other.
+            const descriptors = Object.getOwnPropertyDescriptors(rect) as Record<string | symbol, PropertyDescriptor>;
+            for (const key of Reflect.ownKeys(descriptors)) {
+                if (Object.prototype.hasOwnProperty.call(copy, key)) continue;
+                // Only missing, plainly readable state is added: a data property carries a `value`, while an
+                // accessor left out of the copy would bring the source's state along with it.
+                if ("value" in descriptors[key]) Object.defineProperty(copy, key, descriptors[key]);
+            }
+        } else {
+            copy = Object.create(Object.getPrototypeOf(rect)) as T;
+            // Descriptors rather than `Object.assign`: a rect may keep extra fields, or the backing fields
+            // behind `width`/`height`, non-enumerable, and assignment would drop those silently.
+            Object.defineProperties(copy, Object.getOwnPropertyDescriptors(rect));
+        }
         try {
             // Every field the packing replay reads or writes, not just the size: a class backing `x`, `y`,
             // `rot` or `data` with a `#private` field passes a size-only check and then dies inside a bin.
