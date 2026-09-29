@@ -265,8 +265,8 @@ English keeps the project history usable for every contributor and every downstr
   below) and then `scripts/verify-entry.mjs` (fast, checks file paths), while CI runs
   `npm run verify:package` (slow — `npm pack`s a real tarball, installs it into a temp consumer and
   verifies `require`/`import` by **package name**, then compiles a fixture against the published
-  `types` under both `bundler` and `nodenext`). All of them will stop you after a change to the entry
-  points, `files` or artifact names.
+  `types` under `bundler`, `node16` and `nodenext`). All of them will stop you after a change to the
+  entry points, `files` or artifact names.
   The `types` field must name the **barrel's** declaration (`dist/index.d.ts`), not a module's: the
   build emits one `.d.ts` per source module, and `dist/maxrects-packer.d.ts` — the declaration of
   `src/maxrects-packer.ts` — only exports `MaxRectsPacker`, `PACKING_LOGIC` and `IOption`, which left
@@ -277,7 +277,9 @@ English keeps the project history usable for every contributor and every downstr
   with TS2834/TS2835. `bundler` and the historical `node10` never needed them, and the extension costs
   them nothing: `node10` (and TypeScript 4.6 with it) resolves `./x.js` to `./x.d.ts` as well. Measured
   after the rewrite: `bundler`, `node16` and `nodenext`, each with `skipLibCheck: false`, and
-  `node10`/CommonJS all compile the type fixture; `npm run verify:package` gates the first two.
+  `node10`/CommonJS all compile the type fixture. `npm run verify:package` compiles it under
+  `bundler`, `node16` and `nodenext`, so those three are gated; `node10` is measured by hand, since
+  the extension only ever had to be `.js` (not the `.mjs` TS2835 suggests) for it to keep working.
   There is still no `exports` field, so deep imports (`maxrects-packer/dist/...`) work; adding one
   would seal off deep paths, which is breaking and therefore reserved for 3.0.0.
 - Published content is decided by the `files` allowlist in `package.json`: `dist` + `src` +

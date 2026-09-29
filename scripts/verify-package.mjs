@@ -93,14 +93,14 @@ try {
         throw new Error(`import("maxrects-packer") is missing named exports: ${missingEsm.join(", ")}`);
     console.log(`  ✓ import("maxrects-packer") -> ${esmKeys.length} named exports`);
 
-    // 5) Verify the published types by package name, in both resolution modes a consumer can use.
+    // 5) Verify the published types by package name, in every resolution mode a consumer can use.
     // package.json "types" decides what a TypeScript consumer resolves, and it pointed at the
     // declaration of src/maxrects-packer.ts instead of the barrel's, so six of the nine documented
     // exports could not be imported while every runtime check above stayed green. Only compiling an
-    // import of them catches that. `nodenext` is the strictest mode and the one the declarations have
-    // to be written for: this package is `"type": "module"`, so its relative imports need explicit
-    // extensions there (postbuild writes them) or a consumer with skipLibCheck: false sees TS2834.
-    // The consumer project is ESM so that nodenext reads the fixture as ESM too.
+    // import of them catches that. The declarations have to satisfy the strictest modes: this package
+    // is `"type": "module"`, so its relative imports need explicit extensions under node16/nodenext
+    // (postbuild writes them) or a consumer with skipLibCheck: false sees TS2834/TS2835.
+    // The consumer project is ESM so that node16 and nodenext read the fixture as ESM too.
     writeFileSync(
         join(workdir, "package.json"),
         JSON.stringify({ name: "consumer", private: true, type: "module" }, null, 2)
@@ -109,6 +109,7 @@ try {
 
     const MODES = [
         { name: "bundler", module: ts.ModuleKind.ESNext, moduleResolution: ts.ModuleResolutionKind.Bundler },
+        { name: "node16", module: ts.ModuleKind.Node16, moduleResolution: ts.ModuleResolutionKind.Node16 },
         { name: "nodenext", module: ts.ModuleKind.NodeNext, moduleResolution: ts.ModuleResolutionKind.NodeNext }
     ];
     const compileFixture = ({ module, moduleResolution }) => {
@@ -143,9 +144,7 @@ try {
             );
         }
     }
-    console.log(
-        `  ✓ the published types accept the documented imports (${MODES.map((mode) => mode.name).join(" and ")})`
-    );
+    console.log(`  ✓ the published types accept the documented imports (${MODES.map((mode) => mode.name).join(", ")})`);
 
     console.log("Package entry gate passed");
 } catch (error) {
