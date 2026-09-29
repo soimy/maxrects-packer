@@ -15,8 +15,9 @@ export default defineConfig({
             include: ["src/**/*.ts"],
             exclude: ["src/**/*.d.ts"],
             reporter: ["text", "json", "lcov", "html"],
-            // Measured identically on Node 22 and 24: 437/438 statements, 355/361 branches, 74/74
-            // functions, 395/395 lines. The uncovered remainder is the dead code recorded in
+            // Measured: 449/450 statements, 376/382 branches, 75/75 functions, 402/402 lines. The
+            // counts were identical on Node 22 and 24 when the thresholds were set and only moved
+            // because a fix added covered code. The uncovered remainder is the dead code recorded in
             // DEFERRED_WORK.md, so these are a floor rather than a target — the little slack keeps a
             // legitimate change from failing over a fraction, and raising them belongs to the change
             // that earns it. `src/index.ts` reports 0% across the board without dragging these

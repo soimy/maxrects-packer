@@ -167,6 +167,28 @@ describe("#add", () => {
         expect(packer.bins[0].rects[0].oversized).toBe(false);
     });
 
+    test("refuses a rect no square bin can hold", () => {
+        // `square` rounds every bin up to a square, capped by maxWidth — 1024 here — so the rotated
+        // footprint of a 2048x55 rect (55x2048) never fits one. The bin used to take the rect anyway
+        // and report a 0x0 or 1024x1024 size for it; it has to be reported as oversized instead.
+        const packer = new MaxRectsPacker(1024, 2048, 1, {
+            ...opt,
+            smart: true,
+            pot: true,
+            square: true,
+            allowRotation: true
+        });
+        const rect = packer.add({ width: 2048, height: 55 });
+        const built = packer.add(2048, 55, { num: 2 });
+
+        expect(packer.bins).toHaveLength(2);
+        expect(packer.bins[0].rects).toContain(rect);
+        expect(rect.oversized).toBe(true);
+        // The (width, height, data) overload has to resolve it the same way.
+        expect(packer.bins[1].rects).toContain(built);
+        expect(built.oversized).toBe(true);
+    });
+
     test("checks oversized elements and skip rotation when set to false", () => {
         const packer = new MaxRectsPacker(512, 1024, 0, { ...opt, allowRotation: false });
         packer.add(640, 256, { num: 1 });
@@ -284,6 +306,24 @@ describe("#addArray", () => {
         ]);
         expect(packer.bins).toHaveLength(1);
         expect(packer.bins[0].rects).toHaveLength(2);
+    });
+
+    test("keeps a rect no square bin can hold in non-exclusive tag mode", () => {
+        // The tag grouping path opens bins of its own, so it has to report a refused rect as oversized
+        // exactly like `add()` does — otherwise the rect disappears between the two APIs.
+        packer = new MaxRectsPacker(1024, 2048, 0, {
+            ...opt,
+            tag: true,
+            exclusiveTag: false,
+            smart: true,
+            pot: true,
+            square: true,
+            allowRotation: true
+        });
+        packer.addArray([{ width: 2048, height: 55, tag: "one" }]);
+
+        expect(packer.rects).toHaveLength(1);
+        expect(packer.rects[0].oversized).toBe(true);
     });
 });
 

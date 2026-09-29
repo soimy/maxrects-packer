@@ -152,6 +152,28 @@ describe("no padding", () => {
         expect(bin.rects[1].rot).toBe(false);
     });
 
+    test("rotates a plain rect exactly like a Rectangle instance", () => {
+        const shapes = [
+            [1024, 512],
+            [400, 1024],
+            [64, 64]
+        ];
+        const pack = (make) => {
+            const target = new MaxRectsBin(1024, 1024, 0, { ...opt, allowRotation: true });
+            return shapes.map(([width, height]) => {
+                const rect = target.add(make(width, height));
+                return { width: rect.width, height: rect.height, x: rect.x, y: rect.y, rot: rect.rot };
+            });
+        };
+
+        // `Rectangle.rot` swaps width/height in its setter. A plain `{width, height}` object — what the
+        // README advertises — has no setter, so the placement has to maintain its dimensions itself or
+        // the rect reports a footprint it does not occupy, one that can even leave its own bin.
+        const expected = pack((width, height) => new Rectangle(width, height));
+        expect(expected[1].rot).toBe(true); // the fixture has to rotate a rect, or this proves nothing
+        expect(pack((width, height) => ({ width, height }))).toEqual(expected);
+    });
+
     test("stores custom rect correctly", () => {
         bin.add({ width: 200, height: 100, foo: "bar" });
         expect(bin.rects[0].foo).toBe("bar");
