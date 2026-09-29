@@ -12,7 +12,19 @@ export class OversizedElementBin<T extends IRectangle = Rectangle> extends Bin<T
     public rects: T[] = [];
     public freeRects: IRectangle[];
 
+    /**
+     * Build a placeholder bin around an existing rect: the rect is kept as-is, flagged `oversized`, and
+     * its data becomes the bin's data.
+     * @param rect - the rect to hold, which must be an object
+     */
     constructor(rect: T);
+    /**
+     * Build a placeholder bin for an element that does not exist as a rect yet.
+     * @param width - width of the element
+     * @param height - height of the element
+     * @param data - data attached to the element; a JavaScript caller that leaves it out gets
+     * `undefined` here (and in `bin.data`), since only the typed overload requires the argument
+     */
     constructor(width: number, height: number, data: any);
     constructor(...args: any[]) {
         super();
