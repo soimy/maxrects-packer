@@ -443,19 +443,40 @@ describe("clone", () => {
         expect(rect.x).toBe(0);
     });
 
-    test("keeps an arrow or bound method out of the copy", () => {
-        // A function created in the source's scope reads that scope wherever it is called, so restoring it
-        // would let a method call on a rect in the cloned bin change the original.
+    test("restores a concise method the copy was not given", () => {
+        // A concise method has no `prototype` either, so the arrow/bound check cannot key off that: like an
+        // ordinary function it takes `this` from its caller and works on the copy.
+        const bin = new MaxRectsBin(256, 256, 0, opt);
+        const rect = { width: 100, height: 50 };
+        rect.describe = {
+            describe() {
+                return `${this.width}x${this.height}`;
+            }
+        }.describe;
+        rect.clone = () => ({ width: rect.width, height: rect.height });
+        bin.add(rect);
+
+        expect(bin.clone().rects[0].describe()).toBe("100x50");
+    });
+
+    test("keeps arrow and bound methods out of the copy", () => {
+        // A function created in the source's scope — an arrow, or a bound function — reads that scope
+        // wherever it is called, so restoring it would let a method call on a rect in the cloned bin change
+        // the original. They are recognised from their source text: `=>` in the head, or `[native code]`.
         const bin = new MaxRectsBin(256, 256, 0, opt);
         const rect = { width: 100, height: 50 };
         rect.scale = () => {
             rect.width *= 2;
         };
+        rect.reset = function () {
+            rect.width = 100;
+        }.bind(rect);
         rect.clone = () => ({ width: rect.width, height: rect.height });
         bin.add(rect);
 
         const copy = bin.clone().rects[0];
         expect(copy.scale).toBeUndefined();
+        expect(copy.reset).toBeUndefined();
         expect(rect.width).toBe(100);
     });
 

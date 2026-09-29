@@ -62,6 +62,22 @@ export class Rectangle implements IRectangle {
     }
 
     /**
+     * Whether a function taken from a source rect reads the source's scope wherever it is called. Arrow
+     * and bound functions do, so they must not be handed to a copy: a method call on a rect in the cloned
+     * bin would reach back into the original. `prototype` does not tell those apart from a concise method
+     * (`{ m() {} }`), which has none either and takes `this` from its caller, so the source text decides:
+     * an arrow opens with its parameters and `=>`, a bound or native function reads `[native code]`.
+     *
+     * @param value - the property value to inspect
+     * @returns true when the value is a function tied to the scope it was created in
+     */
+    private static isBoundOrArrow(value: unknown): boolean {
+        if (typeof value !== "function") return false;
+        const source = Function.prototype.toString.call(value);
+        return /^\s*(async\s+)?(\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>/.test(source) || source.includes("[native code]");
+    }
+
+    /**
      * Copy a rect object without going through its setters: the prototype and every own property are
      * kept — non-enumerable ones included — so a `Rectangle` stays a `Rectangle`, a custom rect class
      * keeps its identity and its extra fields, and a plain `{width, height}` object stays plain. The
@@ -77,10 +93,10 @@ export class Rectangle implements IRectangle {
      * moving the original. Plain values, and a key the copy does not define, come from the source: a
      * `clone()` that rebuilds only the dimensions leaves the constructor's defaults in exactly those
      * fields (payload, placement, per-item rotation) and omits the methods that read `this`. Neither
-     * accessors nor functions created in the source's scope (arrow and bound functions, which have no
-     * `prototype`) travel: both read and write the source wherever they are called. What a class closes
-     * over the source in some other way — an ordinary function doing it, say — cannot be told apart from a
-     * `this`-based method from the outside, and such a class has to say so through its own `clone()` — which is what keeps the payload, the placement, the per-item rotation
+     * accessors nor functions created in the source's scope (arrow and bound functions) travel: both read
+     * and write the source wherever they are called. What a class closes over the source in some other
+     * way — a plain function or concise method doing it, say — cannot be told apart from a `this`-based
+     * method from the outside, and such a class has to say so through its own `clone()` — which is what keeps the payload, the placement, the per-item rotation
      * permission and anything added since construction from being lost when a `clone()` rebuilds just
      * the dimensions, leaving the constructor's defaults in those plain data fields.
      *
@@ -112,15 +128,13 @@ export class Rectangle implements IRectangle {
                 // the copy, and a non-configurable property cannot be redefined at all. Overwriting any of
                 // those would leave the copy's methods reading stale state.
                 if (own && (!("value" in own) || !own.configurable || typeof own.value === "function")) continue;
-                // A function created in the source's scope — an arrow or a bound function — has no
-                // `prototype` and reads that scope wherever it is called, so calling it on the copy would
-                // reach back into the original. An ordinary function is the shape of a `this`-based method,
-                // which works on the copy; a class that closes over the source some other way has to say so
-                // through its own `clone()`.
-                if (typeof descriptor.value === "function" && descriptor.value.prototype === undefined) continue;
+                // A function tied to the scope it was created in must not be handed to a copy: calling it
+                // would reach back into the original. What a class closes over the source some other way
+                // cannot be told apart and has to say so through its own `clone()`.
+                if (Rectangle.isBoundOrArrow(descriptor.value)) continue;
                 // Everything else is state, and the state belongs to the bin: a `clone()` that rebuilds only
                 // the dimensions leaves the constructor's defaults there (payload, per-item rotation), and a
-                // `this`-based method it left out is restored with them.
+                // `this`-based method it left out — ordinary or concise — is restored with them.
                 Object.defineProperty(copy, key, descriptor);
             }
         } else {

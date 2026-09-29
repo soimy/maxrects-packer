@@ -90,10 +90,11 @@ caller's rects
    where it is **not a plain value** — an accessor (how a class keeps its own state, `#private` fields
    included), a function (behaviour bound to the copy), a non-configurable property (which cannot be
    redefined) — while plain values, and any key the copy does not define, come from the source. Accessors never
-   travel, and neither do functions created in the source's scope (arrow and bound functions, which have
-   no `prototype`): both read and write the source wherever they are called. An ordinary function is
-   restored as a `this`-based method, and a class that closes over the source in some other way cannot be
-   told apart from that from the outside — it has to say so through its own `clone()`. That combination is
+   travel, and neither do functions created in the source's scope — an arrow or a bound function is
+   recognised by its source text (`=>` in the head, or `[native code]`), since `prototype` cannot tell
+   those from a concise method, which has none either. An ordinary function or concise method is restored
+   as a `this`-based method, and a class that closes over the source some other way cannot be told apart
+   from that from the outside — it has to say so through its own `clone()`. That combination is
    what keeps a `clone()` which rebuilds only the dimensions from losing the payload, the placement, the
    per-item rotation permission, extra fields or a `this`-based method, without handing the copy's own
    accessors, functions or frozen properties to the source. Two shapes are **not**
@@ -145,7 +146,7 @@ npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild ne
   extension-less) and take `describe / test / expect / beforeEach` from `vitest` explicitly instead of
   from globals — **they do not test `dist`**. A broken build or a broken artifact is
   invisible to them, so compare `dist` by hand whenever you touch the build.
-- Baseline: `8 spec files / 123 passed / 2 skipped`; v8 coverage is 100% on statements, branches,
+- Baseline: `8 spec files / 124 passed / 2 skipped`; v8 coverage is 100% on statements, branches,
   functions and lines — removing the dead code recorded in `DEFERRED_WORK.md` took the last uncovered
   range with it, so no file has a gap left to read. Coverage is **opt-in**: only `npm run cover`
   collects it and writes `test/coverage/` (gitignored), so a plain `npm test` or a single-spec run
