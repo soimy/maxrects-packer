@@ -574,6 +574,29 @@ describe("clone", () => {
         expect([copy.x, copy.y, copy.rot]).toEqual([rect.x, rect.y, rect.rot]);
     });
 
+    test("restores the state a subclass clone() left at its constructor defaults", () => {
+        // A `Rectangle` subclass that rebuilds only the dimensions starts from the constructor's `_data` and
+        // `_allowRotation` defaults. Those are plain own data properties, so they are bin state rather than
+        // the class's decision about the copy: the payload and the per-item rotation permission have to come
+        // from the source. Accessors and non-configurable properties of the copy are still left alone.
+        class SheetRect extends Rectangle {
+            clone() {
+                return new SheetRect(this.width, this.height);
+            }
+        }
+        const bin = new MaxRectsBin(256, 256, 0, { ...opt, allowRotation: true });
+        const rect = new SheetRect(200, 100);
+        rect.data = { sheet: "atlas-1" };
+        rect.allowRotation = true;
+        bin.add(rect);
+
+        const copy = bin.clone().rects[0];
+        expect(copy).not.toBe(rect);
+        expect(copy).toEqual(rect); // every own property, the constructor defaults included
+        expect(copy.data).toEqual({ sheet: "atlas-1" });
+        expect(copy.allowRotation).toBe(true);
+    });
+
     test("keeps the placement accessors a custom clone() built for the copy", () => {
         // Filling the copy's gaps from the source must not reach into what the copy already defines: the
         // source's accessor closes over the *source's* state, so putting it back on the copy would make

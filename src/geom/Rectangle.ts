@@ -69,12 +69,13 @@ export class Rectangle implements IRectangle {
      *
      * A rect class that keeps its state out of reach of a copy — behind an ECMAScript `#private` field —
      * cannot be copied this way and has to hand out a `clone()` method instead, which is used whenever
-     * it exists. What that method returns has the last word on the copy: the original's own **data**
-     * properties are only filled in where the copy does not define them itself, which is what keeps the
-     * payload, the placement and anything added since construction from being dropped by a `clone()` that
-     * rebuilds just the dimensions. Redefining what the copy already defines would be worse than useless:
-     * an accessor the class built for the copy would be replaced by the source's, whose closure reads and
-     * writes the *source*, and a property the copy declares non-configurable cannot be redefined at all.
+     * it exists. What that method returns decides how the copy is *built*; the state a bin owns still
+     * comes from the source. An accessor, or a property the copy declares non-configurable, is left
+     * alone: replacing an accessor with the source's would put the source's closure back in charge of
+     * the copy, and a non-configurable property cannot be redefined at all. Every other own property of
+     * the source is applied — which is what keeps the payload, the placement, the per-item rotation
+     * permission and anything added since construction from being lost when a `clone()` rebuilds just
+     * the dimensions, leaving the constructor's defaults in those plain data fields.
      *
      * When no `clone()` exists the copy is a prototype-only shell, so every own descriptor is taken over
      * as-is. A rect that keeps its state in an **own accessor closing over the source** — rather than in
@@ -94,10 +95,15 @@ export class Rectangle implements IRectangle {
             // Typed for symbol keys as well: a rect may carry them, and they are copied like any other.
             const descriptors = Object.getOwnPropertyDescriptors(rect) as Record<string | symbol, PropertyDescriptor>;
             for (const key of Reflect.ownKeys(descriptors)) {
-                if (Object.prototype.hasOwnProperty.call(copy, key)) continue;
-                // Only missing, plainly readable state is added: a data property carries a `value`, while an
-                // accessor left out of the copy would bring the source's state along with it.
-                if ("value" in descriptors[key]) Object.defineProperty(copy, key, descriptors[key]);
+                const descriptor = descriptors[key];
+                const own = Object.getOwnPropertyDescriptor(copy, key);
+                // An accessor, or a non-configurable property, is the copy's own decision and stays: the
+                // first would bring the source's closure along with it, the second cannot be redefined at
+                // all. Everything else is plain state, and the state belongs to the bin: a `clone()` that
+                // rebuilds only the dimensions leaves the constructor's defaults in those fields (the
+                // payload, the per-item rotation permission), which must not win over the source's.
+                if (own && (!("value" in own) || !own.configurable)) continue;
+                if (own || "value" in descriptor) Object.defineProperty(copy, key, descriptor);
             }
         } else {
             copy = Object.create(Object.getPrototypeOf(rect)) as T;
