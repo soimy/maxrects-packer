@@ -161,6 +161,9 @@ describe("clone", () => {
         expect(clone.rects[0]).toBeInstanceOf(PrivateRect);
         expect(clone.rects[0]).not.toBe(rect);
         expect(clone.rects[0].width).toBe(100);
+        // Prototype methods come with the instance the `clone()` returns, so cloning the copy works without
+        // the library handing any function over.
+        expect(clone.rects[0].clone()).toBeInstanceOf(PrivateRect);
 
         clone.rects[0].width = 42;
         expect(rect.width).toBe(100);
@@ -443,9 +446,28 @@ describe("clone", () => {
         expect(rect.x).toBe(0);
     });
 
-    test("restores a concise method the copy was not given", () => {
-        // A concise method has no `prototype` either, so the arrow/bound check cannot key off that: like an
-        // ordinary function it takes `this` from its caller and works on the copy.
+    test("leaves an own method the copy was not given out of the copy", () => {
+        // State travels, behaviour does not: no function is taken from the source, so a `clone()` that
+        // rebuilds only the dimensions has to define the methods its result needs. The source keeps its
+        // own method, and a caller of `bin.clone().rects[0].describe()` gets a `TypeError` rather than a
+        // method that could reach back into the original.
+        const bin = new MaxRectsBin(256, 256, 0, opt);
+        const rect = { width: 100, height: 50 };
+        rect.describe = function () {
+            return `${this.width}x${this.height}`;
+        };
+        rect.clone = () => ({ width: rect.width, height: rect.height });
+        bin.add(rect);
+
+        const copy = bin.clone().rects[0];
+        expect(copy.describe).toBeUndefined();
+        expect(rect.describe()).toBe("100x50");
+    });
+
+    test("leaves a concise method the copy was not given out of the copy", () => {
+        // The same rule, and the shape that made every source-text check fail in one direction or the
+        // other: a concise method has no `prototype` either, so it cannot be told from an arrow from the
+        // outside. Nothing is classified any more, so both stay behind.
         const bin = new MaxRectsBin(256, 256, 0, opt);
         const rect = { width: 100, height: 50 };
         rect.describe = {
@@ -456,13 +478,15 @@ describe("clone", () => {
         rect.clone = () => ({ width: rect.width, height: rect.height });
         bin.add(rect);
 
-        expect(bin.clone().rects[0].describe()).toBe("100x50");
+        const copy = bin.clone().rects[0];
+        expect(copy.describe).toBeUndefined();
+        expect(rect.describe()).toBe("100x50");
     });
 
     test("keeps arrow and bound methods out of the copy", () => {
-        // A function created in the source's scope — an arrow, or a bound function — reads that scope
-        // wherever it is called, so restoring it would let a method call on a rect in the cloned bin change
-        // the original. They are recognised from their source text: `=>` in the head, or `[native code]`.
+        // A function created in the source's scope reads that scope wherever it is called, so a method call
+        // on a rect in the cloned bin would change the original. All three shapes stay behind, the nested
+        // call in a default parameter included — that one is what a source-text check missed.
         const bin = new MaxRectsBin(256, 256, 0, opt);
         const rect = { width: 100, height: 50 };
         rect.scale = () => {
@@ -471,27 +495,70 @@ describe("clone", () => {
         rect.reset = function () {
             rect.width = 100;
         }.bind(rect);
+        rect.grow = (next = Math.max(50, rect.width + 100)) => {
+            rect.width = next;
+            return next;
+        };
         rect.clone = () => ({ width: rect.width, height: rect.height });
         bin.add(rect);
 
         const copy = bin.clone().rects[0];
         expect(copy.scale).toBeUndefined();
         expect(copy.reset).toBeUndefined();
+        expect(copy.grow).toBeUndefined();
         expect(rect.width).toBe(100);
     });
 
-    test("restores an own method the copy was not given", () => {
-        // A method that reads `this` works on the copy, so a `clone()` that rebuilds only the dimensions
-        // should not leave the copy without it — callers of `bin.clone().rects[0].describe()` would throw.
+    test("keeps the methods a clone() gave the copy, whatever their text", () => {
+        // Behaviour comes from the `clone()` now, so the text of a function decides nothing: a method the
+        // copy carries survives even when its body spells `[native code]`, and a mutator among them writes
+        // the copy's own state.
+        const makeCopy = (width) => {
+            const copy = { width, height: 50 };
+            copy.describe = function () {
+                return `${this.width} [native code]`;
+            };
+            copy.grow = function () {
+                this.width *= 2;
+            };
+            copy.clone = () => makeCopy(copy.width);
+            return copy;
+        };
         const bin = new MaxRectsBin(256, 256, 0, opt);
         const rect = { width: 100, height: 50 };
-        rect.describe = function () {
-            return `${this.width}x${this.height}`;
+        rect.omit = function () {
+            return `[native code] ${this.width}`;
         };
-        rect.clone = () => ({ width: rect.width, height: rect.height });
+        rect.clone = () => makeCopy(rect.width);
         bin.add(rect);
 
-        expect(bin.clone().rects[0].describe()).toBe("100x50");
+        const copy = bin.clone().rects[0];
+        expect(copy.describe()).toBe("100 [native code]");
+        copy.grow();
+        expect(copy.describe()).toBe("200 [native code]");
+        expect(copy.omit).toBeUndefined(); // text decides nothing, in either direction
+        expect(rect.width).toBe(100);
+    });
+
+    test("clones a copy again without reaching the original", () => {
+        // The copy carries the `clone()` its own class built, so cloning the clone stays on the copy's
+        // state; the original is untouched at every step.
+        const makeCopy = (from) => {
+            const copy = { width: from.width, height: from.height };
+            copy.clone = () => makeCopy(copy);
+            return copy;
+        };
+        const bin = new MaxRectsBin(256, 256, 0, opt);
+        const rect = { width: 100, height: 50 };
+        rect.clone = () => makeCopy(rect);
+        bin.add(rect);
+
+        const first = bin.clone();
+        first.rects[0].width = 42;
+        const second = first.clone();
+        expect(second.rects[0].width).toBe(42);
+        expect(second.rects[0]).not.toBe(first.rects[0]);
+        expect(rect.width).toBe(100);
     });
 
     test("reproduces the placements of a bin with rotated rects", () => {

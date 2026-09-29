@@ -62,22 +62,6 @@ export class Rectangle implements IRectangle {
     }
 
     /**
-     * Whether a function taken from a source rect reads the source's scope wherever it is called. Arrow
-     * and bound functions do, so they must not be handed to a copy: a method call on a rect in the cloned
-     * bin would reach back into the original. `prototype` does not tell those apart from a concise method
-     * (`{ m() {} }`), which has none either and takes `this` from its caller, so the source text decides:
-     * an arrow opens with its parameters and `=>`, a bound or native function reads `[native code]`.
-     *
-     * @param value - the property value to inspect
-     * @returns true when the value is a function tied to the scope it was created in
-     */
-    private static isBoundOrArrow(value: unknown): boolean {
-        if (typeof value !== "function") return false;
-        const source = Function.prototype.toString.call(value);
-        return /^\s*(async\s+)?(\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>/.test(source) || source.includes("[native code]");
-    }
-
-    /**
      * Copy a rect object without going through its setters: the prototype and every own property are
      * kept — non-enumerable ones included — so a `Rectangle` stays a `Rectangle`, a custom rect class
      * keeps its identity and its extra fields, and a plain `{width, height}` object stays plain. The
@@ -85,27 +69,27 @@ export class Rectangle implements IRectangle {
      *
      * A rect class that keeps its state out of reach of a copy — behind an ECMAScript `#private` field —
      * cannot be copied this way and has to hand out a `clone()` method instead, which is used whenever
-     * it exists. What that method returns decides how the copy is *built*, the bin's state fills in the
-     * rest, and the rule between them is about what the copy already holds. What the copy defines for
-     * itself wins where it is not a plain value: an accessor is how it keeps its own state (`#private`
-     * fields included), a function is behaviour bound to the copy, and a non-configurable property cannot
-     * be redefined at all — overwriting any of those leaves the copy's methods reading stale state or
-     * moving the original. Plain values, and a key the copy does not define, come from the source: a
-     * `clone()` that rebuilds only the dimensions leaves the constructor's defaults in exactly those
-     * fields (payload, placement, per-item rotation) and omits the methods that read `this`. Neither
-     * accessors nor functions created in the source's scope (arrow and bound functions) travel: both read
-     * and write the source wherever they are called. What a class closes over the source in some other
-     * way — a plain function or concise method doing it, say — cannot be told apart from a `this`-based
-     * method from the outside, and such a class has to say so through its own `clone()` — which is what keeps the payload, the placement, the per-item rotation
-     * permission and anything added since construction from being lost when a `clone()` rebuilds just
-     * the dimensions, leaving the constructor's defaults in those plain data fields.
+     * it exists. That method decides how the copy is *built*, the bin's state fills in the rest, and the
+     * rule between them is about what the copy already holds: what the copy defines for itself wins where
+     * it is not a plain value — an accessor is how it keeps its own state (`#private` fields included), a
+     * function is behaviour bound to the copy, and a non-configurable property cannot be redefined at all
+     * — while plain values, and every key the copy does not define, come from the source.
+     *
+     * **State travels, behaviour does not.** No function is taken over from the source: one cannot be
+     * classified from the outside, since a `this`-based method and a function closing over the source
+     * look the same, and a wrong guess either lets a method call on a rect in the cloned bin write to the
+     * original or drops a method the copy needs. Prototype methods come with the instance a `clone()`
+     * returns; an own method or accessor the copy needs is that `clone()`'s to define. So a `clone()`
+     * which rebuilds only the dimensions still inherits the payload, the placement, the per-item rotation
+     * permission and any plain field added since construction, but not the source's own functions, and no
+     * source accessor travels either — it reads and writes whatever it closed over.
      *
      * When no `clone()` exists the copy is a prototype-only shell, so every own descriptor is taken over
-     * as-is. A rect that keeps its state in an **own accessor closing over the source** — rather than in
-     * own data reached through a prototype accessor — is then still shared with the original: which of
-     * the two a given accessor is cannot be told from the outside, so such a class has to provide
-     * `clone()` as well. A rect whose state is simply out of reach (a `#private` field) fails on the first
-     * field the copy cannot read, and that is reported here rather than from inside a bin placing it.
+     * as-is, functions included: there the copy is the source's shape by construction. A rect that keeps
+     * its state in an **own accessor closing over the source**, or in an own function that does, is then
+     * still shared with the original and has to provide `clone()` as well. A rect whose state is simply
+     * out of reach (a `#private` field) fails on the first field the copy cannot read, and that is
+     * reported here rather than from inside a bin placing it.
      *
      * @param rect - the rect to copy
      * @returns a new object carrying the same own properties, or whatever `rect.clone()` returns
@@ -128,13 +112,15 @@ export class Rectangle implements IRectangle {
                 // the copy, and a non-configurable property cannot be redefined at all. Overwriting any of
                 // those would leave the copy's methods reading stale state.
                 if (own && (!("value" in own) || !own.configurable || typeof own.value === "function")) continue;
-                // A function tied to the scope it was created in must not be handed to a copy: calling it
-                // would reach back into the original. What a class closes over the source some other way
-                // cannot be told apart and has to say so through its own `clone()`.
-                if (Rectangle.isBoundOrArrow(descriptor.value)) continue;
+                // Behaviour is the `clone()`'s business rather than the library's. A function cannot be
+                // classified from the outside — a `this`-based method and one closing over the source have
+                // the same shape — and a wrong guess either lets a method call on a rect in the cloned bin
+                // change the original, or drops a method the copy needs. So none travels: prototype methods
+                // arrive with the instance the `clone()` returns, and an own one has to be defined by it.
+                if (typeof descriptor.value === "function") continue;
                 // Everything else is state, and the state belongs to the bin: a `clone()` that rebuilds only
-                // the dimensions leaves the constructor's defaults there (payload, per-item rotation), and a
-                // `this`-based method it left out — ordinary or concise — is restored with them.
+                // the dimensions leaves the constructor's defaults there (payload, per-item rotation), so
+                // the source's plain values fill those in.
                 Object.defineProperty(copy, key, descriptor);
             }
         } else {
