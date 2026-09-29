@@ -64,7 +64,8 @@ export class OversizedElementBin<T extends IRectangle = Rectangle> extends Bin<T
     }
     /**
      * Copy this bin around a copy of its rect, so mutating one bin's rect leaves the other's alone. The
-     * copy is shallow (`Rectangle.Clone`), so a payload stored in `rect.data` is still shared.
+     * copy is shallow (`Rectangle.Clone`), so a payload stored in `rect.data` is still shared, and a rect
+     * class that cannot be copied that way reports it from there.
      *
      * @returns a bin holding a copy of the same rect, with the same size, data and tag
      */

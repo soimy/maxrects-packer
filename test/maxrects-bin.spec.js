@@ -355,12 +355,108 @@ describe("clone", () => {
     test("copies the tag and the data", () => {
         const bin = new MaxRectsBin(256, 128, 0, opt);
         bin.add(new Rectangle(100, 100));
+        // The tag lands on an already-filled bin, so the copy has to carry a tagged bin whose rects are
+        // untagged: the replay must not re-run the tag gate, or it would drop them.
         bin.tag = "one";
         bin.data = { name: "sheet" };
 
         const clone = bin.clone();
         expect(clone.tag).toBe("one");
         expect(clone.data).toBe(bin.data);
+    });
+
+    test("copies a tagged bin under exclusiveTag", () => {
+        // The tag has to be on the copy before the rects are replayed, or `place()` refuses every tagged
+        // rect and the copy comes back empty — which is what it did until now.
+        const bin = new MaxRectsBin(1024, 1024, 0, { ...opt, exclusiveTag: true });
+        bin.tag = "one";
+        const rect = new Rectangle(100, 100);
+        rect.data = { tag: "one" };
+        expect(bin.add(rect)).toBeDefined();
+
+        const clone = bin.clone();
+        expect(clone.rects).toHaveLength(1);
+        expect(clone.tag).toBe("one");
+        expect(clone.rects[0]).not.toBe(rect);
+    });
+
+    test("uses the rect's own clone() when its class has one", () => {
+        // A class holding its state behind `#private` fields cannot be copied property by property, so it
+        // gets to say how — and the copy still ends up independent of the original.
+        class PrivateRect {
+            #width;
+            #height;
+            constructor(width, height) {
+                this.#width = width;
+                this.#height = height;
+            }
+            get width() {
+                return this.#width;
+            }
+            set width(value) {
+                this.#width = value;
+            }
+            get height() {
+                return this.#height;
+            }
+            set height(value) {
+                this.#height = value;
+            }
+            clone() {
+                return new PrivateRect(this.#width, this.#height);
+            }
+        }
+        const bin = new MaxRectsBin(256, 256, 0, opt);
+        const rect = new PrivateRect(100, 100);
+        bin.add(rect);
+
+        const clone = bin.clone();
+        expect(clone.rects[0]).toBeInstanceOf(PrivateRect);
+        expect(clone.rects[0]).not.toBe(rect);
+        expect(clone.rects[0].width).toBe(100);
+
+        clone.rects[0].width = 42;
+        expect(rect.width).toBe(100);
+    });
+
+    test("reports a rect class it cannot copy", () => {
+        class PrivateRect {
+            #width;
+            #height;
+            constructor(width, height) {
+                this.#width = width;
+                this.#height = height;
+            }
+            get width() {
+                return this.#width;
+            }
+            set width(value) {
+                this.#width = value;
+            }
+            get height() {
+                return this.#height;
+            }
+            set height(value) {
+                this.#height = value;
+            }
+        }
+        const bin = new MaxRectsBin(256, 256, 0, opt);
+        bin.add(new PrivateRect(100, 100));
+
+        // With no `clone()` to fall back on, the copy would throw on the first getter reading `#width`, so
+        // the message says what to add. Sharing the rect instead is the aliasing this change removed.
+        expect(() => bin.clone()).toThrow("give its class a clone() method");
+    });
+
+    test("reports a rect it can no longer place", () => {
+        // A placed rect the caller resized out of the bin would make the copy incomplete; an error beats
+        // a bin that quietly holds fewer rects than the original.
+        const bin = new MaxRectsBin(256, 128, 0, opt);
+        const rect = new Rectangle(100, 100);
+        bin.add(rect);
+        rect.width = 4000;
+
+        expect(() => bin.clone()).toThrow("repack the bin before cloning it");
     });
 
     test("reproduces the placements of a bin with rotated rects", () => {

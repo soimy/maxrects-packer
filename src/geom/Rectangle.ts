@@ -67,11 +67,27 @@ export class Rectangle implements IRectangle {
      * fields, and a plain `{width, height}` object stays plain. The copy is shallow — an object held in
      * `rect.data`, or in any custom field, is shared with the original.
      *
+     * A rect class that keeps its state out of reach of `Object.assign` — behind an ECMAScript
+     * `#private` field — cannot be copied this way, and has to hand out a `clone()` method instead,
+     * which is used whenever it exists. Without one the copy would throw on the first getter reading
+     * such a field, so that case is reported here rather than from inside a bin trying to place it.
+     *
      * @param rect - the rect to copy
-     * @returns a new object carrying the same own properties
+     * @returns a new object carrying the same own properties, or whatever `rect.clone()` returns
      */
     public static Clone<T extends IRectangle>(rect: T): T {
-        return Object.assign(Object.create(Object.getPrototypeOf(rect)), rect) as T;
+        const copier = (rect as { clone?: () => T }).clone;
+        if (typeof copier === "function") return copier.call(rect);
+        const copy = Object.assign(Object.create(Object.getPrototypeOf(rect)), rect) as T;
+        try {
+            void copy.width;
+            void copy.height;
+        } catch {
+            throw new Error(
+                "Rectangle.Clone(): the rect keeps its width or height out of reach of a copy (an ECMAScript #private field, say) — give its class a clone() method"
+            );
+        }
+        return copy;
     }
 
     /**

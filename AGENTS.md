@@ -27,7 +27,7 @@ possible, each staying within `maxWidth × maxHeight` (sprite sheets / texture a
 | --- | --- |
 | `src/index.ts` | The only barrel export. Runtime values: `Rectangle / MaxRectsPacker / PACKING_LOGIC / Bin / MaxRectsBin / OversizedElementBin`; types: `IRectangle / IOption / IBin`. The surface is pinned by `test/index.spec.js` — adding or renaming a public value means updating that list in the same commit — and what consumers can actually import is checked by the type fixture in `npm run verify:package` against `package.json`'s `types` entry |
 | `src/types.ts` | `IOption`, `PACKING_LOGIC` (MAX_AREA/MAX_EDGE/FILL_WIDTH), `EDGE_MAX_VALUE=4096`, `EDGE_MIN_VALUE=128` (**never used inside the library, but re-exported by `src/maxrects-packer.ts` and part of the public `.d.ts` — not dead code, do not delete**) |
-| `src/geom/Rectangle.ts` | `IRectangle` interface + `Rectangle`: `width/height/x/y/rot/data/allowRotation` all go through getters/setters and bump `_dirty` on every mutation; the `rot` setter swaps width/height, the `data` setter syncs `data.allowRotation`; the `Clone` static copies a rect for the bins' `clone()` (prototype and own properties, shallow) |
+| `src/geom/Rectangle.ts` | `IRectangle` interface + `Rectangle`: `width/height/x/y/rot/data/allowRotation` all go through getters/setters and bump `_dirty` on every mutation; the `rot` setter swaps width/height, the `data` setter syncs `data.allowRotation`; the `Clone` static copies a rect for the bins' `clone()` — prototype and own properties, shallow, or the rect's own `clone()` when its class has one |
 | `src/abstract-bin.ts` | `IBin` / abstract `Bin<T>`: the `dirty` semantics and `setDirty()`; `add/reset/repack/clone` are left to subclasses |
 | `src/maxrects-bin.ts` | Core single-bin algorithm: `place → findNode(scoring) → updateBinSize(expand) → splitNode(split) → pruneFreeList` |
 | `src/oversized-element-bin.ts` | Placeholder bin for one oversized element (`rect.oversized = true`, `add()` always returns `undefined`) |
@@ -77,7 +77,13 @@ caller's rects
    rect one bin holds, or adding to one bin, therefore never reaches the other. The copy is **shallow**
    — the object in `rect.data` is shared — and it is produced by re-packing the copies, which
    reproduced the source's placements in every fixture measured (`test/maxrects-bin.spec.js` pins one
-   rotated fixture and sweeps 80 seeded bins).
+   rotated fixture and sweeps 80 seeded bins). That replay runs with the tag gate **off** and restores
+   the source's `options`/`tag`/`data` afterwards: a bin can hold rects its own gate would now refuse
+   — it was tagged after it was filled, or it carries several tags in non-exclusive mode — and
+   re-running the gate would give back a copy with fewer rects than the original. Two cases fail
+   loudly instead of silently: `Rectangle.Clone` reports a rect class that hides its width or height
+   behind an ECMAScript `#private` field and offers no `clone()` of its own, and `MaxRectsBin.clone()`
+   reports a bin holding a rect it can no longer place.
 
 ## Commands
 
@@ -121,7 +127,7 @@ npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild ne
   extension-less) and take `describe / test / expect / beforeEach` from `vitest` explicitly instead of
   from globals — **they do not test `dist`**. A broken build or a broken artifact is
   invisible to them, so compare `dist` by hand whenever you touch the build.
-- Baseline: `7 spec files / 105 passed / 2 skipped`; v8 coverage is 100% on statements, branches,
+- Baseline: `7 spec files / 109 passed / 2 skipped`; v8 coverage is 100% on statements, branches,
   functions and lines — removing the dead code recorded in `DEFERRED_WORK.md` took the last uncovered
   range with it, so no file has a gap left to read. Coverage is **opt-in**: only `npm run cover`
   collects it and writes `test/coverage/` (gitignored), so a plain `npm test` or a single-spec run
