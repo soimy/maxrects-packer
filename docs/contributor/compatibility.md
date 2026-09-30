@@ -60,8 +60,8 @@ deferred-work ledger holds it for a major release.
 
 ## What ships
 
-The `files` allowlist decides: `dist`, `src`, `assets/{custom.css,custom.js,favicon.ico}`,
-`CHANGELOG.md`, `tsconfig*.json` and `typedoc.json` — currently 30 files. `docs/`, the documentation
+The `files` allowlist decides: `dist`, `src`, `assets/favicon.ico`, `CHANGELOG.md`, `tsconfig*.json`
+and `typedoc.json` — currently 28 files. `docs/`, the documentation
 site and internal plans are not in it and never ship.
 
 ## Node version

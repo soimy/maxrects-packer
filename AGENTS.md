@@ -338,15 +338,15 @@ English keeps the project history usable for every contributor and every downstr
   There is still no `exports` field, so deep imports (`maxrects-packer/dist/...`) work; adding one
   would seal off deep paths, which is breaking and therefore reserved for 3.0.0.
 - Published content is decided by the `files` allowlist in `package.json`: `dist` + `src` +
-  `assets/{custom.css,custom.js,favicon.ico}` + `CHANGELOG.md` + `tsconfig*.json` + `typedoc.json`
-  (measured `npm pack`: ~62kB / 30 files — the byte count drifts slightly between builds, the file
+  `assets/favicon.ico` + `CHANGELOG.md` + `tsconfig*.json` + `typedoc.json`
+  (measured `npm pack`: ~66kB / 28 files — the byte count drifts slightly between builds, the file
   count does not; the published 2.7.4 tarball was 67.0kB / 33 files). The differences from 2.7.4 are
   all deliberate: `eslint.config.js`, `.eslintrc.json` and `.github/workflows/node.js.yml` are no
   longer published, `dist/maxrects-packer.cjs` is new, and `UPGRADE_SUMMARY.md` was deleted as an
   obsolete dependency-upgrade log. There is **no `.npmignore`**, so npm falls back to `.gitignore`
   (which lists `dist`/`lib`), but `files` wins and `dist` still ships. Note that `assets/*.png` is not
   in the allowlist (2.7.x did not ship it either), so the README images stay broken on the npm page;
-  adding the whole `assets` directory would fix that at the cost of growing the tarball from ~62kB to
+  adding the whole `assets` directory would fix that at the cost of growing the tarball from ~66kB to
   ~530kB (`assets/` is 468kB, mostly uncompressed PNG). `clean` removes both `dist` and the legacy
   `lib`.
 - The `resolved` fields in `package-lock.json` must point at `registry.npmjs.org`: this machine has a

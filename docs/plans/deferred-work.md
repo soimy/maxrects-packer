@@ -147,5 +147,11 @@ the old TypeDoc site published. Switching the repository's Pages source to **Git
 maintainer step that has to happen before the first deployment; until then `doc:publish` still pushes to
 `gh-pages`, and the two paths must not be used together.
 
-Still open: retiring the old theme, `gh-pages` and the theme assets from `devDependencies` and the
-`files` allowlist. The published tarball is unaffected: `docs/` is not in the `files` allowlist.
+The old theme is retired: `typedoc-unhoax-theme`, `assets/custom.css` and `assets/custom.js` are gone
+from `devDependencies`, the repository and the `files` allowlist, which takes the published tarball from
+30 files to 28 (`assets/favicon.ico` stays).
+
+Still open: dropping `gh-pages` (and the `doc:publish` alias that uses it) once the Pages source is
+switched to GitHub Actions — until then it is the fallback deployment path. `cz-conventional-changelog`
+is unrelated stale tooling (interactive commitizen commits only). The published tarball is otherwise
+unaffected: `docs/` is not in the `files` allowlist.
