@@ -42,6 +42,40 @@ class SheetRect extends Rectangle {
 const copiedSheet: SheetRect = Rectangle.Clone(new SheetRect(4, 4));
 export const summary = [saved.length, bins.length, bin.width, oversized.width, oversizedWithoutData.width, rect.width, copied.width, copiedSheet.label];
 `;
+// What `npm pack` is meant to produce, sorted. Almost all of it comes from the `files` allowlist in
+// package.json; `package.json`, `README.md` and `LICENSE` are npm's own additions. Edit this list only
+// together with the allowlist — it is the record of what consumers download.
+const PUBLISHED_FILES = [
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md",
+    "assets/favicon.ico",
+    "dist/abstract-bin.d.ts",
+    "dist/geom/Rectangle.d.ts",
+    "dist/index.d.ts",
+    "dist/maxrects-bin.d.ts",
+    "dist/maxrects-packer.cjs",
+    "dist/maxrects-packer.d.ts",
+    "dist/maxrects-packer.js",
+    "dist/maxrects-packer.js.map",
+    "dist/maxrects-packer.min.js",
+    "dist/maxrects-packer.mjs",
+    "dist/maxrects-packer.mjs.map",
+    "dist/oversized-element-bin.d.ts",
+    "dist/types.d.ts",
+    "package.json",
+    "src/abstract-bin.ts",
+    "src/geom/Rectangle.ts",
+    "src/index.ts",
+    "src/maxrects-bin.ts",
+    "src/maxrects-packer.ts",
+    "src/oversized-element-bin.ts",
+    "src/types.ts",
+    "tsconfig.build.json",
+    "tsconfig.json",
+    "typedoc.json"
+].sort();
+
 const root = fileURLToPath(new URL("..", import.meta.url));
 const workdir = mkdtempSync(join(tmpdir(), "maxrects-packer-verify-"));
 
@@ -53,13 +87,35 @@ try {
     const tarball = join(workdir, tarballName);
     console.log(`  ✓ npm pack -> ${tarballName}`);
 
-    // 2) Install into a brand-new consumer project (the temporary directory itself)
+    // 2) The tarball carries exactly the files that are meant to ship. A `files` allowlist decides this,
+    // so the two quiet mistakes are a path added to it (the documentation site's source tree, the
+    // uncompressed PNGs) and an entry dropped from it (`src/`, a tsconfig) — neither of which any other
+    // check would notice, since the entry points themselves would still resolve.
+    const published = JSON.parse(run("npm", ["pack", "--dry-run", "--json"], { cwd: root }))[0]
+        .files.map((file) => file.path)
+        .sort();
+    const added = published.filter((path) => !PUBLISHED_FILES.includes(path));
+    const dropped = PUBLISHED_FILES.filter((path) => !published.includes(path));
+    if (added.length > 0 || dropped.length > 0) {
+        const list = (paths) =>
+            paths.length > 8 ? `${paths.slice(0, 8).join(", ")} …and ${paths.length - 8} more` : paths.join(", ");
+        const detail = [
+            added.length > 0 ? `not expected: ${list(added)}` : null,
+            dropped.length > 0 ? `missing: ${list(dropped)}` : null
+        ].filter(Boolean);
+        throw new Error(
+            `the tarball holds ${published.length} files, not the ${PUBLISHED_FILES.length} intended — ${detail.join("; ")}`
+        );
+    }
+    console.log(`  ✓ npm pack --dry-run lists the ${published.length} intended files`);
+
+    // 3) Install into a brand-new consumer project (the temporary directory itself)
     execFileSync("npm", ["init", "-y"], { cwd: workdir, stdio: "ignore" });
     writeFileSync(join(workdir, "package.json"), JSON.stringify({ name: "consumer", private: true }, null, 2));
     run("npm", ["install", "--no-save", "--no-package-lock", "--no-audit", "--no-fund", tarball], { cwd: workdir });
     console.log("  ✓ installed into the temporary consumer project");
 
-    // 3) Verify CJS by package name — this is the path that was broken historically
+    // 4) Verify CJS by package name — this is the path that was broken historically
     const cjs = JSON.parse(
         run(
             "node",
@@ -80,7 +136,7 @@ try {
         throw new Error(`require("maxrects-packer") loaded but misbehaves: expected 1 bin, got ${cjs.bins}`);
     console.log(`  ✓ require("maxrects-packer") -> ${cjs.keys.length} exports, real packing run OK`);
 
-    // 4) Verify ESM by package name (Node loads main through CJS interop; named exports come from cjs-module-lexer)
+    // 5) Verify ESM by package name (Node loads main through CJS interop; named exports come from cjs-module-lexer)
     // Node 23+ also adds a synthetic "module.exports" key to the namespace of a CommonJS module, so the
     // raw key count is 6 on Node 20/22 and 7 on Node 24. Drop it: this gate is about which real exports
     // are reachable by name, and a count that changes with the Node version reads like a regression.
@@ -102,7 +158,7 @@ try {
         throw new Error(`import("maxrects-packer") is missing named exports: ${missingEsm.join(", ")}`);
     console.log(`  ✓ import("maxrects-packer") -> ${esmKeys.length} named exports`);
 
-    // 5) Verify the published types by package name, in every resolution mode a consumer can use.
+    // 6) Verify the published types by package name, in every resolution mode a consumer can use.
     // package.json "types" decides what a TypeScript consumer resolves, and it pointed at the
     // declaration of src/maxrects-packer.ts instead of the barrel's, so six of the nine documented
     // exports could not be imported while every runtime check above stayed green. Only compiling an
@@ -155,7 +211,7 @@ try {
     }
     console.log(`  ✓ the published types accept the documented imports (${MODES.map((mode) => mode.name).join(", ")})`);
 
-    // 6) Run the documentation examples marked with `<!-- docs-example: name -->`, against the package
+    // 7) Run the documentation examples marked with `<!-- docs-example: name -->`, against the package
     // installed by name. The guides are the first thing a user copies, and nothing else would notice an
     // example that stopped working: the test specs import `../src`, so a broken README or guide snippet
     // rots silently while every gate stays green. Every page is scanned rather than a hand-kept list of

@@ -340,7 +340,10 @@ English keeps the project history usable for every contributor and every downstr
 - Published content is decided by the `files` allowlist in `package.json`: `dist` + `src` +
   `assets/favicon.ico` + `CHANGELOG.md` + `tsconfig*.json` + `typedoc.json`
   (measured `npm pack`: ~66kB / 28 files — the byte count drifts slightly between builds, the file
-  count does not; the published 2.7.4 tarball was 67.0kB / 33 files). The differences from 2.7.4 are
+  count does not; the published 2.7.4 tarball was 67.0kB / 33 files). That file list is **pinned**:
+  `PUBLISHED_FILES` in `scripts/verify-package.mjs` is compared against `npm pack --dry-run --json`, so
+  an entry added to the allowlist (the site's `docs/` tree, `assets/*.png`) or dropped from it (`src/`,
+  a tsconfig) fails `npm run verify:package` by name. The differences from 2.7.4 are
   all deliberate: `eslint.config.js`, `.eslintrc.json` and `.github/workflows/node.js.yml` are no
   longer published, `dist/maxrects-packer.cjs` is new, and `UPGRADE_SUMMARY.md` was deleted as an
   obsolete dependency-upgrade log. There is **no `.npmignore`**, so npm falls back to `.gitignore`
