@@ -102,7 +102,8 @@ old theme's own anchors for signatures the new pages have no heading for (`#dirt
 `#widthwidth-1`, `#collide-2`); and 15 are sections of the two legacy index pages, which redirect to
 `api/index.html` — that page lists classes, interfaces and enumerations without a per-entry anchor for
 `#maxrectspacker` or `#Bin`. The full inventory is in the
-[spike report](https://github.com/soimy/maxrects-packer/blob/master/docs/spec/2026-09-30-docs-migration-spike.md).
+[spike report](https://github.com/soimy/maxrects-packer/blob/master/docs/spec/2026-09-30-docs-migration-spike.md),
+whose Phase A counts are marked superseded there and whose re-measurement gives the numbers above.
 
 ## Writing a page
 
