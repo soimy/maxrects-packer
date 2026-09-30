@@ -100,6 +100,23 @@ Every missing anchor falls into one of four buckets, and only the first is a rea
    `index.html`'s README headings (`#usage`, `#installing`, …) become `docs/user/` pages;
    `hierarchy.html` has no successor and can redirect to `api/index.html`.
 
+### Symbol coverage after the migration
+
+Anchors are one question; whether a documented symbol went missing is another. The old site's search
+index (`assets/search.js`, a base64-encoded zlib payload) carries every symbol it documented together
+with its URL — **134 rows** — so each name can be checked against the page that replaced it on the built
+site: **124 are still there and 10 are gone**. The ten are `border`, `stage`, `verticalExpand`,
+`expandFreeRects`, `findNode`, `pruneFreeList`, `splitNode` and `updateBinSize` on `MaxRectsBin`, plus
+`_currentBinIndex` and `sort` on `MaxRectsPacker` — and every one of them is declared `private` in
+`src/`, so `excludePrivate: true` is the whole of the difference. No public class, method, property,
+interface member or enum member the old site documented is absent from the new reference.
+
+The check searches the built HTML for the name in an `id` or in the page text, which is generous: a name
+that only occurred inside another word would still count as present, and these ten occur nowhere. The
+counts differ from the anchor table above because they measure different things — documented names
+there, fragment ids here — and several legacy ids (`#dirtydirty`, `#xx-1`) are theme artifacts for
+symbols the new pages do document.
+
 ### Redirect plan for phase D
 
 Static pages under the legacy paths (`classes/*.html`, `interfaces/*.html`, `enums/*.html`,
