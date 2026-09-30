@@ -144,6 +144,14 @@ counts differ from the anchor table above because they measure different things 
 there, fragment ids here — and several legacy ids (`#dirtydirty`, `#xx-1`) are theme artifacts for
 symbols the new pages do document.
 
+The other direction is complete as well: every member the source declares `public` — **76 across the
+eight exported types** (`Bin`, `IBin`, `MaxRectsBin`, `MaxRectsPacker`, `OversizedElementBin`,
+`Rectangle`, `IRectangle`, `IOption`), optional interface properties included — has an entry on its API
+page, so nothing the source exposes is missing from the reference the site publishes. The method: read
+the members out of `src/`, skip the declarations marked `private`/`protected` or tagged `@private`, and
+look for each name in an `id` or in the page text of `docs/api/` — per declaration, so a getter/setter
+pair counts once.
+
 ### Redirect plan for phase D
 
 Static pages under the legacy paths (`classes/*.html`, `interfaces/*.html`, `enums/*.html`,
