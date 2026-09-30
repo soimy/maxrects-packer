@@ -79,7 +79,10 @@ caller's rects
    rect one bin holds, or adding to one bin, therefore never reaches the other. The copy is **shallow**
    — the object in `rect.data` is shared — and it is produced by re-packing the copies, which
    reproduced the source's placements in every fixture measured (`test/clone.spec.js` pins one rotated
-   fixture and sweeps 80 seeded bins). That replay runs with the tag gate **off** and restores
+   fixture and sweeps 80 seeded bins). That is a measurement, not a guarantee: the replay scores each
+   copy afresh, and a placed rect arrives with its footprint already swapped when `rot` is true, so a bin
+   holding rotated rects can land differently or refuse to build at all — the reproducers are in
+   `docs/plans/deferred-work.md#clone-re-decides-rotation`. That replay runs with the tag gate **off** and restores
    the source's `options`/`tag`/`data` afterwards: a bin can hold rects its own gate would now refuse
    — it was tagged after it was filled, or it carries several tags in non-exclusive mode — and
    re-running the gate would give back a copy with fewer rects than the original.
