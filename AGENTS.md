@@ -49,8 +49,8 @@ These are the contract with downstream users — breaking one is a breaking chan
 version, with the reasoning, is [docs/contributor/behavior-contracts.md](./docs/contributor/behavior-contracts.md).
 
 1. **In-place mutation**: `add()/addArray()` write `x/y/rot/oversized` directly onto the object passed
-   in and return that same object (only the multi-argument overloads construct an internal
-   `new Rectangle`).
+   in. `add()` returns that same object — except the multi-argument overload, which constructs an
+   internal `new Rectangle` and returns that instead — while `addArray()` returns nothing.
 2. **Tag grouping**: with `exclusiveTag: true` (the default) a tagged rect may only enter a bin with
    the same tag, and an untagged bin refuses tagged rects. The check lives in `MaxRectsBin.place()`,
    which every path reaches — `MaxRectsBin.add()` deliberately does not pre-check, so a refused rect

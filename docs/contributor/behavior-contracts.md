@@ -6,9 +6,11 @@ is mostly these contracts seen from the outside.
 
 ## 1. `add()` works in place {#add-works-in-place}
 
-`add()`/`addArray()` write `x`, `y`, `rot` and `oversized` directly onto the object handed to them and
-return that same object (only the `add(width, height, data)` overload constructs an internal
-`Rectangle`). Nothing is copied, so the object you keep a reference to is the object in the bin.
+`add()` writes `x`, `y`, `rot` and `oversized` directly onto the object handed to it and returns that
+same object; `addArray()` writes the same four fields onto every rect it is given but returns nothing.
+Only the `add(width, height, data)` overload constructs an internal `Rectangle` — and that internal rect
+is what it hands back, not anything you passed in. Nothing is copied, so the object you keep a reference
+to is the object in the bin.
 
 ## 2. Tag grouping {#tag-grouping}
 
