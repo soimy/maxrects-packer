@@ -12,6 +12,12 @@ Only the `add(width, height, data)` overload constructs an internal `Rectangle` 
 is what it hands back, not anything you passed in. Nothing is copied, so the object you keep a reference
 to is the object in the bin.
 
+The write-back is what the specs assert — the caller's own object is checked, `rect.oversized` among
+the four fields — while the three **return values** above are not asserted anywhere: no spec compares
+`add()`'s result with what it was given, and none asks what `addArray()` hands back. They are what the
+signatures promise rather than what the suite locks, and the deferred-work ledger (`docs/plans/deferred-work.md`,
+tracked but not part of this site) records the three assertions that would close it.
+
 ## 2. Tag grouping {#tag-grouping}
 
 With `exclusiveTag: true` (the default) a tagged rect may only enter a bin with the same tag, and a bin
