@@ -8,7 +8,8 @@ export interface IRectangle {
 
 export class Rectangle implements IRectangle {
     /**
-     * Oversized tag on rectangle which is bigger than packer itself.
+     * Oversized tag on a rect the packer could not put in a bin: one bigger than the packer itself, or
+     * one no bin could grow to hold (`square` caps a bin below `maxHeight`, say).
      */
     public oversized: boolean = false;
 
@@ -92,7 +93,8 @@ export class Rectangle implements IRectangle {
      * reported here rather than from inside a bin placing it.
      *
      * @param rect - the rect to copy
-     * @returns a new object carrying the same own properties, or whatever `rect.clone()` returns
+     * @returns a new object carrying the same own values as the source, built on whatever `rect.clone()`
+     * returns when the rect class has one
      */
     public static Clone<T extends IRectangle>(rect: T): T {
         const copier = (rect as { clone?: () => T }).clone;

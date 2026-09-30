@@ -249,11 +249,11 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     }
 
     /**
-     * Stop adding new element to the current bin and return a new bin.
+     * Stop adding new elements to the current bin.
      *
      * note: After calling `next()` all elements will no longer added to previous bins.
      *
-     * @returns The current bin index
+     * @returns The index the next bin will take
      */
     public next(): number {
         this._currentBinIndex = this.bins.length;
@@ -261,7 +261,8 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     }
 
     /**
-     * Load bins to the packer, overwrite exist bins
+     * Load bins to the packer: each one replaces the bin at its index, an oversized one is appended
+     * instead, and existing bins past the loaded array are kept
      *
      * @param bins - MaxRectsBin objects
      */
@@ -319,7 +320,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      *
      * @private
      * @param rects - array of rectangles to sort
-     * @param logic - sorting logic, "area" or "edge" (default is MAX_EDGE)
+     * @param logic - sorting logic, `PACKING_LOGIC.MAX_EDGE` or `PACKING_LOGIC.MAX_AREA` (default is MAX_EDGE)
      */
     private sort(rects: T[], logic: IOption["logic"] = PACKING_LOGIC.MAX_EDGE) {
         return rects.slice().sort((a, b) => {

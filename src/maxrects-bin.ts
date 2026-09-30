@@ -121,11 +121,13 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
      * copies are shallow (`Rectangle.Clone`), so a payload stored in `rect.data` is still shared, and a
      * rect class that cannot be copied that way reports it from `Rectangle.Clone()`.
      *
-     * It throws when the copy cannot hold a rect this bin holds — only reachable when a placed rect has
-     * been resized into something the bin can no longer place. Reporting it beats handing back a bin
-     * that quietly holds fewer rects than the original.
+     * It throws when the replay cannot place a rect this bin holds. Two ways in: a rect resized after it
+     * was placed into something the bin can no longer hold, and a rotated rect the replay lands in the
+     * other orientation (the copies are re-packed, so orientation is decided again — see the deferred-work
+     * ledger). Reporting it beats handing back a bin that quietly holds fewer rects than the original.
      *
-     * @returns a bin with the same size, options, tag, data and rects
+     * @returns a bin holding copies of the same rects, with the same options, tag and data — the copies
+     * are re-packed, so the size it grows to and the placements it lands on can differ from the source's
      */
     public clone(): MaxRectsBin<T> {
         // The replay runs with the tag gate off. The source already settled which rects it accepts — in
@@ -390,7 +392,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
     /**
      * Grow the bin so that it contains the given node.
      * @param node - the node the bin has to contain
-     * @param considerRotation - whether the node may still be placed in either orientation, in which case the bin grows by the smaller of the two (default is true)
+     * @param considerRotation - whether the node may also be placed rotated when `options.allowRotation` is on, in which case the bin grows by the smaller of the two (default is true)
      * @returns true when the bin was grown
      */
     private updateBinSize(node: IRectangle, considerRotation: boolean = true): boolean {

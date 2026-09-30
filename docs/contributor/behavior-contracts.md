@@ -63,7 +63,11 @@ and its extra fields, and carry over `tag` and `data`. Mutating a rect one bin h
 bin, never reaches the other. The copy is **shallow**: the object in `rect.data` is shared.
 
 The copy is produced by re-packing the rect copies, which reproduced the source's placements in every
-fixture measured (a rotated fixture plus a sweep of 80 seeded bins). That replay runs with the tag gate
+fixture measured (a rotated fixture plus a sweep of 80 seeded bins) — that is a measurement, not a
+guarantee. The replay scores each copy afresh, and a placed rect arrives with its footprint already
+swapped when `rot` is true, so a bin holding rotated rects can come back with different placements, or
+refuse to build at all; the reproducers and a measured fix direction are in the deferred-work ledger
+(`docs/plans/deferred-work.md`, tracked but not part of this site). That replay runs with the tag gate
 **off** and restores the source's `options`/`tag`/`data` afterwards: a bin can hold rects its own gate
 would now refuse — it was tagged after it was filled, or it carries several tags in non-exclusive mode
 — and re-running the gate would give back a copy with fewer rects than the original.
