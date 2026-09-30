@@ -155,3 +155,27 @@ Still open: dropping `gh-pages` (and the `doc:publish` alias that uses it) once 
 switched to GitHub Actions — until then it is the fallback deployment path. `cz-conventional-changelog`
 is unrelated stale tooling (interactive commitizen commits only). The published tarball is otherwise
 unaffected: `docs/` is not in the `files` allowlist.
+
+## Workflow and packaging follow-ups
+
+Noticed while auditing the stack before its first deployment. Neither is broken today — every run on the
+three pull requests is green — so both wait for a commit of their own.
+
+- **The workflows pin action majors that are several releases behind.** `.github/workflows/docs.yml` uses
+  `actions/checkout@v4`, `actions/setup-node@v4`, `actions/configure-pages@v5`,
+  `actions/upload-pages-artifact@v3` and `actions/deploy-pages@v4`; the current majors read through the
+  API on 2026-09-30 are v7, v7, v6, v5 and v5. `node.js.yml` and `release.yml` sit on
+  `checkout@v4`/`setup-node@v4` too, and the repository has no Dependabot or Renovate configuration, so
+  nothing raises these on its own — one `ci:` PR should move all three files together rather than leaving
+  the new workflow on majors the others do not use. Worth doing before the first deployment, because
+  `actions/deploy-pages` is the one step that has never run here (the job is gated on a push to `master`)
+  and its inputs have to be re-checked against the current `action.yml` — the versions in use were
+  verified against `upload-pages-artifact@v3` and `configure-pages@v5`.
+- **The README's only local image is `assets/favicon32.png`, 2911 bytes, and it is not in the `files`
+  allowlist.** `AGENTS.md` frames the fix as adding the whole `assets` directory for ~468 kB, but
+  `assets/preview.png` alone is 444695 of those bytes, so a single allowlist entry would do it for
+  +2.9 kB — if the npm page resolves a relative image out of the tarball at all. That could not be
+  checked from here (npmjs.com answers 403 to a plain request) and npm's renderer may resolve against the
+  repository instead, in which case there is nothing to fix. The file is also served by neither site:
+  the old index only used it as an `<img>` in the README's heading, and that URL already 404s on the
+  published TypeDoc site.
