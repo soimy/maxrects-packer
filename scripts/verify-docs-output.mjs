@@ -9,7 +9,7 @@
 // `docs/contributor/documentation.html`, which legitimately links to them. Names are not the signal —
 // the built page tree is, in both directions.
 // oxlint-disable no-console -- this file is a build step; its output is the result
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, posix, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -128,10 +128,20 @@ for (const file of linkSources) {
     }
 }
 
-// 5) Every absolute URL the site emits is served under the configured base. VitePress rewrites the
-// links it generates and the ones in markdown, but a raw-html href or a hand-written absolute path is
-// left as it is — and a URL without the base works while serving locally and 404s once deployed.
+// 5) Every absolute URL the site emits is served under the configured base **and resolves inside the
+// build**. VitePress rewrites the links it generates and the ones in markdown, but a raw-html href or a
+// hand-written absolute path is left as it is — and a URL without the base works while serving locally
+// and 404s once deployed. The second half matters when files disappear: deleting an asset a page still
+// points at (a retired theme's stylesheet, say) leaves every other check green.
 const { base } = JSON.parse(readFileSync(join(root, "docs/site.json"), "utf8"));
+const outputFor = (url) => {
+    const rel = decodeURIComponent(url.slice(base.length).split("#")[0].split("?")[0]);
+    const direct = rel === "" ? join(dist, "index.html") : join(dist, rel);
+    if (existsSync(direct) && statSync(direct).isFile()) return direct;
+    if (existsSync(`${direct}.html`)) return `${direct}.html`;
+    if (existsSync(join(direct, "index.html"))) return join(direct, "index.html");
+    return null;
+};
 let absoluteUrls = 0;
 const builtFiles = [];
 const collectBuilt = (current) => {
@@ -147,6 +157,10 @@ for (const file of builtFiles) {
         if (url.startsWith("//")) continue; // protocol-relative, not ours to prefix
         if (!url.startsWith(base)) {
             failures.push(`${relative(dist, file)} points at ${url}, which is outside the base ${base}`);
+            continue;
+        }
+        if (outputFor(url) === null) {
+            failures.push(`${relative(dist, file)} points at ${url}, which the build does not contain`);
             continue;
         }
         absoluteUrls += 1;
@@ -165,5 +179,5 @@ console.log(
 );
 console.log(`  ✓ ${checkedLinks} internal links resolve, anchors included`);
 console.log(`  ✓ ${navLinks.length} nav and sidebar links reach every published page`);
-console.log(`  ✓ ${absoluteUrls} absolute URLs are all under the base ${base}`);
+console.log(`  ✓ ${absoluteUrls} absolute URLs are under the base ${base} and resolve in the build`);
 console.log("Documentation output check passed");

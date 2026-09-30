@@ -63,11 +63,12 @@ boundary check asserted in the tree:
 - every internal link, **anchors included**: a missing `#anchor` is not a VitePress error, and TypeDoc's
   cross-references are full of them;
 - a search index that carries site text rather than nothing;
-- every absolute `href`/`src` under the configured base, because a raw-html link that missed it works
-  while serving locally and 404s once deployed.
+- every absolute `href`/`src` under the configured base **and present in the build**, because a raw-html
+  link that missed it works while serving locally and 404s once deployed — and a page still pointing at
+  a file that was deleted (a retired theme's stylesheet, say) would otherwise stay green.
 
 Each assertion was measured against a broken state before it was trusted: dropping `srcExclude`, deleting
-a sidebar entry, renaming one anchor, appending a base-less link.
+a sidebar entry, renaming one anchor, appending a base-less link, deleting a referenced asset.
 
 ## Deployment
 
