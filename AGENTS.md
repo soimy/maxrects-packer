@@ -84,13 +84,29 @@ caller's rects
    — it was tagged after it was filled, or it carries several tags in non-exclusive mode — and
    re-running the gate would give back a copy with fewer rects than the original.
    `Rectangle.Clone` copies *own property descriptors* rather than assigned values, so a rect keeping
-   extra fields, or the backing fields behind `width`/`height`, non-enumerable still arrives intact;
-   a class with its own `clone()` supplies the base object and the original's own properties are
-   applied on top, so a `clone()` that rebuilds only the dimensions does not drop the payload, the
-   placement or anything added since construction. Two cases fail loudly instead of silently: a rect
-   class that hides state the copy cannot reach (an ECMAScript `#private` field behind `width`,
-   `height`, `x`, `y`, `rot` or `data`) and offers no `clone()` of its own, and a bin holding a rect it
-   can no longer place.
+   extra fields, or the backing fields behind `width`/`height`, non-enumerable still arrives intact. A
+   class with its own `clone()` decides how the copy is *built*, while the state a bin owns comes from
+   the source, but the rule is about what the copy already holds: what the copy defines itself wins
+   where it is **not a plain value** — an accessor (how a class keeps its own state, `#private` fields
+   included), a function (behaviour bound to the copy), a non-configurable property (which cannot be
+   redefined) — while plain values, and any key the copy does not define, come from the source.
+   **State travels, behaviour does not**: no own function is taken over from the source, and no own
+   accessor either, since which of those reads `this` and which reads the source's scope cannot be told
+   from the outside — a source-text check was tried over six review rounds and got both directions
+   wrong, restoring an arrow with a nested call in a default parameter (a method call on a rect in the
+   cloned bin then wrote to the original) and dropping a method whose body merely spelled
+   `[native code]`. Prototype methods arrive with the instance a `clone()` returns, so a class that
+   wants an own method or accessor on its copies defines them in that `clone()`. A `clone()` which
+   rebuilds only the dimensions therefore still inherits the payload, the placement, the per-item
+   rotation permission and any plain field added since construction, while the copy's own accessors,
+   functions and frozen properties stay its own. The no-`clone()` path is unchanged: there the copy is a
+   prototype-only shell and takes over every own descriptor as-is, functions included. Two shapes are
+   **not**
+   covered: a rect that keeps its state in an own accessor closing over the source and provides no
+   `clone()` — indistinguishable from outside from an accessor reading `this`, so it stays shared with
+   the copy — and one whose state is out of reach entirely (an ECMAScript `#private` field behind
+   `width`, `height`, `x`, `y`, `rot` or `data`), which fails loudly instead: `Rectangle.Clone` reports
+   that, as does `MaxRectsBin.clone()` for a bin holding a rect it can no longer place.
 
 ## Commands
 
@@ -134,7 +150,7 @@ npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild ne
   extension-less) and take `describe / test / expect / beforeEach` from `vitest` explicitly instead of
   from globals — **they do not test `dist`**. A broken build or a broken artifact is
   invisible to them, so compare `dist` by hand whenever you touch the build.
-- Baseline: `7 spec files / 113 passed / 2 skipped`; v8 coverage is 100% on statements, branches,
+- Baseline: `8 spec files / 126 passed / 2 skipped`; v8 coverage is 100% on statements, branches,
   functions and lines — removing the dead code recorded in `DEFERRED_WORK.md` took the last uncovered
   range with it, so no file has a gap left to read. Coverage is **opt-in**: only `npm run cover`
   collects it and writes `test/coverage/` (gitignored), so a plain `npm test` or a single-spec run

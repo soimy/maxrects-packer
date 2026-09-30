@@ -69,21 +69,66 @@ export class Rectangle implements IRectangle {
      *
      * A rect class that keeps its state out of reach of a copy — behind an ECMAScript `#private` field —
      * cannot be copied this way and has to hand out a `clone()` method instead, which is used whenever
-     * it exists. Its result is only the base: the original's own properties are applied on top, because
-     * a `clone()` that rebuilds just the dimensions would otherwise drop the payload, the placement and
-     * anything added since construction. When no `clone()` exists the copy would throw on the first
-     * field it cannot reach, so that is reported here rather than from inside a bin placing the copy.
+     * it exists. That method decides how the copy is *built*, the bin's state fills in the rest, and the
+     * rule between them is about what the copy already holds: what the copy defines for itself wins where
+     * it is not a plain value — an accessor is how it keeps its own state (`#private` fields included), a
+     * function is behaviour bound to the copy, and a non-configurable property cannot be redefined at all
+     * — while plain values, and every key the copy does not define, come from the source.
+     *
+     * **State travels, behaviour does not.** No function is taken over from the source: one cannot be
+     * classified from the outside, since a `this`-based method and a function closing over the source
+     * look the same, and a wrong guess either lets a method call on a rect in the cloned bin write to the
+     * original or drops a method the copy needs. Prototype methods come with the instance a `clone()`
+     * returns; an own method or accessor the copy needs is that `clone()`'s to define. So a `clone()`
+     * which rebuilds only the dimensions still inherits the payload, the placement, the per-item rotation
+     * permission and any plain field added since construction, but not the source's own functions, and no
+     * source accessor travels either — it reads and writes whatever it closed over.
+     *
+     * When no `clone()` exists the copy is a prototype-only shell, so every own descriptor is taken over
+     * as-is, functions included: there the copy is the source's shape by construction. A rect that keeps
+     * its state in an **own accessor closing over the source**, or in an own function that does, is then
+     * still shared with the original and has to provide `clone()` as well. A rect whose state is simply
+     * out of reach (a `#private` field) fails on the first field the copy cannot read, and that is
+     * reported here rather than from inside a bin placing it.
      *
      * @param rect - the rect to copy
      * @returns a new object carrying the same own properties, or whatever `rect.clone()` returns
      */
     public static Clone<T extends IRectangle>(rect: T): T {
         const copier = (rect as { clone?: () => T }).clone;
-        const copy =
-            typeof copier === "function" ? copier.call(rect) : (Object.create(Object.getPrototypeOf(rect)) as T);
-        // Descriptors rather than `Object.assign`: a rect may keep extra fields, or the backing fields
-        // behind `width`/`height`, non-enumerable, and assignment would drop those silently.
-        Object.defineProperties(copy, Object.getOwnPropertyDescriptors(rect));
+        let copy: T;
+        if (typeof copier === "function") {
+            copy = copier.call(rect);
+            // Typed for symbol keys as well: a rect may carry them, and they are copied like any other.
+            const descriptors = Object.getOwnPropertyDescriptors(rect) as Record<string | symbol, PropertyDescriptor>;
+            for (const key of Reflect.ownKeys(descriptors)) {
+                const descriptor = descriptors[key];
+                // An accessor never travels: the source's reads and writes the source through its closure, so
+                // putting it on the copy would hand the copy the original's coordinates.
+                if (!("value" in descriptor)) continue;
+                const own = Object.getOwnPropertyDescriptor(copy, key);
+                // What the copy defines itself wins where it is not a plain value: an accessor it built is
+                // how it keeps its own state (`#private` fields included), a function is behaviour bound to
+                // the copy, and a non-configurable property cannot be redefined at all. Overwriting any of
+                // those would leave the copy's methods reading stale state.
+                if (own && (!("value" in own) || !own.configurable || typeof own.value === "function")) continue;
+                // Behaviour is the `clone()`'s business rather than the library's. A function cannot be
+                // classified from the outside — a `this`-based method and one closing over the source have
+                // the same shape — and a wrong guess either lets a method call on a rect in the cloned bin
+                // change the original, or drops a method the copy needs. So none travels: prototype methods
+                // arrive with the instance the `clone()` returns, and an own one has to be defined by it.
+                if (typeof descriptor.value === "function") continue;
+                // Everything else is state, and the state belongs to the bin: a `clone()` that rebuilds only
+                // the dimensions leaves the constructor's defaults there (payload, per-item rotation), so
+                // the source's plain values fill those in.
+                Object.defineProperty(copy, key, descriptor);
+            }
+        } else {
+            copy = Object.create(Object.getPrototypeOf(rect)) as T;
+            // Descriptors rather than `Object.assign`: a rect may keep extra fields, or the backing fields
+            // behind `width`/`height`, non-enumerable, and assignment would drop those silently.
+            Object.defineProperties(copy, Object.getOwnPropertyDescriptors(rect));
+        }
         try {
             // Every field the packing replay reads or writes, not just the size: a class backing `x`, `y`,
             // `rot` or `data` with a `#private` field passes a size-only check and then dies inside a bin.
