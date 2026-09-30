@@ -61,6 +61,23 @@ on the spot.
   give that one test an explicit timeout (it is a measurement, not a unit test) or raise the global
   default; its own PR, since it changes what a gate tolerates.
 
+## Custom heading anchors read out with their braces
+
+Found while scanning the built pages for unrendered markdown; cosmetic, and accepted for now rather
+than churned.
+
+- **`{#custom-id}` on a heading shows up in the permalink's `aria-label`.** VitePress 1.6.4 strips the
+  attribute from the heading text and the visible id is clean — measured on
+  `dist/contributor/behavior-contracts.html`: all nine section headings render without braces, while
+  eight of them carry `Permalink to "… {#the-id}"` in the anchor's `aria-label`, so a screen reader
+  reads the braces out. Nine headings in that file use the syntax and exactly one of them
+  (`#clone-isolates-the-two-bins`) is linked from another page; the rest make the anchors of the
+  *numbered* sections clean (`#tag-grouping`) instead of the slug VitePress would derive
+  (`_2-tag-grouping`).
+- Options, for whoever picks this up: drop the eight unreferenced attributes and accept the `_N-` slugs
+  (nothing links to them today), or keep the ids and treat the label as an upstream quirk worth
+  reporting. This ledger does not choose.
+
 ## Documentation structure
 
 **Done** — the layout this section used to plan is superseded by
