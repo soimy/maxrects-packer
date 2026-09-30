@@ -11,8 +11,8 @@ packer.addArray(rects);            // many at once, sorted first
 `add()` writes the placement onto the object it was given and returns it — it does not copy. The
 multi-argument form is the exception: it builds an internal `Rectangle` and returns that.
 
-`addArray()` sorts the input before placing it (`MAX_EDGE` or `MAX_AREA` order, ties broken by a hash
-of the dimensions) and groups rects by tag first when tags are not exclusive, which is why one
+`addArray()` sorts the input before placing it (`MAX_EDGE` or `MAX_AREA` order, ties broken by the
+rects' own optional `hash` property, highest first, when both carry one) and groups rects by tag first when tags are not exclusive, which is why one
 `addArray()` call usually produces fewer bins than the same rects added one by one.
 
 ## What a bin holds
@@ -25,7 +25,8 @@ there. `MaxRectsPacker.add()` then falls back to an oversized bin instead of dro
 
 ## Oversized rects
 
-A rect larger than `maxWidth × maxHeight` cannot go into a normal bin, so it gets a bin of its own:
+A rect that does not fit `maxWidth × maxHeight` in either orientation cannot go into a normal bin, so
+it gets a bin of its own:
 
 ```js
 const packer = new MaxRectsPacker(1024, 1024);

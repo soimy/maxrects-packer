@@ -6,7 +6,7 @@ images or files and depends on no DOM or Node API, which is why it runs in the b
 | File | Responsibility |
 | --- | --- |
 | `src/index.ts` | The only barrel export. Runtime values: `Rectangle`, `MaxRectsPacker`, `PACKING_LOGIC`, `Bin`, `MaxRectsBin`, `OversizedElementBin`; types: `IRectangle`, `IOption`, `IBin`. The surface is pinned by `test/index.spec.js`, so adding or renaming a public value means updating that list in the same commit. |
-| `src/types.ts` | `IOption`, `PACKING_LOGIC`, `EDGE_MAX_VALUE` and `EDGE_MIN_VALUE`. The two edge constants are never used inside the library but are re-exported by `src/maxrects-packer.ts` and part of the published `.d.ts` — not dead code. |
+| `src/types.ts` | `IOption`, `PACKING_LOGIC`, `EDGE_MAX_VALUE` and `EDGE_MIN_VALUE`. `EDGE_MAX_VALUE` is the default edge size of `MaxRectsBin` and `MaxRectsPacker`; `EDGE_MIN_VALUE` is never used inside the library. Both are re-exported by `src/maxrects-packer.ts` and part of the published `.d.ts` — not dead code. |
 | `src/geom/Rectangle.ts` | `IRectangle` and `Rectangle`: `width`/`height`/`x`/`y`/`rot`/`data`/`allowRotation` all go through getters and setters and bump `_dirty`; the `rot` setter swaps width/height, the `data` setter keeps `data.allowRotation` in sync. Also `Rectangle.Clone`, the copy the bins' `clone()` uses. |
 | `src/abstract-bin.ts` | `IBin` and the abstract `Bin<T>`: the `dirty` semantics and `setDirty()`. `add`/`reset`/`repack`/`clone` are left to subclasses. |
 | `src/maxrects-bin.ts` | The single-bin algorithm: `place → findNode → updateBinSize → splitNode → pruneFreeList`. |

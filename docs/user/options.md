@@ -14,7 +14,7 @@ free space. `options` is a partial [`IOption`](../api/interfaces/IOption.md):
 | `pot` | `true` | Round a grown bin up to the next power of two. |
 | `square` | `false` | Keep every bin square. |
 | `allowRotation` | `false` | Allow 90° rotation while packing. |
-| `tag` | `false` | Group rects by their `data.tag` into the same bin. |
+| `tag` | `false` | Group rects by tag — `rect.data.tag`, or a `tag` property on the rect itself — into bins carrying that tag. |
 | `exclusiveTag` | `true` | With `tag`, keep one tag per bin. Set it to `false` to let several tags share a bin when they fit. |
 | `border` | `0` | Atlas edge spacing: free space is kept `border` pixels away from a bin's edges. |
 | `logic` | `MAX_EDGE` | How free space is scored — see [packing logic](#packing-logic). |

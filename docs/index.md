@@ -4,7 +4,7 @@ layout: home
 hero:
   name: maxrects-packer
   text: MaxRects 2D bin packing
-  tagline: Pack rectangles into as few bins as possible, each staying inside maxWidth × maxHeight.
+  tagline: Packs rectangles into few bins, each staying inside maxWidth × maxHeight — a heuristic, not a minimiser.
   actions:
     - theme: brand
       text: Get started
@@ -15,7 +15,7 @@ hero:
 
 features:
   - title: Few bins, not one huge image
-    details: Instead of producing a single output image of minimum size, the packer opens as few bins as it can under a maximum size — which is what keeps sprite sheets browser-friendly and close to power-of-two.
+    details: Instead of shrinking everything into one image, the packer keeps the bin count low under a maximum bin size — which is what keeps sprite sheets browser-friendly and close to power-of-two.
   - title: Any object with a width and a height
     details: Your own classes stay your own classes. Placement is written onto the objects you pass in, and extra fields, tags and per-item data survive untouched.
   - title: Zero dependencies, ES5 bundle

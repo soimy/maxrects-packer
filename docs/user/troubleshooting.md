@@ -15,10 +15,11 @@ bin, no overlaps, nothing dropped — rather than an exact bin count or exact co
 
 ## A rect that should fit ends up oversized
 
-- It is larger than `maxWidth × maxHeight` on its own — that always produces
-  [an oversized bin](./packing.md#oversized-rects).
-- It only fits rotated, but the packer was built with `allowRotation: false`. Per-rect rotation does
-  not override the packer option; see
+- It is larger than `maxWidth × maxHeight` in both orientations — that always produces
+  [an oversized bin](./packing.md#oversized-rects). A rect that fits when rotated does not, unless the
+  packer has `allowRotation: false`.
+- It only fits rotated, but the packer was built with `allowRotation: false`. A per-rect flag on a
+  plain object does not override the packer option, and no per-rect flag overrides this check; see
   [per-rect rotation](./rotation-and-tags.md#per-rect-rotation-is-much-narrower-than-it-looks).
 - `square: true` with `maxHeight` above `maxWidth`: the square bin a tall rect would need is wider
   than `maxWidth`, so the bin cannot grow to hold it and the rect is reported oversized.
@@ -56,8 +57,9 @@ rects have to be re-added by the caller. See [persistence](./persistence.md).
 
 ## My clone shares state with the original
 
-`bin.clone()` copies the rects, the tag and the data, and the copy is **shallow**: the object in
-`rect.data` is shared between the two bins, and a rect class that keeps its state behind an own
+`bin.clone()` copies the rects and the tag, and the copy is **shallow**: `MaxRectsBin.clone()` also
+carries a `data` set on the bin itself, while an oversized bin re-derives its `data` from its rect.
+The object in `rect.data` is shared between the two bins, and a rect class that keeps its state behind an own
 accessor is shared too unless it provides its own `clone()`. State travels into the copy; behaviour
 (methods and accessors) does not — a class that wants its own methods on the copies defines them in
 `clone()`. The full rule is in the

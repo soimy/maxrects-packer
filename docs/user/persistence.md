@@ -31,8 +31,10 @@ so they serialize fine:
 writeFileSync("state.json", JSON.stringify({ bins: packer.save(), rects: packer.rects }));
 ```
 
-`load()` replaces the packer's bins with the loaded ones; anything you packed in the current run is
-gone from the packer (the rect objects themselves are untouched). Loading also restores each bin's
+`load()` writes the loaded bins over the packer's by index and does **not** clear the ones after them:
+a packer holding three bins that loads one still has three — the first replaced, the other two keeping
+the rects they already held. Load into a fresh packer, or `reset()` first, when you want the loaded
+state alone. The rect objects themselves are untouched either way. Loading also restores each bin's
 options and tag, so a bin keeps gating the way it did when it was saved.
 
 Both methods are plain data in and out — no files, no JSON parsing inside the library, so the
