@@ -17,7 +17,9 @@ rects' own optional `hash` property, highest first, when both carry one) and gro
 
 ## What a bin holds
 
-- `bin.width` / `bin.height` — the size the bin grew to, never above `maxWidth`/`maxHeight`.
+- `bin.width` / `bin.height` — the size the bin grew to. A normal bin stops at `maxWidth`/`maxHeight`;
+  the placeholder bin an oversized rect gets is that rect's own size instead, so it can be larger
+  ([below](#oversized-rects)).
 - `bin.rects` — the placed rects, each with `x`, `y`, `rot` and whatever data you attached.
 
 A bin never holds a rect it cannot contain: if the bin cannot grow to fit, the rect is not placed

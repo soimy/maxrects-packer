@@ -4,9 +4,11 @@
 const packer = new MaxRectsPacker(maxWidth, maxHeight, padding = 0, options = {});
 ```
 
-`maxWidth` and `maxHeight` are the bounds every bin stays inside. `padding` keeps placed rects at
-least that many pixels apart, and is added to the footprint of each rect when the packer looks for
-free space. `options` is a partial [`IOption`](../api/interfaces/IOption.md):
+`maxWidth` and `maxHeight` are the bounds a normal bin stays inside. The placeholder bin an oversized
+rect gets is that rect's own size and can pass them — see
+[oversized rects](packing.md#oversized-rects). `padding` keeps placed rects at least that many pixels
+apart, and is added to the footprint of each rect when the packer looks for free space. `options` is a
+partial [`IOption`](../api/interfaces/IOption.md):
 
 | Option | Default | Effect |
 | --- | --- | --- |
