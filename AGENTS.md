@@ -119,7 +119,9 @@ npm run lint                 # oxlint (baseline is 0 warnings / 0 errors)
 npm run lint:fix             # oxlint --fix
 npm run format               # oxfmt writes back; CI only checks, via npm run format:check
 npm run cover                # build + vitest run --coverage + thresholds + coverage artifact self-check
-npm run doc                  # typedoc → docs/ (not tracked by git)
+npm run docs:api             # TypeDoc markdown → docs/api/ (ignored); docs:dev / docs:build / docs:preview for the site
+npm run docs:clean           # removes docs/api, docs/.vitepress/cache and docs/.vitepress/dist, nothing else
+npm run verify:docs          # asserts that boundary and the ignore rules
 npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild needed)
 ```
 
@@ -151,7 +153,7 @@ npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild ne
   from globals — **they do not test `dist`**. A broken build or a broken artifact is
   invisible to them, so compare `dist` by hand whenever you touch the build.
 - Baseline: `8 spec files / 126 passed / 2 skipped`; v8 coverage is 100% on statements, branches,
-  functions and lines — removing the dead code recorded in `DEFERRED_WORK.md` took the last uncovered
+  functions and lines — removing the dead code recorded in `docs/plans/deferred-work.md` took the last uncovered
   range with it, so no file has a gap left to read. Coverage is **opt-in**: only `npm run cover`
   collects it and writes `test/coverage/` (gitignored), so a plain `npm test` or a single-spec run
   leaves that directory alone. Read the real numbers from a full `npm run cover`, and take the *gap*
@@ -344,8 +346,10 @@ English keeps the project history usable for every contributor and every downstr
 ## Deferred work
 
 Findings that need a deliberate change later — unreachable or redundant code, behaviour questions, and
-the planned `docs/` restructure — are recorded in [DEFERRED_WORK.md](./DEFERRED_WORK.md). None of them
-is fixed on the spot: each is a behaviour decision with its own PR.
+the documentation migration — are recorded in
+[docs/plans/deferred-work.md](./docs/plans/deferred-work.md). Designs and specifications go to
+`docs/spec/`, named `YYYY-MM-DD-<topic>.md`; both directories are tracked but excluded from the site.
+None of them is fixed on the spot: each is a behaviour decision with its own PR.
 
 Keep day-to-day records in that file rather than growing this one. This file describes how the
 repository works and what to watch out for; it is not a log.

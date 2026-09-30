@@ -35,6 +35,9 @@ jobs:
     - run: npm run lint
     - run: npm run format:check
     - run: npm run typecheck
+    # Documentation boundaries: the site source is tracked, the build products are ignored, and
+    # docs:clean may only delete the build products. Needs no build, so it runs before the tests.
+    - run: npm run verify:docs
     - run: npm run cover
     # Must run after the build: it verifies require/import **by package name** against the real
     # tarball produced by npm pack

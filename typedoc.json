@@ -1,14 +1,14 @@
 {
   "entryPoints": ["src/index.ts"],
   "entryPointStrategy": "expand",
-  "out": "docs",
+  "out": "docs/api",
+  "docsRoot": "docs",
+  "readme": "none",
+  "plugin": ["typedoc-plugin-markdown", "typedoc-vitepress-theme"],
+  "theme": "default",
   "excludeExternals": true,
   "excludeNotDocumented": false,
-  "excludePrivate": false,
+  "excludePrivate": true,
   "skipErrorChecking": true,
-  "tsconfig": "tsconfig.json",
-  "plugin": ["typedoc-unhoax-theme"],
-  "theme": "unhoax",
-  "customCss": "./assets/custom.css",
-  "customJs": "./assets/custom.js"
+  "tsconfig": "tsconfig.json"
 }
