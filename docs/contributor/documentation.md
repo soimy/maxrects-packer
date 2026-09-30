@@ -94,10 +94,14 @@ small redirect page at each of them (`scripts/build-legacy-redirects.mjs`) that 
 replaced it, and it **fails the build** when a target is missing rather than shipping a redirect into a
 404.
 
-Two limits are worth knowing: legacy anchors that separated words with underscores are rewritten in the
-browser (`#max_area` → `#max-area`), while anchors that belonged to *private* members no longer exist —
-`excludePrivate: true` keeps implementation members out of the site — so those deep links land on the
-page itself. The full inventory is in the
+Deep links are their own story, measured against the published 2.7.4 site: of the 170 member anchors on
+those 11 pages, **105 resolve** on the page that replaced them — the browser rewrites underscores to
+hyphens first (`#max_area` → `#max-area`). The other 65 land on the page itself: 22 belonged to private
+members, which `excludePrivate: true` keeps out of the site (`#_dirty`, `#findnode`, `#sort`); 28 are the
+old theme's own anchors for signatures the new pages have no heading for (`#dirtydirty`, `#constructorbint`,
+`#widthwidth-1`, `#collide-2`); and 15 are sections of the two legacy index pages, which redirect to
+`api/index.html` — that page lists classes, interfaces and enumerations without a per-entry anchor for
+`#maxrectspacker` or `#Bin`. The full inventory is in the
 [spike report](https://github.com/soimy/maxrects-packer/blob/master/docs/spec/2026-09-30-docs-migration-spike.md).
 
 ## Writing a page
