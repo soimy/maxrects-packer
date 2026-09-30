@@ -47,10 +47,31 @@ const markdownPages = (dir) => {
 };
 const expected = [join(root, "docs/index.md"), ...PUBLISHED.flatMap(markdownPages)];
 if (expected.length < 10) failures.push(`only ${expected.length} pages are expected — the page list looks wrong`);
+const routeOfPage = (page) => relative(join(root, "docs"), page).replace(/\.md$/, ".html");
 for (const page of expected) {
-    const route = relative(join(root, "docs"), page).replace(/\.md$/, ".html");
+    const route = routeOfPage(page);
     if (!existsSync(join(dist, route))) {
         failures.push(`${route} was not built — a page that should be published is missing`);
+    }
+}
+
+// 2b) …and it is reachable. VitePress fails on a link that points nowhere, not on a page nothing links
+// to, so a new page can be built and still be invisible outside search.
+const navLinks = [
+    ...readFileSync(join(root, "docs/.vitepress/config.mts"), "utf8").matchAll(/link:\s*"(\/[^"]*)"/g)
+].map((match) => match[1]);
+if (navLinks.length < 10) failures.push(`the site config lists only ${navLinks.length} links — the nav looks empty`);
+const routeOfLink = (link) =>
+    (link.endsWith("/") ? `${link}index.html` : link.endsWith(".html") ? link : `${link}.html`).slice(1);
+const reachable = new Set(navLinks.map(routeOfLink));
+for (const link of navLinks) {
+    const route = routeOfLink(link);
+    if (!existsSync(join(dist, route))) failures.push(`the config links to ${link} but ${route} was not built`);
+}
+for (const page of expected) {
+    const route = routeOfPage(page);
+    if (page !== join(root, "docs/index.md") && !reachable.has(route)) {
+        failures.push(`${route} is built but no nav or sidebar entry reaches it`);
     }
 }
 
