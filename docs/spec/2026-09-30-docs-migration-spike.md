@@ -83,7 +83,7 @@ Page mapping (`legacy live URL` → `new page`, member anchors preserved / total
 | `enums/PACKING_LOGIC.html` | `api/enumerations/PACKING_LOGIC.html` | 1/4 |
 | `modules.html` | `api/index.html` | 3/12 |
 | `index.html` (README as home) | `index.html` (VitePress home) | 0/21 |
-| `hierarchy.html` | none | — |
+| `hierarchy.html` | `api/index.html` (redirect) | — |
 
 **The mapping above stands; its `preserved` column is the spike's first pass and is superseded.** That
 column adds up to 129 of the 170 anchors, while re-measuring the published 2.7.4 site against the built
@@ -175,6 +175,9 @@ page and be listed in the migration notes.
 
 ## Phase B — suggested scope for the first PR
 
+**Landed as PR #82**, with the content migration, deployment and theme retirement following in #83, #84
+and #85. The scope below is what the spike asked for, kept as the record of that request.
+
 1. `.gitignore`: replace the single `docs` line with `docs/api/`, `docs/.vitepress/cache/`,
    `docs/.vitepress/dist/` (the site root itself becomes tracked source).
 2. Remove the old generated HTML from the working tree before adding tracked markdown (`docs/` is
@@ -195,8 +198,12 @@ page and be listed in the migration notes.
 
 1. **Hosting** — #81 proposes keeping GitHub Pages at `https://soimy.github.io/maxrects-packer/`
    with base `/maxrects-packer/`; Vercel is the alternative only if online PR previews are required.
-   The spike built successfully at the Pages base path.
+   The spike built successfully at the Pages base path. **Decided: GitHub Pages**, and a pull request
+   gets a downloadable artifact rather than a preview deployment, so the Vercel alternative stays
+   unused.
 2. **Private-member anchors** — dropping them is what hiding private API costs; confirm that
    `excludePrivate: true` is wanted, since it is the largest bucket in the inventory above.
+   **Decided: yes** — it is what #81 asks for, the reference omits no public member for it (see the
+   source-side check above), and the anchors it costs are the 22 private ones in the re-measured table.
 3. **TypeDoc warnings** — the build printed none for this source, so nothing has to be decided yet
    about turning warnings into errors.
