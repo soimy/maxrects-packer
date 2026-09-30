@@ -31,7 +31,10 @@ const GENERATED_SENTINELS = [
 
 const isIgnored = (path) => {
     try {
-        execFileSync("git", ["check-ignore", "-q", path], { cwd: root, stdio: "pipe" });
+        // `--no-index` matters: without it git reports nothing for a path that is already tracked, so a
+        // new rule covering `docs/spec/` would pass this check while silently excluding every file added
+        // there later. The rule is what is asserted here, not the current index.
+        execFileSync("git", ["check-ignore", "--no-index", "-q", path], { cwd: root, stdio: "pipe" });
         return true;
     } catch {
         return false;
@@ -52,6 +55,12 @@ try {
             failures.push(`${path} is missing before the check — the site source is incomplete`);
     }
     for (const path of [...SOURCE_SENTINELS, ...GENERATED_SENTINELS]) {
+        // Refused rather than overwritten: the check deletes what it writes, so a real file sitting at
+        // one of these paths would be lost while the run still reported success.
+        if (existsSync(join(root, path))) {
+            failures.push(`${path} already exists — the check will not overwrite and delete it`);
+            continue;
+        }
         mkdirSync(dirname(join(root, path)), { recursive: true });
         writeFileSync(join(root, path), "verify-docs\n");
         written.push(path);
