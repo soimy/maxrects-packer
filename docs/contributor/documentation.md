@@ -53,7 +53,21 @@ imports the generated sidebar — so on a tree that was just cleaned it stops at
   that running this check cannot touch the working tree is verified rather than assumed.
 
 `docs:build` is a CI step of its own: the boundary check says the files are in the right place, the build
-says the site still builds from them.
+says the site still builds from them, and `scripts/verify-docs-output.mjs` asserts in the output what the
+boundary check asserted in the tree:
+
+- no page tree for `spec/` or `plans/` — which is also what keeps them out of the search index, since
+  VitePress only indexes the pages it built;
+- a built page for every handwritten page, and a nav or sidebar entry reaching each one: VitePress fails
+  on a link that points nowhere, never on a page nothing links to;
+- every internal link, **anchors included**: a missing `#anchor` is not a VitePress error, and TypeDoc's
+  cross-references are full of them;
+- a search index that carries site text rather than nothing;
+- every absolute `href`/`src` under the configured base, because a raw-html link that missed it works
+  while serving locally and 404s once deployed.
+
+Each assertion was measured against a broken state before it was trusted: dropping `srcExclude`, deleting
+a sidebar entry, renaming one anchor, appending a base-less link.
 
 ## Deployment
 
