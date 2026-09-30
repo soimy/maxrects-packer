@@ -26,7 +26,7 @@ possible, each staying within `maxWidth × maxHeight` (sprite sheets / texture a
 | File | Responsibility |
 | --- | --- |
 | `src/index.ts` | The only barrel export. Runtime values: `Rectangle / MaxRectsPacker / PACKING_LOGIC / Bin / MaxRectsBin / OversizedElementBin`; types: `IRectangle / IOption / IBin`. The surface is pinned by `test/index.spec.js` — adding or renaming a public value means updating that list in the same commit — and what consumers can actually import is checked by the type fixture in `npm run verify:package` against `package.json`'s `types` entry |
-| `src/types.ts` | `IOption`, `PACKING_LOGIC` (MAX_AREA/MAX_EDGE/FILL_WIDTH), `EDGE_MAX_VALUE=4096`, `EDGE_MIN_VALUE=128` (**never used inside the library, but re-exported by `src/maxrects-packer.ts` and part of the public `.d.ts` — not dead code, do not delete**) |
+| `src/types.ts` | `IOption`, `PACKING_LOGIC` (MAX_AREA/MAX_EDGE/FILL_WIDTH), `EDGE_MAX_VALUE=4096` (the default edge size of `MaxRectsBin`/`MaxRectsPacker`), `EDGE_MIN_VALUE=128` (**never used inside the library; both are re-exported by `src/maxrects-packer.ts` and part of the public `.d.ts` — not dead code, do not delete**) |
 | `src/geom/Rectangle.ts` | `IRectangle` interface + `Rectangle`: `width/height/x/y/rot/data/allowRotation` all go through getters/setters and bump `_dirty` on every mutation; the `rot` setter swaps width/height, the `data` setter syncs `data.allowRotation`; the `Clone` static copies a rect for the bins' `clone()` — prototype and own properties, shallow, or the rect's own `clone()` when its class has one |
 | `src/abstract-bin.ts` | `IBin` / abstract `Bin<T>`: the `dirty` semantics and `setDirty()`; `add/reset/repack/clone` are left to subclasses |
 | `src/maxrects-bin.ts` | Core single-bin algorithm: `place → findNode(scoring) → updateBinSize(expand) → splitNode(split) → pruneFreeList` |
@@ -78,8 +78,11 @@ caller's rects
    custom class keeps its prototype and its extra fields) and carry over `tag` and `data`. Mutating a
    rect one bin holds, or adding to one bin, therefore never reaches the other. The copy is **shallow**
    — the object in `rect.data` is shared — and it is produced by re-packing the copies, which
-   reproduced the source's placements in every fixture measured (`test/maxrects-bin.spec.js` pins one
-   rotated fixture and sweeps 80 seeded bins). That replay runs with the tag gate **off** and restores
+   reproduced the source's placements in every fixture measured (`test/clone.spec.js` pins one rotated
+   fixture and sweeps 80 seeded bins). That is a measurement, not a guarantee: the replay scores each
+   copy afresh, and a placed rect arrives with its footprint already swapped when `rot` is true, so a bin
+   holding rotated rects can land differently or refuse to build at all — the reproducers are in
+   `docs/plans/deferred-work.md#clone-re-decides-rotation`. That replay runs with the tag gate **off** and restores
    the source's `options`/`tag`/`data` afterwards: a bin can hold rects its own gate would now refuse
    — it was tagged after it was filled, or it carries several tags in non-exclusive mode — and
    re-running the gate would give back a copy with fewer rects than the original.
@@ -119,7 +122,9 @@ npm run lint                 # oxlint (baseline is 0 warnings / 0 errors)
 npm run lint:fix             # oxlint --fix
 npm run format               # oxfmt writes back; CI only checks, via npm run format:check
 npm run cover                # build + vitest run --coverage + thresholds + coverage artifact self-check
-npm run doc                  # typedoc → docs/ (not tracked by git)
+npm run docs:api             # TypeDoc markdown → docs/api/ (ignored); docs:dev / docs:build / docs:preview for the site
+npm run docs:clean           # removes docs/api, docs/.vitepress/cache and docs/.vitepress/dist, nothing else
+npm run verify:docs          # asserts that boundary and the ignore rules
 npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild needed)
 ```
 
@@ -151,7 +156,7 @@ npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild ne
   from globals — **they do not test `dist`**. A broken build or a broken artifact is
   invisible to them, so compare `dist` by hand whenever you touch the build.
 - Baseline: `8 spec files / 126 passed / 2 skipped`; v8 coverage is 100% on statements, branches,
-  functions and lines — removing the dead code recorded in `DEFERRED_WORK.md` took the last uncovered
+  functions and lines — removing the dead code recorded in `docs/plans/deferred-work.md` took the last uncovered
   range with it, so no file has a gap left to read. Coverage is **opt-in**: only `npm run cover`
   collects it and writes `test/coverage/` (gitignored), so a plain `npm test` or a single-spec run
   leaves that directory alone. Read the real numbers from a full `npm run cover`, and take the *gap*
@@ -174,8 +179,8 @@ npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild ne
   the fixture, because `addArray()` writes `x/y/rot` back onto the rect objects and a rotated rect
   carries swapped dimensions afterwards, so a shared fixture would let one candidate measure what the
   previous one left behind.
-- CI: `.github/workflows/node.js.yml` (Node 20/22/24: lint → format:check → typecheck → cover →
-  verify:package); `release.yml` is triggered by `v*` tags.
+- CI: `.github/workflows/node.js.yml` (Node 20/22/24: lint → format:check → typecheck → verify:docs →
+  docs:build → cover → verify:package); `release.yml` is triggered by `v*` tags.
 
 ## Worktrees
 
@@ -304,8 +309,9 @@ English keeps the project history usable for every contributor and every downstr
   entry points, `files` or artifact names.
   The `types` field must name the **barrel's** declaration (`dist/index.d.ts`), not a module's: the
   build emits one `.d.ts` per source module, and `dist/maxrects-packer.d.ts` — the declaration of
-  `src/maxrects-packer.ts` — only exports `MaxRectsPacker`, `PACKING_LOGIC` and `IOption`, which left
-  six of the nine documented exports unimportable from TypeScript until the type fixture landed.
+  `src/maxrects-packer.ts` — only exports `MaxRectsPacker`, `PACKING_LOGIC` and `IOption` among the nine documented exports (plus
+  the two `EDGE_*` constants), which left six of them unimportable from TypeScript until the type
+  fixture landed.
   The emitted declarations carry explicit `.js` extensions — `scripts/fix-declaration-extensions.mjs`
   writes them from `postbuild` — because the package is `"type": "module"`: without them, a
   `node16`/`nodenext` consumer with `skipLibCheck: false` fails inside this package's own `.d.ts` files
@@ -344,8 +350,10 @@ English keeps the project history usable for every contributor and every downstr
 ## Deferred work
 
 Findings that need a deliberate change later — unreachable or redundant code, behaviour questions, and
-the planned `docs/` restructure — are recorded in [DEFERRED_WORK.md](./DEFERRED_WORK.md). None of them
-is fixed on the spot: each is a behaviour decision with its own PR.
+the documentation migration — are recorded in
+[docs/plans/deferred-work.md](./docs/plans/deferred-work.md). Designs and specifications go to
+`docs/spec/`, named `YYYY-MM-DD-<topic>.md`; both directories are tracked but excluded from the site.
+None of them is fixed on the spot: each is a behaviour decision with its own PR.
 
 Keep day-to-day records in that file rather than growing this one. This file describes how the
 repository works and what to watch out for; it is not a log.

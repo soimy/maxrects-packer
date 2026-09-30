@@ -16,7 +16,7 @@ export default defineConfig({
             exclude: ["src/**/*.d.ts"],
             reporter: ["text", "json", "lcov", "html"],
             // Measured: 470/470 statements, 354/354 branches, 76/76 functions, 423/423 lines — every
-            // metric at 100%, because removing the dead code recorded in DEFERRED_WORK.md took the last
+            // metric at 100%, because removing the dead code recorded in docs/plans/deferred-work.md took the last
             // uncovered range with it (the counts were identical on Node 22 and 24 when the thresholds
             // were set). The thresholds stay a notch below the measurement on purpose: they are a
             // floor, so a legitimate change that adds an uncovered error path is a review point

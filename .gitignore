@@ -63,8 +63,11 @@ typings/
 # dotenv environment variables file
 .env
 
-# Typedocs
-docs
+# Generated documentation output. The site source under docs/ is tracked; only these three
+# directories are build products, and `npm run docs:clean` deletes exactly them.
+docs/api/
+docs/.vitepress/cache/
+docs/.vitepress/dist/
 
 # Mac stuff
 # General
