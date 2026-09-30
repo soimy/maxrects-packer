@@ -1,8 +1,9 @@
 # User guide
 
-`maxrects-packer` aims to pack rectangles into as few bins as possible, each staying inside a maximum
+`maxrects-packer` aims to pack rectangles into as few normal bins as possible within a maximum
 `width × height` — sprite sheets, texture atlases and any other "many small images into few big
-images" problem.
+images" problem. A rect that cannot fit gets an
+[oversized placeholder bin](./packing.md#oversized-rects) of its own.
 
 It differs from most packing libraries by *what it optimizes*: instead of making one output image of
 minimum size, it aims for a **small number of images under a maximum size** — a heuristic target, not a

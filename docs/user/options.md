@@ -14,7 +14,7 @@ partial [`IOption`](../api/interfaces/IOption.md):
 | --- | --- | --- |
 | `smart` | `true` | Grow a bin to the smallest size that still fits, instead of jumping to `maxWidth`/`maxHeight`. |
 | `pot` | `true` | Round a grown bin up to the next power of two. |
-| `square` | `false` | Keep every bin square. |
+| `square` | `false` | Keep every normal bin square. |
 | `allowRotation` | `false` | Allow 90° rotation while packing. |
 | `tag` | `false` | Group rects by tag — `rect.data.tag`, or a `tag` property on the rect itself — into bins carrying that tag. |
 | `exclusiveTag` | `true` | With `tag`, keep one tag per bin. Set it to `false` to let several tags share a bin when they fit. |
