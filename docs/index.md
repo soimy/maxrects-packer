@@ -4,7 +4,7 @@ layout: home
 hero:
   name: maxrects-packer
   text: MaxRects 2D bin packing
-  tagline: Packs rectangles into few bins, each staying inside maxWidth × maxHeight — a heuristic, not a minimiser.
+  tagline: Packs rectangles into few bins within maxWidth × maxHeight — a heuristic, not a minimiser. A rect that cannot fit at all gets a placeholder bin of its own.
   actions:
     - theme: brand
       text: Get started
