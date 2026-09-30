@@ -50,7 +50,8 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      *
      * @param width - width of the input bin/rectangle
      * @param height - height of the input bin/rectangle
-     * @param data - custom data object
+     * @param data - custom data object; with `tag: true` the packer reads `data.tag`, so this has to
+     * be an object there — passing `undefined` throws (`packer.add(w, h, {})` is the safe form)
      */
     public add(width: number, height: number, data: any): T;
     /**

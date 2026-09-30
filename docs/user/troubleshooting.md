@@ -71,6 +71,18 @@ accessor is shared too unless it provides its own `clone()`. State travels into 
 `clone()`. The full rule is in the
 [behaviour contracts](../contributor/behavior-contracts.md#clone-isolates-the-two-bins).
 
+## `TypeError: Cannot read properties of undefined (reading 'tag')`
+
+`add(width, height, data)` reads `data.tag` when the packer runs with `tag: true`, so `undefined` throws
+there — the single-argument form guards the same read and packs normally. Measured:
+`new MaxRectsPacker(100, 100, 0, { tag: true }).add(50, 50, undefined)` throws
+`TypeError: Cannot read properties of undefined (reading 'tag')`, while
+`packer.add({ width: 50, height: 50 })` packs into one bin.
+
+Pass an object — `packer.add(50, 50, {})` — or the rect form, which never reads `data`. The ledger
+carries the question of whether a bad call should keep reporting an internal message
+(`docs/plans/deferred-work.md`, tracked but not part of this site).
+
 ## A CommonJS TypeScript project cannot import the package
 
 The package is `"type": "module"` and carries no `exports` field, so a TypeScript file that compiles to
