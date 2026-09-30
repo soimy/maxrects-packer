@@ -3,17 +3,20 @@
 Packing a large atlas is expensive; adding a few more sprites later should not mean re-packing
 everything. `save()` and `load()` carry the **free space** of the bins across such a break.
 
+<!-- docs-example: persistence -->
 ```js
-import { writeFileSync, readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { MaxRectsPacker } from "maxrects-packer";
 
-// after a first pack
-const bins = packer.save();
-writeFileSync("atlas.json", JSON.stringify(bins));
-
-// later, in another run
+// first run: pack something, then keep the free space that is left
 const packer = new MaxRectsPacker(1024, 1024, 2);
-packer.load(JSON.parse(readFileSync("atlas.json", "utf8")));
-packer.addArray([{ width: 300, height: 120 }]);   // lands in the space that was left free
+packer.addArray([{ width: 600, height: 600 }]);
+writeFileSync("atlas.json", JSON.stringify(packer.save()));
+
+// later run: start empty, restore that free space, and add only the rects that are new
+const next = new MaxRectsPacker(1024, 1024, 2);
+next.load(JSON.parse(readFileSync("atlas.json", "utf8")));
+next.addArray([{ width: 300, height: 120 }]);   // lands in the space that was left free
 ```
 
 ## What is stored

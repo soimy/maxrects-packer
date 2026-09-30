@@ -52,8 +52,13 @@ Writing to a plain `{ width, height }` object has no setter to notice it. Either
 
 ## `load()` did not restore my rects
 
-By design: `save()` stores free space only, and `load()` restores free space only, so already-placed
-rects have to be re-added by the caller. See [persistence](./persistence.md).
+By design: `save()` stores free space only, and `load()` restores free space only. What matters is what
+you add next: **do not add the rects you already packed again.** Their area is already taken out of the
+restored free space, so adding them a second time puts a duplicate of them in what is left or opens
+another bin for it — measured on a 10×10 bin holding a 6×10 rect, which leaves a 4×10 strip: a new 4×10
+rect fills that strip in one bin, while the 6×10 rect added again needs a second bin. Keep the old
+placements in your own list — `packer.rects` holds them with their `x`/`y`/`rot` — and add only the rects
+that are new. See [persistence](./persistence.md).
 
 ## My clone shares state with the original
 

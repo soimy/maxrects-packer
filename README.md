@@ -52,9 +52,10 @@ packer.addArray([{ width: 256, height: 256, name: "late sprite" }]);   // fills 
 
 packer.bins.forEach((bin) => console.log(bin.width, bin.height, bin.rects));
 
-const bins = packer.save();    // free space, for reuse in a later run
-packer.load(bins);
-packer.addArray(input);
+const saved = packer.save();   // free space only, for reuse in a later run
+const next = new MaxRectsPacker(1024, 1024, 2, options);
+next.load(saved);
+next.addArray([{ width: 256, height: 256, name: "after the reload" }]);   // only the rects that are new
 ```
 
 `addArray()` writes `x`, `y` and `rot` onto the objects you pass in, so `bin.rects` holds your objects
