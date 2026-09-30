@@ -45,6 +45,9 @@ caller's rects
 
 ## Invariants you must preserve
 
+These are the contract with downstream users — breaking one is a breaking change. The longer
+version, with the reasoning, is [docs/contributor/behavior-contracts.md](./docs/contributor/behavior-contracts.md).
+
 1. **In-place mutation**: `add()/addArray()` write `x/y/rot/oversized` directly onto the object passed
    in and return that same object (only the multi-argument overloads construct an internal
    `new Rectangle`).
@@ -86,30 +89,41 @@ caller's rects
    the source's `options`/`tag`/`data` afterwards: a bin can hold rects its own gate would now refuse
    — it was tagged after it was filled, or it carries several tags in non-exclusive mode — and
    re-running the gate would give back a copy with fewer rects than the original.
-   `Rectangle.Clone` copies *own property descriptors* rather than assigned values, so a rect keeping
-   extra fields, or the backing fields behind `width`/`height`, non-enumerable still arrives intact. A
-   class with its own `clone()` decides how the copy is *built*, while the state a bin owns comes from
-   the source, but the rule is about what the copy already holds: what the copy defines itself wins
-   where it is **not a plain value** — an accessor (how a class keeps its own state, `#private` fields
-   included), a function (behaviour bound to the copy), a non-configurable property (which cannot be
-   redefined) — while plain values, and any key the copy does not define, come from the source.
-   **State travels, behaviour does not**: no own function is taken over from the source, and no own
-   accessor either, since which of those reads `this` and which reads the source's scope cannot be told
-   from the outside — a source-text check was tried over six review rounds and got both directions
-   wrong, restoring an arrow with a nested call in a default parameter (a method call on a rect in the
-   cloned bin then wrote to the original) and dropping a method whose body merely spelled
-   `[native code]`. Prototype methods arrive with the instance a `clone()` returns, so a class that
-   wants an own method or accessor on its copies defines them in that `clone()`. A `clone()` which
-   rebuilds only the dimensions therefore still inherits the payload, the placement, the per-item
-   rotation permission and any plain field added since construction, while the copy's own accessors,
-   functions and frozen properties stay its own. The no-`clone()` path is unchanged: there the copy is a
-   prototype-only shell and takes over every own descriptor as-is, functions included. Two shapes are
-   **not**
-   covered: a rect that keeps its state in an own accessor closing over the source and provides no
-   `clone()` — indistinguishable from outside from an accessor reading `this`, so it stays shared with
-   the copy — and one whose state is out of reach entirely (an ECMAScript `#private` field behind
-   `width`, `height`, `x`, `y`, `rot` or `data`), which fails loudly instead: `Rectangle.Clone` reports
-   that, as does `MaxRectsBin.clone()` for a bin holding a rect it can no longer place.
+   `Rectangle.Clone` copies *own property descriptors*, so extra fields and non-enumerable backing fields
+   survive. When the class has its own `clone()`, that method builds the copy and everything else follows
+   one rule: **state travels, behaviour does not.** The copy's own accessors, functions and
+   non-configurable properties win; plain values, and every key the copy does not define, come from the
+   source; no own function and no own accessor is ever taken from the source — prototype methods arrive
+   with the instance the `clone()` returns, and an own one is that method's to define, because a
+   `this`-based method and a closure over the source cannot be told apart from outside (a source-text
+   check got both directions wrong over six review rounds). The copy is shallow. Two shapes are
+   documented rather than detected: an own accessor closing over the source, with no `clone()`, stays
+   shared with the copy; `#private`-backed state with no `clone()` fails loudly. Details and the full
+   list: [behaviour contracts](./docs/contributor/behavior-contracts.md#clone-isolates-the-two-bins).
+
+## Documentation map
+
+The documentation site is VitePress, with its API pages generated from the JSDoc in `src/` by TypeDoc.
+The tree is tracked **source**; `docs/api/`, `docs/.vitepress/cache/` and `docs/.vitepress/dist/` are
+build products, and `npm run verify:docs` asserts both halves in CI.
+
+| Path | Holds | Read it when |
+| --- | --- | --- |
+| `docs/user/` | User guide: options, packing, rotation and tags, repacking, persistence, troubleshooting | answering "how do I use this" |
+| `docs/contributor/` | Development, testing, architecture, behaviour contracts, compatibility, documentation, releasing | changing code or process |
+| `docs/spec/YYYY-MM-DD-<topic>.md` | Designs and specifications | before implementing a design |
+| `docs/plans/` | Execution plans and the deferred-work ledger | picking up unfinished work |
+| `docs/api/` | API markdown generated from JSDoc | never edited by hand |
+
+Routing rules for new material:
+
+1. User-facing details belong in `docs/user/`; contributor and process details in `docs/contributor/`.
+2. Agent-authored designs go to `docs/spec/YYYY-MM-DD-<topic>.md`, execution plans to
+   `docs/plans/YYYY-MM-DD-<topic>.md`.
+3. Do not create tool-specific roots such as `docs/superpowers/`.
+4. Never edit generated API markdown or built site files.
+5. A behaviour change updates the relevant tests, JSDoc and guide pages together.
+6. Ongoing findings go to the deferred-work ledger rather than growing this file.
 
 ## Commands
 

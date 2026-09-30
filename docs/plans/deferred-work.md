@@ -69,7 +69,12 @@ markdown, so the tree is tracked source and the build products are the ignored p
 `docs/.vitepress/dist/`; `npm run verify:docs` asserts both that boundary and the ignore rules, and
 runs in CI. The `doc*` script names remain as aliases so existing habits keep working.
 
-Still open from the migration: the content move (README and CONTRIBUTING) and the AGENTS routing rules,
-the documentation CI job and the legacy-URL redirects, and retiring the old theme, `gh-pages` and the
-theme assets from `devDependencies` and the `files` allowlist. The published tarball is unaffected:
-`docs/` is not in the `files` allowlist.
+Done with the content migration: the README is an entry point again, its detail moved into
+`docs/user/`, `CONTRIBUTING.md` points at `docs/contributor/` for development, testing, architecture,
+behaviour contracts, compatibility and releasing, and `AGENTS.md` carries the documentation map and the
+routing rules.
+
+Still open: the documentation CI job (artifact upload and deployment) with the legacy-URL redirects
+inventoried in the spike report, and retiring the old theme, `gh-pages` and the theme assets from
+`devDependencies` and the `files` allowlist. The published tarball is unaffected: `docs/` is not in the
+`files` allowlist.
