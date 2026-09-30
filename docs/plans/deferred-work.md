@@ -25,6 +25,31 @@ suite.
   packing decision — a bin copies its `options` at construction, so a bin created in non-exclusive
   mode never gates on its own tag, even if `packer.options.exclusiveTag` is flipped later.
 
+## Clone re-decides rotation
+
+Found while auditing the JSDoc against the code; a behaviour decision of its own, so it is not fixed
+on the spot.
+
+- **`MaxRectsBin.clone()` re-packs the copies, and a rotated rect arrives with its footprint already
+  swapped** (`src/maxrects-bin.ts:130`, `:194`). The replay therefore scores a different rect than the
+  source did. Measured on the bundle with `allowRotation: true`:
+
+  | Case | Source | `clone()` |
+  | --- | --- | --- |
+  | 18×18 packer, border 2, 10×11 + 3×1 + 13×13 + 11×2 | 17×15, `1×3 @12,2` and `2×11 @13,2` rotated | 15×18, all three unrotated, different placements |
+  | 16×19 holding `11×15 @2,2` and `1×15 @13,2` rotated, untouched since | 16×19 | **throws** "the bin holds a rect it can no longer place" |
+
+  The rotated fixture and the 80-bin sweep in `test/clone.spec.js` reach neither case; a seeded sweep
+  over tight bins with rotation on hits them in roughly 2% of trials.
+
+  Fix direction, measured through the public API rather than guessed: restore each copy to the
+  orientation its source was handed over in before replaying it — set `rot` to false, and swap
+  `width`/`height` yourself when that did not do it, because `Rectangle.rot`'s setter swaps for a
+  `Rectangle` and does nothing for the plain `{width, height}` objects the README advertises. With that
+  normalization both reproducers above reproduce their source exactly, and the existing sweep still
+  passes. That makes the change about five lines plus the seeded sweep, in its own PR: it changes what
+  `clone()` returns for every bin holding rotated rects.
+
 ## Documentation structure
 
 **Done** — the layout this section used to plan is superseded by

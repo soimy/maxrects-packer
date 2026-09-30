@@ -179,8 +179,8 @@ npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild ne
   the fixture, because `addArray()` writes `x/y/rot` back onto the rect objects and a rotated rect
   carries swapped dimensions afterwards, so a shared fixture would let one candidate measure what the
   previous one left behind.
-- CI: `.github/workflows/node.js.yml` (Node 20/22/24: lint → format:check → typecheck → cover →
-  verify:package); `release.yml` is triggered by `v*` tags.
+- CI: `.github/workflows/node.js.yml` (Node 20/22/24: lint → format:check → typecheck → verify:docs →
+  docs:build → cover → verify:package); `release.yml` is triggered by `v*` tags.
 
 ## Worktrees
 
