@@ -39,9 +39,13 @@ working; `doc:publish` publishes the built site only.
 - `docs/index.md`, `docs/.vitepress/config.mts`, `docs/spec/**` and `docs/plans/**` are **not** ignored
   (checked with `--no-index`, so a rule covering tracked source is caught too);
 - `docs/api/**`, `docs/.vitepress/cache/**` and `docs/.vitepress/dist/**` **are** ignored;
-- `docs:clean` removes generated sentinels and leaves the source ones and the real source files
-  untouched. It refuses to write a sentinel where a file already exists, rather than deleting a file it
-  did not create.
+- `docs:clean` leaves every source file byte-identical and removes the generated ones. The command
+  under test runs in a throwaway fixture holding a copy of the documentation source, **never in the
+  checkout**: a `docs:clean` that regressed to wiping the tree would otherwise destroy a contributor's
+  uncommitted work before the assertions reported it. The fixture's source files are inventoried with a
+  hash of their contents before and after — a handful of sentinels would not notice a cleanup that
+  deletes `docs/spec/*.md` by extension — and the checkout itself is fingerprinted too, so the promise
+  that running this check cannot touch the working tree is verified rather than assumed.
 
 `docs:build` is a CI step of its own: the boundary check says the files are in the right place, the build
 says the site still builds from them.
