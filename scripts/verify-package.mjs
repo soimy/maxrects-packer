@@ -7,7 +7,7 @@
 // npm pack -> install -> require/import by package name.
 // oxlint-disable no-console -- this file is a CI gate; its output is the result
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -158,12 +158,21 @@ try {
     // 6) Run the documentation examples marked with `<!-- docs-example: name -->`, against the package
     // installed by name. The guides are the first thing a user copies, and nothing else would notice an
     // example that stopped working: the test specs import `../src`, so a broken README or guide snippet
-    // rots silently while every gate stays green.
-    const EXAMPLE_SOURCES = ["README.md", "docs/user/getting-started.md", "docs/user/rotation-and-tags.md"];
-    const examples = EXAMPLE_SOURCES.flatMap((relative) => {
-        const markdown = readFileSync(join(root, relative), "utf8");
-        const matches = [...markdown.matchAll(/<!-- docs-example: ([\w-]+) -->\n+```js\n([\s\S]*?)```/g)];
-        return matches.map(([, name, code]) => ({ name, code, relative }));
+    // rots silently while every gate stays green. Every page is scanned rather than a hand-kept list of
+    // files, because a marker added to a guide the list does not name would escape the check while
+    // looking covered — `docs/api/` is generated, and `spec/`/`plans/` are the records `srcExclude` keeps
+    // out of the site.
+    const UNPUBLISHED = new Set(["api", "spec", "plans"]);
+    const walkMarkdown = (dir) =>
+        readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+            if (!entry.isDirectory()) return entry.name.endsWith(".md") ? [join(dir, entry.name)] : [];
+            return UNPUBLISHED.has(entry.name) ? [] : walkMarkdown(join(dir, entry.name));
+        });
+    const examples = [join(root, "README.md"), ...walkMarkdown(join(root, "docs"))].flatMap((source) => {
+        const matches = [
+            ...readFileSync(source, "utf8").matchAll(/<!-- docs-example: ([\w-]+) -->\n+```js\n([\s\S]*?)```/g)
+        ];
+        return matches.map(([, name, code]) => ({ name, code }));
     });
     if (examples.length === 0) throw new Error("no runnable documentation example was found");
     for (const example of examples) {
