@@ -58,9 +58,10 @@ says the site still builds from them.
 ## Deployment
 
 `.github/workflows/docs.yml` builds the site on every change that can affect it (`docs/**`, `src/**`,
-the TypeDoc and package manifests, this workflow), uploads `docs/.vitepress/dist` as an artifact so a
-pull request can be reviewed at a URL, and deploys that artifact to GitHub Pages from `master` — one
-job, Node 24, `npm ci --include=dev`, with `npm run typecheck` before the build.
+`scripts/**`, the TypeDoc and the package manifests, the root markdown files, this workflow), uploads
+`docs/.vitepress/dist` as an artifact so a pull request can be reviewed at a URL, and deploys that
+artifact to GitHub Pages from `master`. A `build` job does the work — Node 24, `npm ci --include=dev`,
+`npm run typecheck` before `npm run docs:build` — and a `deploy` job publishes the uploaded artifact.
 
 Deploying needs the repository's Pages source set to **GitHub Actions** (Settings → Pages → Build and
 deployment). Until that switch is made, `npm run doc:publish` still pushes the built site to the

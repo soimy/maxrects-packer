@@ -89,8 +89,8 @@ for (const file of linkSources) {
     for (const [, link] of text.matchAll(/\]\(([^)\s]+)\)/g)) {
         if (/^(https?:|mailto:|#!)/.test(link)) continue;
         const [path, anchor] = link.split("#");
-        const target = path.replace(/\.md$/, ".html").replace(/\.html$/, ".html");
-        if (path && !/\.(md|html)$/.test(target) && !/\/$/.test(path)) continue; // images and other assets
+        // Only pages are resolved: an image or another asset next to a page is not a route.
+        if (path && !path.endsWith(".md") && !path.endsWith(".html") && !path.endsWith("/")) continue;
         let route;
         if (!path) route = from.replace(/^docs\//, "").replace(/\.md$/, ".html");
         else if (path.startsWith("/")) route = path.slice(1);
