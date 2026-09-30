@@ -24,7 +24,7 @@ of the search index; the navigation does not mention them either, which on its o
 | --- | --- |
 | `npm run docs:api` | Clean and regenerate `docs/api/` only. |
 | `npm run docs:dev` | Generate the API, then start the VitePress dev server. |
-| `npm run docs:build` | Generate the API, build the site into `docs/.vitepress/dist/`, write the legacy-URL redirects, then check the output. |
+| `npm run docs:build` | Generate the API, then build the site into `docs/.vitepress/dist/`. |
 | `npm run docs:preview` | Serve the production build locally. |
 | `npm run docs:clean` | Delete `docs/api/`, `docs/.vitepress/cache/` and `docs/.vitepress/dist/` — nothing else. |
 | `npm run verify:docs` | Assert the whole boundary described above. |
