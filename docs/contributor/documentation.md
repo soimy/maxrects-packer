@@ -73,10 +73,14 @@ a sidebar entry, renaming one anchor, appending a base-less link.
 
 `.github/workflows/docs.yml` builds the site on every change that can affect it (`docs/**`, `src/**`,
 `scripts/**`, `package.json`, `package-lock.json`, `typedoc.json`, `tsconfig.json`, the root markdown
-files, this workflow), uploads
-`docs/.vitepress/dist` as an artifact so a pull request can be reviewed at a URL, and deploys that
-artifact to GitHub Pages from `master`. A `build` job does the work — Node 24, `npm ci --include=dev`,
-`npm run typecheck` before `npm run docs:build` — and a `deploy` job publishes the uploaded artifact.
+files, this workflow) and uploads `docs/.vitepress/dist` as a Pages artifact. A `build` job does the
+work — Node 24, `npm ci --include=dev`, `npm run typecheck` before `npm run docs:build` — and a
+`deploy` job publishes that artifact to GitHub Pages.
+
+`deploy` is gated on a push to `master`, so a pull request stops after the upload: the built site is
+attached to the run as a downloadable artifact, but it is **not** published and the workflow offers no
+preview URL. Reviewing a rendered page before the merge therefore means downloading that artifact and
+serving it locally — `npm run docs:preview` does the same from a local build.
 
 Deploying needs the repository's Pages source set to **GitHub Actions** (Settings → Pages → Build and
 deployment). Until that switch is made, `npm run doc:publish` still pushes the built site to the

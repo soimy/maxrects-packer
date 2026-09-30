@@ -1,5 +1,5 @@
-# Documentation site: built on every change that can affect it, uploaded as an artifact for review on
-# pull requests, and deployed to GitHub Pages from master.
+# Documentation site: built on every change that can affect it, uploaded as a downloadable artifact on
+# pull requests (which publish nothing), and deployed to GitHub Pages from master.
 #
 # The legacy TypeDoc URLs are served by redirect pages the build writes into the output (see
 # scripts/build-legacy-redirects.mjs), so there is nothing to keep in sync by hand here.
