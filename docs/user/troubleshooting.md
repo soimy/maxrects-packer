@@ -71,6 +71,30 @@ accessor is shared too unless it provides its own `clone()`. State travels into 
 `clone()`. The full rule is in the
 [behaviour contracts](../contributor/behavior-contracts.md#clone-isolates-the-two-bins).
 
+## A CommonJS TypeScript project cannot import the package
+
+The package is `"type": "module"` and carries no `exports` field, so a TypeScript file that compiles to
+CommonJS and resolves modules the `node16` or `nodenext` way cannot import it: the compiler reports
+**TS1479** — "the referenced file is an ECMAScript module and cannot be imported with `require`" — or
+**TS1471** for `import pkg = require("maxrects-packer")`. That is the module format of the
+*declarations* being read, not the runtime: a plain JavaScript `require("maxrects-packer")` works, and
+the package gate consumes the real tarball that way.
+
+Measured against the published tarball from a CommonJS consumer, `skipLibCheck` either way and the same
+on TypeScript 6 and 7:
+
+| How the consumer imports | `node16` / `nodenext` |
+| --- | --- |
+| `import { MaxRectsPacker } from "maxrects-packer"` | TS1479 |
+| `import pkg = require("maxrects-packer")` | TS1471 |
+| `await import("maxrects-packer")` | compiles |
+| `moduleResolution` `node10` or `bundler` | compiles |
+
+So: use a dynamic `import()`, leave the `require` in JavaScript, or resolve with `bundler`/`node10`. An
+`exports` map with per-format declarations would close the gap, but it seals off deep imports
+(`maxrects-packer/dist/...`) as well, which is why it waits for a major release — the deferred-work
+ledger (`docs/plans/deferred-work.md`, tracked but not part of this site) records it.
+
 ## Still stuck
 
 Open a [discussion](https://github.com/soimy/maxrects-packer/discussions) with a minimal input array,

@@ -42,6 +42,13 @@ Three gates protect the entry points: `postbuild` runs `scripts/fix-declaration-
 it into a temp consumer and consumes it **by package name** under `require`, `import`, and a type
 fixture compiled with `bundler`, `node16` and `nodenext`.
 
+That fixture is an **ESM** consumer, which is what makes `node16` and `nodenext` read it as ESM. A
+CommonJS TypeScript consumer is the one shape those two modes reject — TS1479, or TS1471 for
+`import … = require(…)` — even though `require("maxrects-packer")` works at runtime.
+[Troubleshooting](../user/troubleshooting.md#a-commonjs-typescript-project-cannot-import-the-package)
+has the measurements and the workarounds; closing it needs an `exports` map, which is why the
+deferred-work ledger holds it for a major release.
+
 - `types` names the **barrel's** declaration (`dist/index.d.ts`). Naming a module's declaration instead
   left six of the nine documented exports unimportable from TypeScript.
 - The emitted declarations carry explicit `.js` extensions, written by
