@@ -29,7 +29,8 @@ bin, no overlaps, nothing dropped — rather than an exact bin count or exact co
 `padding` is the gap between placed rects and `border` is the gap to the bin's edge; both default to
 0. They change the usable area (`maxWidth + padding - border * 2` for the initial free rectangle), so a
 rect that exactly equals `maxWidth` still fits, while one that equals `maxWidth` with a border of 5
-does not.
+does not — and that formula is free space, not capacity: the oversized check compares against
+`maxWidth`/`maxHeight` themselves, which neither option changes.
 
 ## Something I added to `bin.rects` disappeared after a repack
 
