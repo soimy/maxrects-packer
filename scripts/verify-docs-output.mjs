@@ -139,4 +139,5 @@ console.log(
     `  ✓ ${expected.length} pages built, no page tree for ${INTERNAL.join(" or ")}, search index carries site text`
 );
 console.log(`  ✓ ${checkedLinks} internal links resolve, anchors included`);
+console.log(`  ✓ ${navLinks.length} nav and sidebar links reach every published page`);
 console.log("Documentation output check passed");
