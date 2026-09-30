@@ -44,7 +44,10 @@ So: on plain objects, set the option on the packer; for one rect, pass it throug
 
 ## Tag-based grouping
 
+<!-- docs-example: tags -->
 ```js
+import { MaxRectsPacker } from "maxrects-packer";
+
 const packer = new MaxRectsPacker(1024, 1024, 0, { tag: true });
 packer.addArray([
     { width: 100, height: 100, data: { tag: "hud" } },

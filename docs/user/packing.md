@@ -30,7 +30,10 @@ there. `MaxRectsPacker.add()` then falls back to an oversized bin instead of dro
 A rect that does not fit `maxWidth × maxHeight` in either orientation cannot go into a normal bin, so
 it gets a bin of its own:
 
+<!-- docs-example: oversized -->
 ```js
+import { MaxRectsPacker } from "maxrects-packer";
+
 const packer = new MaxRectsPacker(1024, 1024);
 packer.add(2000, 2000, { name: "background" });
 
