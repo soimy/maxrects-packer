@@ -1,0 +1,93 @@
+# Documentation site: built on every change that can affect it, uploaded as an artifact for review on
+# pull requests, and deployed to GitHub Pages from master.
+#
+# The legacy TypeDoc URLs are served by redirect pages the build writes into the output (see
+# scripts/build-legacy-redirects.mjs), so there is nothing to keep in sync by hand here.
+#
+# Deploying this workflow requires the repository's Pages source to be set to "GitHub Actions"
+# (Settings -> Pages -> Build and deployment). Until that is switched over, the `doc:publish` script
+# still pushes the built site to the `gh-pages` branch the old way.
+name: Documentation
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "docs/**"
+      - "src/**"
+      - "scripts/**"
+      - "typedoc.json"
+      - "package.json"
+      - "package-lock.json"
+      - "README.md"
+      - "CONTRIBUTING.md"
+      - "AGENTS.md"
+      - "CHANGELOG.md"
+      - ".github/workflows/docs.yml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "docs/**"
+      - "src/**"
+      - "scripts/**"
+      - "typedoc.json"
+      - "package.json"
+      - "package-lock.json"
+      - "README.md"
+      - "CONTRIBUTING.md"
+      - "AGENTS.md"
+      - "CHANGELOG.md"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: documentation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "npm"
+
+      - run: npm ci --include=dev
+      # The type check runs first: generating the API reference from JSDoc should never be the thing
+      # that hides a type error.
+      - run: npm run typecheck
+      - run: npm run docs:build
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload the site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/.vitepress/dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    # Only production refs deploy; pull requests stop after the artifact upload above.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

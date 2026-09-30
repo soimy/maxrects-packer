@@ -141,7 +141,11 @@ Done with the content migration: the README is an entry point again, its detail 
 behaviour contracts, compatibility and releasing, and `AGENTS.md` carries the documentation map and the
 routing rules.
 
-Still open: the documentation CI job (artifact upload and deployment) with the legacy-URL redirects
-inventoried in the spike report, and retiring the old theme, `gh-pages` and the theme assets from
-`devDependencies` and the `files` allowlist. The published tarball is unaffected: `docs/` is not in the
-`files` allowlist.
+The documentation workflow (`.github/workflows/docs.yml`) builds on pull requests, uploads the site as
+an artifact and deploys it from `master`, and the build writes the legacy-URL redirects for the pages
+the old TypeDoc site published. Switching the repository's Pages source to **GitHub Actions** is a
+maintainer step that has to happen before the first deployment; until then `doc:publish` still pushes to
+`gh-pages`, and the two paths must not be used together.
+
+Still open: retiring the old theme, `gh-pages` and the theme assets from `devDependencies` and the
+`files` allowlist. The published tarball is unaffected: `docs/` is not in the `files` allowlist.

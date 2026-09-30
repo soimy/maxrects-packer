@@ -13,7 +13,7 @@ tracked at [`docs/spec/2026-09-30-docs-migration-spike.md`](https://github.com/s
 | `docs/spec/`, `docs/plans/` | Designs, specifications and the deferred-work ledger | tracked, excluded from the site |
 | `docs/.vitepress/` | Site configuration | tracked, except `cache/` and `dist/` |
 | `docs/api/` | API markdown generated from JSDoc | ignored, never edited by hand |
-| `docs/.vitepress/dist/` | Built site | ignored |
+| `docs/.vitepress/dist/` | Built site, plus the legacy-URL redirect pages | ignored |
 
 `srcExclude` in `docs/.vitepress/config.mts` keeps `spec/**` and `plans/**` out of the site *and* out
 of the search index; the navigation does not mention them either, which on its own would not be enough.
@@ -55,6 +55,7 @@ imports the generated sidebar — so on a tree that was just cleaned it stops at
 `docs:build` is a CI step of its own: the boundary check says the files are in the right place, the build
 says the site still builds from them.
 
+## Deployment
 ## Writing a page
 
 - **API documentation is JSDoc's job.** Nothing under the API reference is written by hand; a missing
