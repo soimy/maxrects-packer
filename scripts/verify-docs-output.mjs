@@ -128,6 +128,31 @@ for (const file of linkSources) {
     }
 }
 
+// 5) Every absolute URL the site emits is served under the configured base. VitePress rewrites the
+// links it generates and the ones in markdown, but a raw-html href or a hand-written absolute path is
+// left as it is — and a URL without the base works while serving locally and 404s once deployed.
+const { base } = JSON.parse(readFileSync(join(root, "docs/site.json"), "utf8"));
+let absoluteUrls = 0;
+const builtFiles = [];
+const collectBuilt = (current) => {
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+        const full = join(current, entry.name);
+        if (entry.isDirectory()) collectBuilt(full);
+        else if (/\.(html|js|css)$/.test(entry.name)) builtFiles.push(full);
+    }
+};
+collectBuilt(dist);
+for (const file of builtFiles) {
+    for (const [, url] of readFileSync(file, "utf8").matchAll(/(?:href|src)="(\/[^"]*)"/g)) {
+        if (url.startsWith("//")) continue; // protocol-relative, not ours to prefix
+        if (!url.startsWith(base)) {
+            failures.push(`${relative(dist, file)} points at ${url}, which is outside the base ${base}`);
+            continue;
+        }
+        absoluteUrls += 1;
+    }
+}
+
 if (failures.length > 0) {
     console.error("Documentation output check failed:");
     for (const failure of failures) console.error(`  ✗ ${failure}`);
@@ -140,4 +165,5 @@ console.log(
 );
 console.log(`  ✓ ${checkedLinks} internal links resolve, anchors included`);
 console.log(`  ✓ ${navLinks.length} nav and sidebar links reach every published page`);
+console.log(`  ✓ ${absoluteUrls} absolute URLs are all under the base ${base}`);
 console.log("Documentation output check passed");
