@@ -32,6 +32,11 @@ of the search index; the navigation does not mention them either, which on its o
 `doc`, `doc:clean`, `doc:json`, `doc:publish` and `doc:serve` remain as aliases so older notes keep
 working; `doc:publish` publishes the built site only.
 
+`docs:preview` serves what the last build wrote, but it still loads the site config, and that config
+imports the generated sidebar — so on a tree that was just cleaned it stops at
+`Could not resolve "../api/typedoc-sidebar.json"` instead of reporting that there is no build. Run
+`docs:build` first, or use `docs:dev`, which generates the API itself.
+
 ## The boundary is enforced
 
 `scripts/verify-docs.mjs` runs in CI before the tests and asserts, through git itself:
