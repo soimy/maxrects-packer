@@ -1,12 +1,13 @@
 # User guide
 
-`maxrects-packer` packs rectangles into as few bins as possible, each staying inside a maximum
+`maxrects-packer` aims to pack rectangles into as few bins as possible, each staying inside a maximum
 `width × height` — sprite sheets, texture atlases and any other "many small images into few big
 images" problem.
 
 It differs from most packing libraries by *what it optimizes*: instead of making one output image of
-minimum size, it makes a **minimum number of images under a maximum size**. A single 8192×8192 atlas
-is not browser-friendly, while four 1024×1024 sheets usually are.
+minimum size, it aims for a **small number of images under a maximum size** — a heuristic target, not a
+guarantee ([what the algorithm guarantees](./packing.md#what-the-algorithm-guarantees)). A single
+8192×8192 atlas is not browser-friendly, while four 1024×1024 sheets usually are.
 
 - [Getting started](./getting-started.md) — install and a runnable example.
 - [Options](./options.md) — every constructor argument and option, with defaults.
