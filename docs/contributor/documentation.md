@@ -50,11 +50,6 @@ working; `doc:publish` publishes the built site only.
 `docs:build` is a CI step of its own: the boundary check says the files are in the right place, the build
 says the site still builds from them.
 
-The build then ends with `scripts/verify-docs-output.mjs`, which asserts the other half of the same
-boundary in the output: no page tree for `spec/` or `plans/` (which is also what keeps them out of the
-search index, since VitePress only indexes pages it built), a built page for every handwritten page,
-and a search index that actually carries site text.
-
 ## Writing a page
 
 - **API documentation is JSDoc's job.** Nothing under the API reference is written by hand; a missing
