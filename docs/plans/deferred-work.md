@@ -31,7 +31,7 @@ Found while auditing the JSDoc against the code; a behaviour decision of its own
 on the spot.
 
 - **`MaxRectsBin.clone()` re-packs the copies, and a rotated rect arrives with its footprint already
-  swapped** (`src/maxrects-bin.ts:130`, `:194`). The replay therefore scores a different rect than the
+  swapped** (`src/maxrects-bin.ts:132`, `:196`). The replay therefore scores a different rect than the
   source did. Measured on the bundle with `allowRotation: true`:
 
   | Case | Source | `clone()` |
@@ -56,7 +56,7 @@ Found while documenting what `load()` does with a saved bin the current packer c
 guide now states the append, and this is the part of it that looks like a bug rather than a design.
 
 - **A saved bin whose `maxWidth`/`maxHeight` exceeds the packer's is appended as an
-  `OversizedElementBin`, and a later entry can overwrite it** (`src/maxrects-packer.ts:270`). The
+  `OversizedElementBin`, and a later entry can overwrite it** (`src/maxrects-packer.ts:272`). The
   oversized branch calls `this.bins.push(...)` and ignores the `index` the callback already has, while
   the normal branch assigns `this.bins[index] = newBin`. Measured on the sources: a 1024×1024 packer
   holding one bin that loads `[saved 2048-wide bin, saved 512-wide bin]` ends with two `MaxRectsBin`s
