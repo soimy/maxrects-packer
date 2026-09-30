@@ -10,7 +10,7 @@ A max rectangle 2D bin packing algorithm for packing glyphs or images into multi
 atlases. Minimalist, with no runtime dependency.
 
 It differs from most packing libraries by what it optimizes: instead of creating one output image of
-minimum size, it creates a **minimum number of images under a maximum size**. That avoids the single
+minimum size, it aims for a **small number of images under a maximum size**. That avoids the single
 massive image that is not browser-friendly, and suits WebGL games where the GPU benefits from sprite
 sheets close to power-of-two sizes.
 
