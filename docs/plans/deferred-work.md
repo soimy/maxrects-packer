@@ -50,6 +50,26 @@ on the spot.
   passes. That makes the change about five lines plus the seeded sweep, in its own PR: it changes what
   `clone()` returns for every bin holding rotated rects.
 
+## `load()` can drop the placeholder it appends
+
+Found while documenting what `load()` does with a saved bin the current packer could not hold; the
+guide now states the append, and this is the part of it that looks like a bug rather than a design.
+
+- **A saved bin whose `maxWidth`/`maxHeight` exceeds the packer's is appended as an
+  `OversizedElementBin`, and a later entry can overwrite it** (`src/maxrects-packer.ts:270`). The
+  oversized branch calls `this.bins.push(...)` and ignores the `index` the callback already has, while
+  the normal branch assigns `this.bins[index] = newBin`. Measured on the sources: a 1024×1024 packer
+  holding one bin that loads `[saved 2048-wide bin, saved 512-wide bin]` ends with two `MaxRectsBin`s
+  and **no placeholder** — the second entry wrote over index 1, where the first had just been appended
+  — while a fresh packer loading the same array keeps both, because the append landed at index 0 and
+  the second entry at index 1. The placeholder is also built as
+  `new OversizedElementBin(bin.width, bin.height, {})`, so it carries none of the saved bin's
+  `options` or `tag`: the round trip does not preserve the gate for that bin either.
+  Decide between giving the oversized entry its own index — the callback already receives it — and
+  pushing it past the packer's existing bins, and whether the placeholder should inherit the saved
+  `options`/`tag`. A `save()`/`load()` round trip that silently loses a bin is why this is recorded
+  rather than left to the guide's prose.
+
 ## Test infrastructure
 
 - **`test/efficiency.spec.js > combined best of` sits close to vitest's 5s default timeout.** It

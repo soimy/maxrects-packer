@@ -37,5 +37,15 @@ the rects they already held. Load into a fresh packer, or `reset()` first, when 
 state alone. The rect objects themselves are untouched either way. Loading also restores each bin's
 options and tag, so a bin keeps gating the way it did when it was saved.
 
+One kind of entry does not follow that rule. A saved bin whose `maxWidth` or `maxHeight` is larger than
+the packer's own size describes a bin this packer could not hold at all, so instead of restoring it at
+its index, `load()` **appends** a placeholder
+[`OversizedElementBin`](../api/classes/OversizedElementBin.md) of the saved `width` × `height`, holding a
+fresh rect, to the end of the bins — next to whatever the packer already held, which is left untouched.
+That placeholder carries none of the saved bin's `options` or `tag`, so the gating sentence above does
+not apply to it, and because it is appended rather than placed at its index, a later entry of the same
+array can take that position and replace it. The measurement is in the deferred-work ledger
+(`docs/plans/deferred-work.md`, tracked but not part of this site).
+
 Both methods are plain data in and out — no files, no JSON parsing inside the library, so the
 serialized form is yours to compress, version or store in a database.
