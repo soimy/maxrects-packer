@@ -44,8 +44,10 @@ permissions:
   contents: read
 
 concurrency:
-  group: documentation-${{ github.ref }}
-  cancel-in-progress: true
+  # One deployment at a time per ref, and an in-progress deployment is never cancelled: a half-applied
+  # Pages deployment is worse than a build that waits its turn. Pull-request builds queue the same way.
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build:
