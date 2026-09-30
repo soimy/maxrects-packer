@@ -10,7 +10,7 @@
 // the built page tree is, in both directions.
 // oxlint-disable no-console -- this file is a build step; its output is the result
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, posix, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -66,6 +66,47 @@ if (chunks.length === 0) {
     }
 }
 
+// 4) Every internal link resolves, and every anchor with it. VitePress fails the build on a dead page
+// link but says nothing about a missing anchor, so a `#section` that was renamed rots unnoticed —
+// including the anchors TypeDoc writes into its own cross-references, which are the bulk of them.
+const pageHtml = new Map();
+const collectHtml = (current) => {
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+        const full = join(current, entry.name);
+        if (entry.isDirectory()) collectHtml(full);
+        else if (entry.name.endsWith(".html"))
+            pageHtml.set(relative(dist, full).replaceAll("\\", "/"), readFileSync(full, "utf8"));
+    }
+};
+collectHtml(dist);
+
+const linkSources = [...PUBLISHED.flatMap(markdownPages), join(root, "docs/index.md"), ...markdownPages("docs/api")];
+let checkedLinks = 0;
+for (const file of linkSources) {
+    const from = relative(root, file).replaceAll("\\", "/");
+    // Fenced blocks carry example markup, not links.
+    const text = readFileSync(file, "utf8").replace(/```[\s\S]*?```/g, "");
+    for (const [, link] of text.matchAll(/\]\(([^)\s]+)\)/g)) {
+        if (/^(https?:|mailto:|#!)/.test(link)) continue;
+        const [path, anchor] = link.split("#");
+        const target = path.replace(/\.md$/, ".html").replace(/\.html$/, ".html");
+        if (path && !/\.(md|html)$/.test(target) && !/\/$/.test(path)) continue; // images and other assets
+        let route;
+        if (!path) route = from.replace(/^docs\//, "").replace(/\.md$/, ".html");
+        else if (path.startsWith("/")) route = path.slice(1);
+        else route = posix.normalize(posix.join(posix.dirname(from), path)).replace(/\.md$/, ".html");
+        route = route.replace(/^docs\//, "");
+        if (route.endsWith("/")) route += "index.html";
+        if (!route.endsWith(".html")) route += ".html";
+        checkedLinks += 1;
+        if (!pageHtml.has(route)) {
+            failures.push(`${from} links to ${link} but ${route} was not built`);
+        } else if (anchor && !pageHtml.get(route).includes(`id="${anchor}"`)) {
+            failures.push(`${from} links to ${link} but ${route} has no anchor #${anchor}`);
+        }
+    }
+}
+
 if (failures.length > 0) {
     console.error("Documentation output check failed:");
     for (const failure of failures) console.error(`  ✗ ${failure}`);
@@ -76,4 +117,5 @@ if (failures.length > 0) {
 console.log(
     `  ✓ ${expected.length} pages built, no page tree for ${INTERNAL.join(" or ")}, search index carries site text`
 );
+console.log(`  ✓ ${checkedLinks} internal links resolve, anchors included`);
 console.log("Documentation output check passed");
