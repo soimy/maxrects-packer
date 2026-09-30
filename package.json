@@ -24,7 +24,7 @@
     "build:clean": "npm run clean && npm run build",
     "docs:api": "rimraf docs/api && typedoc",
     "docs:dev": "npm run docs:api && vitepress dev docs",
-    "docs:build": "npm run docs:api && vitepress build docs && node scripts/build-legacy-redirects.mjs",
+    "docs:build": "npm run docs:api && vitepress build docs && node scripts/build-legacy-redirects.mjs && node scripts/verify-docs-output.mjs",
     "docs:preview": "vitepress preview docs",
     "docs:clean": "rimraf docs/api docs/.vitepress/cache docs/.vitepress/dist",
     "doc": "npm run docs:build",

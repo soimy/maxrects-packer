@@ -56,6 +56,30 @@ imports the generated sidebar — so on a tree that was just cleaned it stops at
 says the site still builds from them.
 
 ## Deployment
+
+`.github/workflows/docs.yml` builds the site on every change that can affect it (`docs/**`, `src/**`,
+the TypeDoc and package manifests, this workflow), uploads `docs/.vitepress/dist` as an artifact so a
+pull request can be reviewed at a URL, and deploys that artifact to GitHub Pages from `master` — one
+job, Node 24, `npm ci --include=dev`, with `npm run typecheck` before the build.
+
+Deploying needs the repository's Pages source set to **GitHub Actions** (Settings → Pages → Build and
+deployment). Until that switch is made, `npm run doc:publish` still pushes the built site to the
+`gh-pages` branch the old way, and the two must not run at the same time.
+
+### Legacy URLs
+
+The old site was TypeDoc's HTML at the Pages root, so `classes/*.html`, `interfaces/*.html`,
+`enums/PACKING_LOGIC.html`, `modules.html` and `hierarchy.html` were published URLs. The build writes a
+small redirect page at each of them (`scripts/build-legacy-redirects.mjs`) that points at the page which
+replaced it, and it **fails the build** when a target is missing rather than shipping a redirect into a
+404.
+
+Two limits are worth knowing: legacy anchors that separated words with underscores are rewritten in the
+browser (`#max_area` → `#max-area`), while anchors that belonged to *private* members no longer exist —
+`excludePrivate: true` keeps implementation members out of the site — so those deep links land on the
+page itself. The full inventory is in the
+[spike report](https://github.com/soimy/maxrects-packer/blob/master/docs/spec/2026-09-30-docs-migration-spike.md).
+
 ## Writing a page
 
 - **API documentation is JSDoc's job.** Nothing under the API reference is written by hand; a missing
