@@ -158,8 +158,8 @@ unaffected: `docs/` is not in the `files` allowlist.
 
 ## Workflow and packaging follow-ups
 
-Noticed while auditing the stack before its first deployment. Neither is broken today — every run on the
-three pull requests is green — so both wait for a commit of their own.
+Noticed while auditing the stack before its first deployment. None of these is broken today — every run
+on the three pull requests is green — so each waits for a commit of its own.
 
 - **The workflows pin action majors that are several releases behind.** `.github/workflows/docs.yml` uses
   `actions/checkout@v4`, `actions/setup-node@v4`, `actions/configure-pages@v5`,
@@ -179,3 +179,14 @@ three pull requests is green — so both wait for a commit of their own.
   repository instead, in which case there is nothing to fix. The file is also served by neither site:
   the old index only used it as an `<img>` in the README's heading, and that URL already 404s on the
   published TypeDoc site.
+- **A CommonJS TypeScript consumer cannot import the package under `node16`/`nodenext`.** Measured on the
+  published tarball, in a `.cts` file compiled with `module`/`moduleResolution` `node16`:
+  `import { MaxRectsPacker } from "maxrects-packer"` is TS1479 ("the referenced file is an ECMAScript
+  module and cannot be imported with `require`") and `import pkg = require("maxrects-packer")` is TS1471,
+  while `await import(...)`, `moduleResolution` `node10`/`bundler` and a JavaScript `require()` all work;
+  neither `skipLibCheck` nor the compiler version changes anything (TS 6 and TS 7 both). No gate can see
+  it: `verify:package` compiles its type fixture in an ESM consumer, which is exactly what makes
+  `node16`/`nodenext` read it as ESM, and the runtime `require()` path it does cover is fine. The fix is
+  an `exports` map with per-format conditions and declarations — which also seals off the deep imports
+  `maxrects-packer/dist/...` that the entry-points section above keeps working, so it belongs to 3.0.0.
+  Documented as a sharp edge in `docs/user/troubleshooting.md` meanwhile.
