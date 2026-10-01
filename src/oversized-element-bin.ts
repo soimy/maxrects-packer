@@ -67,7 +67,8 @@ export class OversizedElementBin<T extends IRectangle = Rectangle> extends Bin<T
      * copy is shallow (`Rectangle.Clone`), so a payload stored in `rect.data` is still shared, and a rect
      * class that cannot be copied that way reports it from there.
      *
-     * @returns a bin holding a copy of the same rect, with the same size, data and tag
+     * @returns a bin holding a copy of the same rect, with the same size and tag — its data is the copy
+     * of the rect's, so a two-argument source reports `{}` here instead of its `null`
      */
     clone(): Bin<T> {
         let clonedBin: OversizedElementBin<T> = new OversizedElementBin<T>(Rectangle.Clone(this.rects[0]));

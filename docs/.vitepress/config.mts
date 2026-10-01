@@ -4,8 +4,7 @@ import { defineConfig } from "vitepress";
 import typedocSidebar from "../api/typedoc-sidebar.json";
 
 // The site source is tracked under `docs/`; `docs/api/`, `docs/.vitepress/cache/` and
-// `docs/.vitepress/dist/` are build products (see .gitignore). Guides and contributor pages arrive
-// with the content migration, which is also where the navigation gets its remaining entries.
+// `docs/.vitepress/dist/` are build products (see .gitignore and `npm run verify:docs`).
 export default defineConfig({
     title: "maxrects-packer",
     description: "MaxRects 2D bin packing for sprite sheets and texture atlases",
@@ -15,10 +14,45 @@ export default defineConfig({
     themeConfig: {
         search: { provider: "local" },
         nav: [
+            { text: "Guide", link: "/user/" },
             { text: "API", link: "/api/" },
-            { text: "GitHub", link: "https://github.com/soimy/maxrects-packer" }
+            { text: "Contributing", link: "/contributor/" },
+            { text: "Releases", link: "/releases/" }
         ],
-        sidebar: { "/api/": typedocSidebar },
+        sidebar: {
+            "/user/": [
+                {
+                    text: "User guide",
+                    items: [
+                        { text: "Overview", link: "/user/" },
+                        { text: "Getting started", link: "/user/getting-started" },
+                        { text: "Options", link: "/user/options" },
+                        { text: "Packing", link: "/user/packing" },
+                        { text: "Rotation and tags", link: "/user/rotation-and-tags" },
+                        { text: "Repacking", link: "/user/repacking" },
+                        { text: "Persistence", link: "/user/persistence" },
+                        { text: "Troubleshooting", link: "/user/troubleshooting" }
+                    ]
+                }
+            ],
+            "/contributor/": [
+                {
+                    text: "Contributing",
+                    items: [
+                        { text: "Overview", link: "/contributor/" },
+                        { text: "Development", link: "/contributor/development" },
+                        { text: "Testing", link: "/contributor/testing" },
+                        { text: "Architecture", link: "/contributor/architecture" },
+                        { text: "Behaviour contracts", link: "/contributor/behavior-contracts" },
+                        { text: "Compatibility", link: "/contributor/compatibility" },
+                        { text: "Documentation", link: "/contributor/documentation" },
+                        { text: "Releasing", link: "/contributor/releasing" }
+                    ]
+                }
+            ],
+            "/releases/": [{ text: "Releases", items: [{ text: "Overview", link: "/releases/" }] }],
+            "/api/": typedocSidebar
+        },
         socialLinks: [{ icon: "github", link: "https://github.com/soimy/maxrects-packer" }]
     }
 });

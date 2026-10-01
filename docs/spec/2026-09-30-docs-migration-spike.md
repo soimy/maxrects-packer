@@ -83,7 +83,14 @@ Page mapping (`legacy live URL` → `new page`, member anchors preserved / total
 | `enums/PACKING_LOGIC.html` | `api/enumerations/PACKING_LOGIC.html` | 1/4 |
 | `modules.html` | `api/index.html` | 3/12 |
 | `index.html` (README as home) | `index.html` (VitePress home) | 0/21 |
-| `hierarchy.html` | none | — |
+| `hierarchy.html` | `api/index.html` (redirect) | — |
+
+**The mapping above stands; its `preserved` column is the spike's first pass and is superseded.** That
+column adds up to 129 of the 170 anchors, while re-measuring the published 2.7.4 site against the built
+site resolves **105 of 170** — see [Anchor coverage re-measured](#anchor-coverage-re-measured). No
+criterion tried reproduces 129: an exact `id` resolves 102, an exact `id` after the underscore rewrite
+105, an `id` on any new page 106, an `id` that is a substring of a new one 149, and counting unique names
+instead of page-and-anchor pairs resolves 40 of 98.
 
 Every missing anchor falls into one of four buckets, and only the first is a real compatibility loss:
 
@@ -99,6 +106,51 @@ Every missing anchor falls into one of four buckets, and only the first is a rea
 4. **Pages that change shape.** `modules.html`'s member list becomes `api/index.html`'s list;
    `index.html`'s README headings (`#usage`, `#installing`, …) become `docs/user/` pages;
    `hierarchy.html` has no successor and can redirect to `api/index.html`.
+
+### Anchor coverage re-measured
+
+The 11 pages the redirect table covers carry **170 member anchors** — every `id` the published page
+holds, minus the theme's own chrome (`search-*`, `theme-select`, `mobile-nav-opened`, `app`). Checking
+each one against the page that replaced it on the built site, with the underscore rewrite applied first,
+**105 resolve** and the other 65 fall into three groups:
+
+| Result | Anchors | Examples |
+| --- | --- | --- |
+| Resolve on the new page | 105 | `#max_area` → `#max-area`, `#add`, `#options` |
+| Private members the new reference excludes | 22 | `#_dirty`, `#findnode`, `#sort`, `#border` |
+| The old theme's signature anchors, with no heading to land on | 28 | `#dirtydirty`, `#constructorbint`, `#widthwidth-1`, `#collide-2` |
+| Sections of the two legacy index pages | 15 | `modules.html#maxrectspacker`, `hierarchy.html#Bin` |
+
+The first group is what the redirect pages and the fragment rewrite preserve. The second cannot be
+preserved without republishing private API, which #81 rejects. The third is the old theme's own anchor
+shape rather than a heading. The fourth points into pages that list classes, interfaces and enumerations
+without a per-entry anchor, so those deep links land at the top of `api/index.html`.
+`docs/contributor/documentation.md` carries the same numbers.
+
+### Symbol coverage after the migration
+
+Anchors are one question; whether a documented symbol went missing is another. The old site's search
+index (`assets/search.js`, a base64-encoded zlib payload) carries every symbol it documented together
+with its URL — **134 rows** — so each name can be checked against the page that replaced it on the built
+site: **124 are still there and 10 are gone**. The ten are `border`, `stage`, `verticalExpand`,
+`expandFreeRects`, `findNode`, `pruneFreeList`, `splitNode` and `updateBinSize` on `MaxRectsBin`, plus
+`_currentBinIndex` and `sort` on `MaxRectsPacker` — and every one of them is declared `private` in
+`src/`, so `excludePrivate: true` is the whole of the difference. No public class, method, property,
+interface member or enum member the old site documented is absent from the new reference.
+
+The check searches the built HTML for the name in an `id` or in the page text, which is generous: a name
+that only occurred inside another word would still count as present, and these ten occur nowhere. The
+counts differ from the anchor table above because they measure different things — documented names
+there, fragment ids here — and several legacy ids (`#dirtydirty`, `#xx-1`) are theme artifacts for
+symbols the new pages do document.
+
+The other direction is complete as well: every member the source declares `public` — **76 across the
+eight exported types** (`Bin`, `IBin`, `MaxRectsBin`, `MaxRectsPacker`, `OversizedElementBin`,
+`Rectangle`, `IRectangle`, `IOption`), optional interface properties included — has an entry on its API
+page, so nothing the source exposes is missing from the reference the site publishes. The method: read
+the members out of `src/`, skip the declarations marked `private`/`protected` or tagged `@private`, and
+look for each name in an `id` or in the page text of `docs/api/` — per declaration, so a getter/setter
+pair counts once.
 
 ### Redirect plan for phase D
 
@@ -123,6 +175,9 @@ page and be listed in the migration notes.
 
 ## Phase B — suggested scope for the first PR
 
+**Landed as PR #82**, with the content migration, deployment and theme retirement following in #83, #84
+and #85. The scope below is what the spike asked for, kept as the record of that request.
+
 1. `.gitignore`: replace the single `docs` line with `docs/api/`, `docs/.vitepress/cache/`,
    `docs/.vitepress/dist/` (the site root itself becomes tracked source).
 2. Remove the old generated HTML from the working tree before adding tracked markdown (`docs/` is
@@ -143,8 +198,12 @@ page and be listed in the migration notes.
 
 1. **Hosting** — #81 proposes keeping GitHub Pages at `https://soimy.github.io/maxrects-packer/`
    with base `/maxrects-packer/`; Vercel is the alternative only if online PR previews are required.
-   The spike built successfully at the Pages base path.
+   The spike built successfully at the Pages base path. **Decided: GitHub Pages**, and a pull request
+   gets a downloadable artifact rather than a preview deployment, so the Vercel alternative stays
+   unused.
 2. **Private-member anchors** — dropping them is what hiding private API costs; confirm that
    `excludePrivate: true` is wanted, since it is the largest bucket in the inventory above.
+   **Decided: yes** — it is what #81 asks for, the reference omits no public member for it (see the
+   source-side check above), and the anchors it costs are the 22 private ones in the re-measured table.
 3. **TypeDoc warnings** — the build printed none for this source, so nothing has to be decided yet
    about turning warnings into errors.

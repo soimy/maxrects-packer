@@ -14,6 +14,16 @@ One behaviour question the measurements raised while the dead code around it was
 measurements came from the coverage report and from deleting the code in question and re-running the
 suite.
 
+- **`add(width, height, undefined)` throws an internal `TypeError` when `tag: true`.** Measured:
+  `new MaxRectsPacker(100, 100, 0, { tag: true }).add(50, 50, undefined)` is
+  `TypeError: Cannot read properties of undefined (reading 'tag')`, thrown by `rect.data.tag`, while the
+  single-argument overload guards the same read with `&&` and packs into one bin. `troubleshooting` now
+  states it and the `add()` JSDoc says the argument has to be an object in that mode, so a caller can
+  know; what is undecided is whether a bad call should keep reporting an internal message at all.
+  Rejecting `undefined` explicitly, or treating it as `{}` the way the single-argument form does, changes
+  what a caller sees on a bad call rather than what a valid call packs — decidable on its own, and no
+  spec pins either direction today.
+
 - **`add()` tags a non-exclusive bin with only the first rect's tag** (`src/maxrects-packer.ts:78`).
   In non-exclusive mode one bin may hold several tag groups — `test/maxrects-packer.spec.js` pins a bin
   whose rects carry `one`, `one`, `two`, `two` — so that tag names just one of them, and `save()`
@@ -31,7 +41,7 @@ Found while auditing the JSDoc against the code; a behaviour decision of its own
 on the spot.
 
 - **`MaxRectsBin.clone()` re-packs the copies, and a rotated rect arrives with its footprint already
-  swapped** (`src/maxrects-bin.ts:130`, `:194`). The replay therefore scores a different rect than the
+  swapped** (`src/maxrects-bin.ts:132`, `:196`). The replay therefore scores a different rect than the
   source did. Measured on the bundle with `allowRotation: true`:
 
   | Case | Source | `clone()` |
@@ -49,6 +59,63 @@ on the spot.
   normalization both reproducers above reproduce their source exactly, and the existing sweep still
   passes. That makes the change about five lines plus the seeded sweep, in its own PR: it changes what
   `clone()` returns for every bin holding rotated rects.
+
+## `load()` can drop the placeholder it appends
+
+Found while documenting what `load()` does with a saved bin the current packer could not hold; the
+guide now states the append, and this is the part of it that looks like a bug rather than a design.
+
+- **A saved bin whose `maxWidth`/`maxHeight` exceeds the packer's is appended as an
+  `OversizedElementBin`, and a later entry can overwrite it** (`src/maxrects-packer.ts:272`). The
+  oversized branch calls `this.bins.push(...)` and ignores the `index` the callback already has, while
+  the normal branch assigns `this.bins[index] = newBin`. Measured on the sources: a 1024×1024 packer
+  holding one bin that loads `[saved 2048-wide bin, saved 512-wide bin]` ends with two `MaxRectsBin`s
+  and **no placeholder** — the second entry wrote over index 1, where the first had just been appended
+  — while a fresh packer loading the same array keeps both, because the append landed at index 0 and
+  the second entry at index 1. The placeholder is also built as
+  `new OversizedElementBin(bin.width, bin.height, {})`, so it carries none of the saved bin's
+  `options` or `tag`: the round trip does not preserve the gate for that bin either.
+  Decide between giving the oversized entry its own index — the callback already receives it — and
+  pushing it past the packer's existing bins, and whether the placeholder should inherit the saved
+  `options`/`tag`. A `save()`/`load()` round trip that silently loses a bin is why this is recorded
+  rather than left to the guide's prose.
+
+## Test infrastructure
+
+- **`test/efficiency.spec.js > combined best of` sits close to vitest's 5s default timeout.** It
+  measures the whole candidate table, so its runtime follows the table rather than a fixed amount of
+  work. Measured on GitHub's runners: 3328ms on a green Node 22 run, 6055ms in the run where Node 20
+  and 24 failed together with `Test timed out in 5000ms` while 22 passed on the same commit — load,
+  not a regression, and re-running the jobs turned all three green. Nothing sets `testTimeout` in
+  `vitest.config.js`, so the default is what both the 3.3s and the 6.1s run were judged against. Fix:
+  give that one test an explicit timeout (it is a measurement, not a unit test) or raise the global
+  default; its own PR, since it changes what a gate tolerates.
+- **Three return-value promises are documented but unasserted.** `add()` "returns that same object",
+  `addArray()` "returns nothing", and the `add(width, height, data)` overload returns an internal
+  `Rectangle` rather than anything the caller passed — no spec asserts any of the three. Searched the
+  suite: the only `toBe(<a rect>)` calls are six `not.toBe(rect)` isolation checks in
+  `test/clone.spec.js`, and every test that captures an `add(...)` result passes an inline literal, so
+  it can only prove the return is defined. The in-place half *is* pinned — the caller's own object is
+  checked (`expect(rect.oversized).toBe(true)`) — which is why a regression that quietly returned a
+  copy would keep every gate green. Three assertions across `test/maxrects-packer.spec.js` and
+  `test/maxrects-bin.spec.js` close it; its own PR, since it changes what the suite promises.
+
+## Custom heading anchors read out with their braces
+
+Found while scanning the built pages for unrendered markdown; cosmetic, and accepted for now rather
+than churned.
+
+- **`{#custom-id}` on a heading shows up in the permalink's `aria-label`.** VitePress 1.6.4 strips the
+  attribute from the heading text and the visible id is clean — measured on
+  `dist/contributor/behavior-contracts.html`: all nine section headings render without braces, while
+  eight of them carry `Permalink to "… {#the-id}"` in the anchor's `aria-label`, so a screen reader
+  reads the braces out. Nine headings in that file use the syntax and exactly one of them
+  (`#clone-isolates-the-two-bins`) is linked from another page; the rest make the anchors of the
+  *numbered* sections clean (`#tag-grouping`) instead of the slug VitePress would derive
+  (`_2-tag-grouping`).
+- Options, for whoever picks this up: drop the eight unreferenced attributes and accept the `_N-` slugs
+  (nothing links to them today), or keep the ids and treat the label as an upstream quirk worth
+  reporting. This ledger does not choose.
 
 ## Documentation structure
 
@@ -69,7 +136,12 @@ markdown, so the tree is tracked source and the build products are the ignored p
 `docs/.vitepress/dist/`; `npm run verify:docs` asserts both that boundary and the ignore rules, and
 runs in CI. The `doc*` script names remain as aliases so existing habits keep working.
 
-Still open from the migration: the content move (README and CONTRIBUTING) and the AGENTS routing rules,
-the documentation CI job and the legacy-URL redirects, and retiring the old theme, `gh-pages` and the
-theme assets from `devDependencies` and the `files` allowlist. The published tarball is unaffected:
-`docs/` is not in the `files` allowlist.
+Done with the content migration: the README is an entry point again, its detail moved into
+`docs/user/`, `CONTRIBUTING.md` points at `docs/contributor/` for development, testing, architecture,
+behaviour contracts, compatibility and releasing, and `AGENTS.md` carries the documentation map and the
+routing rules.
+
+Still open: the documentation CI job (artifact upload and deployment) with the legacy-URL redirects
+inventoried in the spike report, and retiring the old theme, `gh-pages` and the theme assets from
+`devDependencies` and the `files` allowlist. The published tarball is unaffected: `docs/` is not in the
+`files` allowlist.
