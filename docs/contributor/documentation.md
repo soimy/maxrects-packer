@@ -29,8 +29,7 @@ of the search index; the navigation does not mention them either, which on its o
 | `npm run docs:clean` | Delete `docs/api/`, `docs/.vitepress/cache/` and `docs/.vitepress/dist/` — nothing else. |
 | `npm run verify:docs` | Assert the whole boundary described above. |
 
-`doc`, `doc:clean`, `doc:json`, `doc:publish` and `doc:serve` remain as aliases so older notes keep
-working; `doc:publish` publishes the built site only.
+`doc`, `doc:clean`, `doc:json` and `doc:serve` remain as aliases so older notes keep working.
 
 `docs:preview` serves what the last build wrote, but it still loads the site config, and that config
 imports the generated sidebar — so on a tree that was just cleaned it stops at
@@ -84,8 +83,8 @@ preview URL. Reviewing a rendered page before the merge therefore means download
 serving it locally — `npm run docs:preview` does the same from a local build.
 
 Deploying needs the repository's Pages source set to **GitHub Actions** (Settings → Pages → Build and
-deployment). Until that switch is made, `npm run doc:publish` still pushes the built site to the
-`gh-pages` branch the old way, and the two must not run at the same time.
+deployment); it is, and `master` has deployed through this workflow since the first successful run.
+There is no second publishing path: the manual `gh-pages` push is gone with the script and the branch.
 
 ### Legacy URLs
 

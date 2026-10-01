@@ -143,16 +143,17 @@ routing rules.
 
 The documentation workflow (`.github/workflows/docs.yml`) builds on pull requests, uploads the site as
 an artifact and deploys it from `master`, and the build writes the legacy-URL redirects for the pages
-the old TypeDoc site published. Switching the repository's Pages source to **GitHub Actions** is a
-maintainer step that has to happen before the first deployment; until then `doc:publish` still pushes to
-`gh-pages`, and the two paths must not be used together.
+the old TypeDoc site published. The repository's Pages source was switched to **GitHub Actions** and
+the first deployment went live on 2026-10-01; root, the API pages and all 11 legacy redirect URLs were
+checked on the published site after it.
 
 The old theme is retired: `typedoc-unhoax-theme`, `assets/custom.css` and `assets/custom.js` are gone
 from `devDependencies`, the repository and the `files` allowlist, which takes the published tarball from
 30 files to 28 (`assets/favicon.ico` stays).
 
-Still open: dropping `gh-pages` (and the `doc:publish` alias that uses it) once the Pages source is
-switched to GitHub Actions — until then it is the fallback deployment path. `cz-conventional-changelog`
+Done with that switch: `gh-pages` and the `doc:publish` alias that used it are gone from
+`package.json` and `devDependencies`, and the `gh-pages` branch is deleted — with the Pages source on
+GitHub Actions it was the old publishing path rather than a fallback. `cz-conventional-changelog`
 is unrelated stale tooling (interactive commitizen commits only). The published tarball is otherwise
 unaffected: `docs/` is not in the `files` allowlist.
 
