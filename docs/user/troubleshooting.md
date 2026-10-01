@@ -92,17 +92,19 @@ CommonJS and resolves modules the `node16` or `nodenext` way cannot import it: t
 *declarations* being read, not the runtime: a plain JavaScript `require("maxrects-packer")` works, and
 the package gate consumes the real tarball that way.
 
-Measured against the published tarball from a CommonJS consumer, `skipLibCheck` either way and the same
-on TypeScript 6 and 7:
+Measured against the published tarball from a CommonJS consumer, `skipLibCheck` either way, with
+TypeScript 6.0.3 and 7.0.2 agreeing on the two diagnostics:
 
 | How the consumer imports | `node16` / `nodenext` |
 | --- | --- |
 | `import { MaxRectsPacker } from "maxrects-packer"` | TS1479 |
 | `import pkg = require("maxrects-packer")` | TS1471 |
-| `await import("maxrects-packer")` | compiles |
-| `moduleResolution` `node10` or `bundler` | compiles |
+| `await import("maxrects-packer")` inside an `async` function | compiles |
+| `moduleResolution` `bundler` | compiles |
+| `moduleResolution` `node10` | TypeScript 6 only: TS5107 without `"ignoreDeprecations": "6.0"`; TypeScript 7 removed the option (TS5108) |
 
-So: use a dynamic `import()`, leave the `require` in JavaScript, or resolve with `bundler`/`node10`. An
+So: use a dynamic `import()`, leave the `require` in JavaScript, or resolve with `bundler`. `node10` is a
+TypeScript 6 escape hatch, not a workaround for 7. An
 `exports` map with per-format declarations would close the gap, but it seals off deep imports
 (`maxrects-packer/dist/...`) as well, which is why it waits for a major release — the deferred-work
 ledger (`docs/plans/deferred-work.md`, tracked but not part of this site) records it.
