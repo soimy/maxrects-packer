@@ -147,5 +147,46 @@ the old TypeDoc site published. Switching the repository's Pages source to **Git
 maintainer step that has to happen before the first deployment; until then `doc:publish` still pushes to
 `gh-pages`, and the two paths must not be used together.
 
-Still open: retiring the old theme, `gh-pages` and the theme assets from `devDependencies` and the
-`files` allowlist. The published tarball is unaffected: `docs/` is not in the `files` allowlist.
+The old theme is retired: `typedoc-unhoax-theme`, `assets/custom.css` and `assets/custom.js` are gone
+from `devDependencies`, the repository and the `files` allowlist, which takes the published tarball from
+30 files to 28 (`assets/favicon.ico` stays).
+
+Still open: dropping `gh-pages` (and the `doc:publish` alias that uses it) once the Pages source is
+switched to GitHub Actions — until then it is the fallback deployment path. `cz-conventional-changelog`
+is unrelated stale tooling (interactive commitizen commits only). The published tarball is otherwise
+unaffected: `docs/` is not in the `files` allowlist.
+
+## Workflow and packaging follow-ups
+
+Noticed while auditing the stack before its first deployment. None of these is broken today — every run
+on the three pull requests is green — so each waits for a commit of its own.
+
+- **The workflows pin action majors that are several releases behind.** `.github/workflows/docs.yml` uses
+  `actions/checkout@v4`, `actions/setup-node@v4`, `actions/configure-pages@v5`,
+  `actions/upload-pages-artifact@v3` and `actions/deploy-pages@v4`; the current majors read through the
+  API on 2026-09-30 are v7, v7, v6, v5 and v5. `node.js.yml` and `release.yml` sit on
+  `checkout@v4`/`setup-node@v4` too, and the repository has no Dependabot or Renovate configuration, so
+  nothing raises these on its own — one `ci:` PR should move all three files together rather than leaving
+  the new workflow on majors the others do not use. Worth doing before the first deployment, because
+  `actions/deploy-pages` is the one step that has never run here (the job is gated on a push to `master`)
+  and its inputs have to be re-checked against the current `action.yml` — the versions in use were
+  verified against `upload-pages-artifact@v3` and `configure-pages@v5`.
+- **The README's only local image is `assets/favicon32.png`, 2911 bytes, and it is not in the `files`
+  allowlist.** `AGENTS.md` frames the fix as adding the whole `assets` directory for ~468 kB, but
+  `assets/preview.png` alone is 444695 of those bytes, so a single allowlist entry would do it for
+  +2.9 kB — if the npm page resolves a relative image out of the tarball at all. That could not be
+  checked from here (npmjs.com answers 403 to a plain request) and npm's renderer may resolve against the
+  repository instead, in which case there is nothing to fix. The file is also served by neither site:
+  the old index only used it as an `<img>` in the README's heading, and that URL already 404s on the
+  published TypeDoc site.
+- **A CommonJS TypeScript consumer cannot import the package under `node16`/`nodenext`.** Measured on the
+  published tarball, in a `.cts` file compiled with `module`/`moduleResolution` `node16`:
+  `import { MaxRectsPacker } from "maxrects-packer"` is TS1479 ("the referenced file is an ECMAScript
+  module and cannot be imported with `require`") and `import pkg = require("maxrects-packer")` is TS1471,
+  while `await import(...)`, `moduleResolution` `node10`/`bundler` and a JavaScript `require()` all work;
+  neither `skipLibCheck` nor the compiler version changes anything (TS 6 and TS 7 both). No gate can see
+  it: `verify:package` compiles its type fixture in an ESM consumer, which is exactly what makes
+  `node16`/`nodenext` read it as ESM, and the runtime `require()` path it does cover is fine. The fix is
+  an `exports` map with per-format conditions and declarations — which also seals off the deep imports
+  `maxrects-packer/dist/...` that the entry-points section above keeps working, so it belongs to 3.0.0.
+  Documented as a sharp edge in `docs/user/troubleshooting.md` meanwhile.
