@@ -5,8 +5,8 @@
 # scripts/build-legacy-redirects.mjs), so there is nothing to keep in sync by hand here.
 #
 # Deploying this workflow requires the repository's Pages source to be set to "GitHub Actions"
-# (Settings -> Pages -> Build and deployment). Until that is switched over, the `doc:publish` script
-# still pushes the built site to the `gh-pages` branch the old way.
+# (Settings -> Pages -> Build and deployment), which is the configured source. The old `doc:publish`
+# script and the `gh-pages` branch it pushed to are gone, so this is the only publishing path.
 name: Documentation
 
 on:
