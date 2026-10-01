@@ -13,7 +13,7 @@ tracked at [`docs/spec/2026-09-30-docs-migration-spike.md`](https://github.com/s
 | `docs/spec/`, `docs/plans/` | Designs, specifications and the deferred-work ledger | tracked, excluded from the site |
 | `docs/.vitepress/` | Site configuration | tracked, except `cache/` and `dist/` |
 | `docs/api/` | API markdown generated from JSDoc | ignored, never edited by hand |
-| `docs/.vitepress/dist/` | Built site | ignored |
+| `docs/.vitepress/dist/` | Built site, plus the legacy-URL redirect pages | ignored |
 
 `srcExclude` in `docs/.vitepress/config.mts` keeps `spec/**` and `plans/**` out of the site *and* out
 of the search index; the navigation does not mention them either, which on its own would not be enough.
@@ -24,7 +24,7 @@ of the search index; the navigation does not mention them either, which on its o
 | --- | --- |
 | `npm run docs:api` | Clean and regenerate `docs/api/` only. |
 | `npm run docs:dev` | Generate the API, then start the VitePress dev server. |
-| `npm run docs:build` | Generate the API, then build the site into `docs/.vitepress/dist/`. |
+| `npm run docs:build` | Generate the API, build the site into `docs/.vitepress/dist/`, write the legacy-URL redirects, then check the output. |
 | `npm run docs:preview` | Serve the production build locally. |
 | `npm run docs:clean` | Delete `docs/api/`, `docs/.vitepress/cache/` and `docs/.vitepress/dist/` — nothing else. |
 | `npm run verify:docs` | Assert the whole boundary described above. |
@@ -53,7 +53,58 @@ imports the generated sidebar — so on a tree that was just cleaned it stops at
   that running this check cannot touch the working tree is verified rather than assumed.
 
 `docs:build` is a CI step of its own: the boundary check says the files are in the right place, the build
-says the site still builds from them.
+says the site still builds from them, and `scripts/verify-docs-output.mjs` asserts in the output what the
+boundary check asserted in the tree:
+
+- no page tree for `spec/` or `plans/` — which is also what keeps them out of the search index, since
+  VitePress only indexes the pages it built;
+- a built page for every handwritten page, and a nav or sidebar entry reaching each one: VitePress fails
+  on a link that points nowhere, never on a page nothing links to;
+- every internal link, **anchors included**: a missing `#anchor` is not a VitePress error, and TypeDoc's
+  cross-references are full of them;
+- a search index that carries site text rather than nothing;
+- every absolute `href`/`src` under the configured base **and present in the build**, because a raw-html
+  link that missed it works while serving locally and 404s once deployed — and a page still pointing at
+  a file that was deleted (a retired theme's stylesheet, say) would otherwise stay green.
+
+Each assertion was measured against a broken state before it was trusted: dropping `srcExclude`, deleting
+a sidebar entry, renaming one anchor, appending a base-less link, deleting a referenced asset.
+
+## Deployment
+
+`.github/workflows/docs.yml` builds the site on every change that can affect it (`docs/**`, `src/**`,
+`scripts/**`, `package.json`, `package-lock.json`, `typedoc.json`, `tsconfig.json`, the root markdown
+files, this workflow) and uploads `docs/.vitepress/dist` as a Pages artifact. A `build` job does the
+work — Node 24, `npm ci --include=dev`, `npm run typecheck` before `npm run docs:build` — and a
+`deploy` job publishes that artifact to GitHub Pages.
+
+`deploy` is gated on a push to `master`, so a pull request stops after the upload: the built site is
+attached to the run as a downloadable artifact, but it is **not** published and the workflow offers no
+preview URL. Reviewing a rendered page before the merge therefore means downloading that artifact and
+serving it locally — `npm run docs:preview` does the same from a local build.
+
+Deploying needs the repository's Pages source set to **GitHub Actions** (Settings → Pages → Build and
+deployment). Until that switch is made, `npm run doc:publish` still pushes the built site to the
+`gh-pages` branch the old way, and the two must not run at the same time.
+
+### Legacy URLs
+
+The old site was TypeDoc's HTML at the Pages root, so `classes/*.html`, `interfaces/*.html`,
+`enums/PACKING_LOGIC.html`, `modules.html` and `hierarchy.html` were published URLs. The build writes a
+small redirect page at each of them (`scripts/build-legacy-redirects.mjs`) that points at the page which
+replaced it, and it **fails the build** when a target is missing rather than shipping a redirect into a
+404.
+
+Deep links are their own story, measured against the published 2.7.4 site: of the 170 member anchors on
+those 11 pages, **105 resolve** on the page that replaced them — the browser rewrites underscores to
+hyphens first (`#max_area` → `#max-area`). The other 65 land on the page itself: 22 belonged to private
+members, which `excludePrivate: true` keeps out of the site (`#_dirty`, `#findnode`, `#sort`); 28 are the
+old theme's own anchors for signatures the new pages have no heading for (`#dirtydirty`, `#constructorbint`,
+`#widthwidth-1`, `#collide-2`); and 15 are sections of the two legacy index pages, which redirect to
+`api/index.html` — that page lists classes, interfaces and enumerations without a per-entry anchor for
+`#maxrectspacker` or `#Bin`. The full inventory is in the
+[spike report](https://github.com/soimy/maxrects-packer/blob/master/docs/spec/2026-09-30-docs-migration-spike.md),
+whose Phase A counts are marked superseded there and whose re-measurement gives the numbers above.
 
 ## Writing a page
 

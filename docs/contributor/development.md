@@ -35,7 +35,7 @@ everywhere in the repository's own documentation.
 | `npm run cover` | Coverage run plus the artifact self-check; writes `test/coverage/` (gitignored). |
 | `npm run verify:package` | Packs a tarball, installs it into a temp consumer and consumes it **by package name**; compile the type fixture under `bundler`, `node16` and `nodenext`. Needs a build first. |
 | `npm run verify:docs` | Asserts the documentation boundary: tracked source, ignored build products, and what `docs:clean` may delete. |
-| `npm run docs:build` | Generates `docs/api/` and builds the site into `docs/.vitepress/dist/`. |
+| `npm run docs:build` | Generates `docs/api/`, builds the site into `docs/.vitepress/dist/`, writes the legacy-URL redirects, then checks the output. |
 | `npx vitest run test/maxrects-bin.spec.js` | A single spec, no rebuild needed. |
 
 ## Worktrees
