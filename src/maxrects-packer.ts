@@ -96,7 +96,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 let added = this.bins.slice(this._currentBinIndex).find((bin) => bin.add(rect as T) !== undefined);
                 if (!added) {
                     let bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
-                    if (this.options.tag && rect.data.tag) bin.tag = rect.data.tag;
+                    if (this.options.tag && rect.data && rect.data.tag) bin.tag = rect.data.tag;
                     if (this.addToBin(bin, rect as T)) this.bins.push(bin);
                 }
             }
