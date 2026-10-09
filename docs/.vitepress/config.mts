@@ -9,53 +9,75 @@ import site from "../site.json";
 // The site source is tracked under `docs/`; `docs/api/`, `docs/.vitepress/cache/` and
 // `docs/.vitepress/dist/` are build products (see .gitignore and `npm run verify:docs`).
 export default defineConfig({
-    title: "maxrects-packer",
-    description: "MaxRects 2D bin packing for sprite sheets and texture atlases",
-    base: site.base,
-    // Tracked designs and plans are repository records, not site pages.
-    srcExclude: ["spec/**", "plans/**"],
-    themeConfig: {
-        search: { provider: "local" },
-        nav: [
-            { text: "Guide", link: "/user/" },
-            { text: "API", link: "/api/" },
-            { text: "Contributing", link: "/contributor/" },
-            { text: "Releases", link: "/releases/" }
-        ],
-        sidebar: {
-            "/user/": [
-                {
-                    text: "User guide",
-                    items: [
-                        { text: "Overview", link: "/user/" },
-                        { text: "Getting started", link: "/user/getting-started" },
-                        { text: "Options", link: "/user/options" },
-                        { text: "Packing", link: "/user/packing" },
-                        { text: "Rotation and tags", link: "/user/rotation-and-tags" },
-                        { text: "Repacking", link: "/user/repacking" },
-                        { text: "Persistence", link: "/user/persistence" },
-                        { text: "Troubleshooting", link: "/user/troubleshooting" }
-                    ]
-                }
-            ],
-            "/contributor/": [
-                {
-                    text: "Contributing",
-                    items: [
-                        { text: "Overview", link: "/contributor/" },
-                        { text: "Development", link: "/contributor/development" },
-                        { text: "Testing", link: "/contributor/testing" },
-                        { text: "Architecture", link: "/contributor/architecture" },
-                        { text: "Behaviour contracts", link: "/contributor/behavior-contracts" },
-                        { text: "Compatibility", link: "/contributor/compatibility" },
-                        { text: "Documentation", link: "/contributor/documentation" },
-                        { text: "Releasing", link: "/contributor/releasing" }
-                    ]
-                }
-            ],
-            "/releases/": [{ text: "Releases", items: [{ text: "Overview", link: "/releases/" }] }],
-            "/api/": typedocSidebar
+  title: "maxrects-packer",
+  description: "MaxRects 2D bin packing for sprite sheets and texture atlases",
+  base: site.base,
+  // Tracked designs and plans are repository records, not site pages.
+  srcExclude: ["spec/**", "plans/**"],
+  // The repository's `assets/` directory doubles as the VitePress public dir via the `docs/public`
+  // symlink, so the favicons and the preview image the old TypeDoc site loaded stay published at
+  // the site root.
+  head: [
+    [
+      "link",
+      { rel: "icon", type: "image/x-icon", href: `${site.base}favicon.ico` },
+    ],
+    [
+      "link",
+      { rel: "icon", type: "image/png", href: `${site.base}favicon.png` },
+    ],
+    ["link", { rel: "apple-touch-icon", href: `${site.base}favicon.png` }],
+  ],
+  themeConfig: {
+    logo: "favicon32.png",
+    search: { provider: "local" },
+    nav: [
+      { text: "Guide", link: "/user/" },
+      { text: "API", link: "/api/" },
+      { text: "Contributing", link: "/contributor/" },
+      { text: "Releases", link: "/releases/" },
+    ],
+    sidebar: {
+      "/user/": [
+        {
+          text: "User guide",
+          items: [
+            { text: "Overview", link: "/user/" },
+            { text: "Getting started", link: "/user/getting-started" },
+            { text: "Options", link: "/user/options" },
+            { text: "Packing", link: "/user/packing" },
+            { text: "Rotation and tags", link: "/user/rotation-and-tags" },
+            { text: "Repacking", link: "/user/repacking" },
+            { text: "Persistence", link: "/user/persistence" },
+            { text: "Troubleshooting", link: "/user/troubleshooting" },
+          ],
         },
-        socialLinks: [{ icon: "github", link: "https://github.com/soimy/maxrects-packer" }]
-    }
+      ],
+      "/contributor/": [
+        {
+          text: "Contributing",
+          items: [
+            { text: "Overview", link: "/contributor/" },
+            { text: "Development", link: "/contributor/development" },
+            { text: "Testing", link: "/contributor/testing" },
+            { text: "Architecture", link: "/contributor/architecture" },
+            {
+              text: "Behaviour contracts",
+              link: "/contributor/behavior-contracts",
+            },
+            { text: "Compatibility", link: "/contributor/compatibility" },
+            { text: "Documentation", link: "/contributor/documentation" },
+            { text: "Releasing", link: "/contributor/releasing" },
+          ],
+        },
+      ],
+      "/releases/": [
+        { text: "Releases", items: [{ text: "Overview", link: "/releases/" }] },
+      ],
+      "/api/": typedocSidebar,
+    },
+    socialLinks: [
+      { icon: "github", link: "https://github.com/soimy/maxrects-packer" },
+    ],
+  },
 });

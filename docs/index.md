@@ -5,6 +5,10 @@ hero:
   name: maxrects-packer
   text: MaxRects 2D bin packing
   tagline: Packs rectangles into few bins within maxWidth × maxHeight — a heuristic, not a minimiser. A rect that cannot fit at all gets a placeholder bin of its own.
+  image:
+    src: /preview.png
+    alt: An atlas packed from two bitmap fonts
+    width: 480
   actions:
     - theme: brand
       text: Get started
