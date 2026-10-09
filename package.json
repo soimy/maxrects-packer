@@ -67,7 +67,6 @@
     "@vitest/coverage-v8": "^4.1.11",
     "ascii-table": "^0.0.9",
     "commit-and-tag-version": "^13.2.1",
-    "cz-conventional-changelog": "^3.3.0",
     "oxfmt": "^0.68.0",
     "oxlint": "^1.83.0",
     "rimraf": "^6.1.3",
