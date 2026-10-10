@@ -44,7 +44,9 @@ One kind of entry cannot come back as a normal bin: a saved bin whose `maxWidth`
 larger than the packer's own size describes a bin this packer could not hold at all. `load()` restores
 it as a placeholder [`OversizedElementBin`](../api/classes/OversizedElementBin.md) of the saved
 `width` × `height`, holding a fresh rect — at its own index like every other entry, replacing whatever
-the packer held there, and carrying the saved `options`, `tag` and `maxWidth`/`maxHeight`.
+the packer held there, and carrying the saved `options`, `tag`, `maxWidth`/`maxHeight` and free space.
+A snapshot that has to pass through a packer too small for it therefore comes back whole: load it into
+a packer that can hold the original limits and the free space it saved is there again.
 
 Both methods are plain data in and out — no files, no JSON parsing inside the library, so the
 serialized form is yours to compress, version or store in a database.
