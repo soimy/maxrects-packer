@@ -282,8 +282,8 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     /**
      * Load bins to the packer: each one replaces the bin at its index, and existing bins past the
      * loaded array are kept. A saved bin too large for this packer is restored as an
-     * `OversizedElementBin` placeholder at its index, keeping its `options`, `tag` and
-     * `maxWidth`/`maxHeight`.
+     * `OversizedElementBin` placeholder at its index, keeping its `options`, `tag`,
+     * `maxWidth`/`maxHeight` and free space.
      *
      * @param bins - MaxRectsBin objects
      */
@@ -300,19 +300,30 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 placeholder.maxHeight = bin.maxHeight;
                 if (bin.options) placeholder.options = { ...bin.options };
                 if (bin.tag) placeholder.tag = bin.tag;
+                this.restoreFreeRects(bin, placeholder);
                 this.bins[index] = placeholder;
             } else {
                 let newBin = new MaxRectsBin<T>(this.width, this.height, this.padding, bin.options);
-                newBin.freeRects.splice(0);
-                bin.freeRects.forEach((r) => {
-                    newBin.freeRects.push(new Rectangle(r.width, r.height, r.x, r.y));
-                });
+                this.restoreFreeRects(bin, newBin);
                 newBin.width = bin.width;
                 newBin.height = bin.height;
                 if (bin.tag) newBin.tag = bin.tag;
                 this.bins[index] = newBin;
             }
         }, this);
+    }
+
+    /**
+     * Give a bin the saved free rectangles as fresh `Rectangle`s, so what it holds shares nothing with
+     * the saved entry. Both branches of `load()` need this: free space is the only placement state
+     * persistence carries, and a placeholder that dropped it would empty the map on the next `save()`.
+     *
+     * @param bin - the saved bin to read the free rectangles from
+     * @param target - the bin to give them to, replacing the ones it already has
+     */
+    private restoreFreeRects(bin: IBin, target: Bin<T>) {
+        target.freeRects.splice(0);
+        bin.freeRects.forEach((r) => target.freeRects.push(new Rectangle(r.width, r.height, r.x, r.y)));
     }
 
     /**

@@ -558,6 +558,40 @@ describe("#save & load", () => {
         expect(reloaded.bins[0]).toBeInstanceOf(OversizedElementBin);
         expect(reloaded.bins[0].maxWidth).toBe(2048);
     });
+
+    test("load keeps the saved free space of an oversized entry, so a smaller packer carries it through", () => {
+        // A smart bin saves the free space it has left — two 28-wide strips around the placed rect —
+        // next to maxima the smaller packer below cannot hold.
+        const large = new MaxRectsPacker(2048, 512, 0);
+        large.addArray([{ width: 100, height: 100 }]);
+        const [saved] = large.save();
+        expect(saved.freeRects.length).toBeGreaterThan(0);
+
+        const small = new MaxRectsPacker(1024, 1024, 0);
+        small.load([saved]);
+        expect(small.bins[0]).toBeInstanceOf(OversizedElementBin);
+
+        // the snapshot that came out of the smaller packer still describes the same free space
+        const [throughSmall] = small.save();
+        expect(throughSmall.rects).toHaveLength(0); // placed rects stay out of persistence
+        expect(throughSmall.freeRects).toEqual(saved.freeRects);
+        expect(small.bins[0].freeRects[0]).toBeInstanceOf(Rectangle); // copied, not aliased
+
+        // and a packer that can hold the original limits restores it as a normal bin
+        const largeAgain = new MaxRectsPacker(2048, 512, 0);
+        largeAgain.load([throughSmall]);
+        expect(largeAgain.bins[0]).not.toBeInstanceOf(OversizedElementBin);
+        expect(largeAgain.bins[0].freeRects).toHaveLength(saved.freeRects.length);
+
+        // which places the next rect where a packer that never saved would
+        const control = new MaxRectsPacker(2048, 512, 0);
+        control.addArray([{ width: 100, height: 100 }]);
+        largeAgain.add(20, 20, { num: 2 });
+        control.add(20, 20, { num: 2 });
+        expect(largeAgain.bins).toHaveLength(1);
+        expect(largeAgain.bins[0].rects[0].x).toBe(control.bins[0].rects[1].x);
+        expect(largeAgain.bins[0].rects[0].y).toBe(control.bins[0].rects[1].y);
+    });
 });
 
 describe("misc functionalities", () => {
