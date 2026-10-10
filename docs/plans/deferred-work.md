@@ -23,7 +23,8 @@ suite.
   `bin.tag` should exist outside `exclusiveTag: true` at all: tagging in both paths is a user-visible
   metadata change, tagging in neither drops a field from `save()` output. Neither direction changes a
   packing decision — a bin copies its `options` at construction, so a bin created in non-exclusive
-  mode never gates on its own tag, even if `packer.options.exclusiveTag` is flipped later.
+  mode never gates on its own tag, even if `packer.options.exclusiveTag` is flipped later. Tracked in
+   [issue #93](https://github.com/soimy/maxrects-packer/issues/93).
 
 ## Clone re-decides rotation
 
@@ -48,7 +49,8 @@ on the spot.
   `Rectangle` and does nothing for the plain `{width, height}` objects the README advertises. With that
   normalization both reproducers above reproduce their source exactly, and the existing sweep still
   passes. That makes the change about five lines plus the seeded sweep, in its own PR: it changes what
-  `clone()` returns for every bin holding rotated rects.
+  `clone()` returns for every bin holding rotated rects. Tracked in
+   [issue #117](https://github.com/soimy/maxrects-packer/issues/117).
 
 ## `load()` can drop the placeholder it appends
 
@@ -75,6 +77,22 @@ guide then stated the append, and this is the part of it that looked like a bug 
   `options`/`tag`. A `save()`/`load()` round trip that silently loses a bin is why this is recorded
   rather than left to the guide's prose.
 
+## `clone()` on an oversized placeholder drops the restored state
+
+Found while reviewing PR #114; a decision of its own, so it is recorded rather than fixed on the
+spot.
+
+- **`OversizedElementBin.clone()` does not carry the state `load()` restores.** Measured on the merged
+   branch: a placeholder holding two saved free rects, `maxWidth`/`maxHeight` 2048×512, the saved
+   `options` clones to another placeholder at its own 128×128 size with
+   `{smart: false, pot: false, square: false}`, no free rects, and the same `tag`. The copy is
+   re-derived from `this.rects[0]`, so the free space PR #114 restores is the first thing it drops.
+   The only internal caller is the non-exclusive tag probe (`src/maxrects-packer.ts:170`), where a
+   placeholder fails the probe either way, so nothing depends on the difference today. Invariant 8
+   says state travels and behaviour does not; here most of the state does not travel either, and
+   `clone()` is public API, so a caller can reach the difference directly. Tracked in
+   [issue #118](https://github.com/soimy/maxrects-packer/issues/118).
+
 ## Test infrastructure
 
 - **Three return-value promises are documented but unasserted.** `add()` "returns that same object",
@@ -85,7 +103,8 @@ guide then stated the append, and this is the part of it that looked like a bug 
   it can only prove the return is defined. The in-place half *is* pinned — the caller's own object is
   checked (`expect(rect.oversized).toBe(true)`) — which is why a regression that quietly returned a
   copy would keep every gate green. Three assertions across `test/maxrects-packer.spec.js` and
-  `test/maxrects-bin.spec.js` close it; its own PR, since it changes what the suite promises.
+  `test/maxrects-bin.spec.js` close it; its own PR, since it changes what the suite promises. Tracked in
+   [issue #97](https://github.com/soimy/maxrects-packer/issues/97).
 
 ## Custom heading anchors read out with their braces
 
@@ -102,7 +121,8 @@ than churned.
   (`_2-tag-grouping`).
 - Options, for whoever picks this up: drop the eight unreferenced attributes and accept the `_N-` slugs
   (nothing links to them today), or keep the ids and treat the label as an upstream quirk worth
-  reporting. This ledger does not choose.
+  reporting. This ledger does not choose. Tracked in
+   [issue #101](https://github.com/soimy/maxrects-packer/issues/101).
 
 ## Documentation structure
 
@@ -158,7 +178,8 @@ on the three pull requests is green — so each waits for a commit of its own.
   the new workflow on majors the others do not use. Worth doing before the first deployment, because
   `actions/deploy-pages` is the one step that has never run here (the job is gated on a push to `master`)
   and its inputs have to be re-checked against the current `action.yml` — the versions in use were
-  verified against `upload-pages-artifact@v3` and `configure-pages@v5`.
+  verified against `upload-pages-artifact@v3` and `configure-pages@v5`. Tracked in
+ [issue #119](https://github.com/soimy/maxrects-packer/issues/119).
 - **The README's only local image is `assets/favicon32.png`, 2911 bytes, and it is not in the `files`
   allowlist.** `AGENTS.md` frames the fix as adding the whole `assets` directory for ~468 kB, but
   `assets/preview.png` alone is 444695 of those bytes, so a single allowlist entry would do it for
@@ -166,7 +187,8 @@ on the three pull requests is green — so each waits for a commit of its own.
   checked from here (npmjs.com answers 403 to a plain request) and npm's renderer may resolve against the
   repository instead, in which case there is nothing to fix. The file is also served by neither site:
   the old index only used it as an `<img>` in the README's heading, and that URL already 404s on the
-  published TypeDoc site.
+  published TypeDoc site. Tracked in
+   [issue #102](https://github.com/soimy/maxrects-packer/issues/102).
 - **A CommonJS TypeScript consumer cannot import the package under `node16`/`nodenext`.** Measured on the
   published tarball, in a `.cts` file compiled with `module`/`moduleResolution` `node16`:
   `import { MaxRectsPacker } from "maxrects-packer"` is TS1479 ("the referenced file is an ECMAScript
@@ -177,4 +199,5 @@ on the three pull requests is green — so each waits for a commit of its own.
   `node16`/`nodenext` read it as ESM, and the runtime `require()` path it does cover is fine. The fix is
   an `exports` map with per-format conditions and declarations — which also seals off the deep imports
   `maxrects-packer/dist/...` that the entry-points section above keeps working, so it belongs to 3.0.0.
-  Documented as a sharp edge in `docs/user/troubleshooting.md` meanwhile.
+  Documented as a sharp edge in `docs/user/troubleshooting.md` meanwhile. Tracked in
+   [issue #98](https://github.com/soimy/maxrects-packer/issues/98).
