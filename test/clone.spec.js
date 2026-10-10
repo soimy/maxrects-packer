@@ -232,6 +232,41 @@ describe("clone", () => {
         expect([clone.rects[0].x, clone.rects[0].y]).toEqual([rect.x, rect.y]);
     });
 
+    test("copies a rect with Object.getOwnPropertySymbols removed, the ES5 path", () => {
+        // Symbols are ES2015 and the bundle promises no engine requirement beyond ES5, so the copy reads
+        // them behind a feature check instead of calling for them. An ES5 engine takes the other branch:
+        // the string-keyed descriptors still have to travel and the copy still has to be placeable.
+        // The window has to stay free of `expect` — vitest's own equality checks call the API too — so
+        // the values are captured inside it and asserted after it closes.
+        const symbols = Object.getOwnPropertySymbols;
+        let added;
+        let clone;
+        let source;
+        delete Object.getOwnPropertySymbols;
+        try {
+            const bin = new MaxRectsBin(256, 256, 0, opt);
+            source = new Rectangle(100, 100);
+            source.extra = "kept";
+            Object.defineProperty(source, "hidden", {
+                value: 7,
+                enumerable: false,
+                writable: true,
+                configurable: true
+            });
+            added = bin.add(source);
+            clone = bin.clone();
+        } finally {
+            Object.getOwnPropertySymbols = symbols;
+        }
+
+        expect(added).toBeDefined();
+        expect(clone.rects).toHaveLength(1);
+        expect(clone.rects[0]).not.toBe(source);
+        expect(clone.rects[0].extra).toBe("kept");
+        expect(clone.rects[0].hidden).toBe(7);
+        expect([clone.rects[0].x, clone.rects[0].y]).toEqual([source.x, source.y]);
+    });
+
     test("reports a rect whose placement is out of reach", () => {
         // The size is a plain field here and only `x`/`y` sit behind `#private`, so a size-only check
         // would wave this copy through and then die on the setter the replay uses.

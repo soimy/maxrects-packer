@@ -321,6 +321,11 @@ English keeps the project history usable for every contributor and every downstr
   verifies `require`/`import` by **package name**, then compiles a fixture against the published
   `types` under `bundler`, `node16` and `nodenext`). All of them will stop you after a change to the
   entry points, `files` or artifact names.
+  `postbuild` also runs `scripts/verify-es5.mjs`, which fails the build when a bundle calls a runtime
+  API newer than ES5 (`Array.prototype.find`, `Object.getOwnPropertyDescriptors`, `Reflect.ownKeys`).
+  `target: es5` downlevels syntax and polyfills nothing, and the specs run `src/` and never touch
+  `dist/`, so this is the only thing that would notice — see
+  [compatibility](./docs/contributor/compatibility.md).
   The `types` field must name the **barrel's** declaration (`dist/index.d.ts`), not a module's: the
   build emits one `.d.ts` per source module, and `dist/maxrects-packer.d.ts` — the declaration of
   `src/maxrects-packer.ts` — only exports `MaxRectsPacker`, `PACKING_LOGIC` and `IOption` among the nine documented exports (plus
