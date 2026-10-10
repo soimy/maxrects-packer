@@ -77,14 +77,6 @@ guide then stated the append, and this is the part of it that looked like a bug 
 
 ## Test infrastructure
 
-- **`test/efficiency.spec.js > combined best of` sits close to vitest's 5s default timeout.** It
-  measures the whole candidate table, so its runtime follows the table rather than a fixed amount of
-  work. Measured on GitHub's runners: 3328ms on a green Node 22 run, 6055ms in the run where Node 20
-  and 24 failed together with `Test timed out in 5000ms` while 22 passed on the same commit — load,
-  not a regression, and re-running the jobs turned all three green. Nothing sets `testTimeout` in
-  `vitest.config.js`, so the default is what both the 3.3s and the 6.1s run were judged against. Fix:
-  give that one test an explicit timeout (it is a measurement, not a unit test) or raise the global
-  default; its own PR, since it changes what a gate tolerates.
 - **Three return-value promises are documented but unasserted.** `add()` "returns that same object",
   `addArray()` "returns nothing", and the `add(width, height, data)` overload returns an internal
   `Rectangle` rather than anything the caller passed — no spec asserts any of the three. Searched the

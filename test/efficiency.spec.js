@@ -6,6 +6,13 @@ import SCENARIOS from "./scenarios.json";
 
 const rectSizeSum = SCENARIOS.map((scenario) => scenario.reduce((memo, rect) => memo + rect.width * rect.height, 0));
 
+// Every test in this suite walks the whole candidate table, so its runtime follows the machine rather
+// than a fixed amount of work. Measured on GitHub's runners: 3328ms on a green run, and 6055ms in the
+// run where Node 20 and 24 failed together on vitest's 5s default while 22 passed on the same commit —
+// load, not a regression. The suite is a measurement rather than a unit test, so it gets a budget that
+// tolerates a loaded runner instead of one that turns load into a red gate.
+const TABLE_TIMEOUT = 30000;
+
 // One table for both logics. The area and edge candidate lists used to be written out in full twice,
 // 85 lines each, identical apart from `logic`.
 const CANDIDATE_SHAPES = [
@@ -34,7 +41,7 @@ const candidatesFor = (logic) =>
             })
     }));
 
-describe("Efficiency", () => {
+describe("Efficiency", { timeout: TABLE_TIMEOUT }, () => {
     const AREA_CANDIDATES = candidatesFor(PACKING_LOGIC.MAX_AREA);
     const EDGE_CANDIDATES = candidatesFor(PACKING_LOGIC.MAX_EDGE);
 
