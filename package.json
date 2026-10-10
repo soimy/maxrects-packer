@@ -18,7 +18,7 @@
   "scripts": {
     "clean": "rimraf ./dist ./lib",
     "build": "rollup -c",
-    "postbuild": "node scripts/fix-declaration-extensions.mjs && node scripts/verify-entry.mjs",
+    "postbuild": "node scripts/fix-declaration-extensions.mjs && node scripts/verify-entry.mjs && node scripts/verify-es5.mjs",
     "build:clean": "npm run clean && npm run build",
     "docs:api": "rimraf docs/api && typedoc",
     "docs:dev": "npm run docs:api && vitepress dev docs",

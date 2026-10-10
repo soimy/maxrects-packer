@@ -6,6 +6,45 @@ export interface IRectangle {
     [propName: string]: any;
 }
 
+/**
+ * The own keys of `object`, string keys first and symbol keys after — the order `Reflect.ownKeys`
+ * uses, without `Reflect`, which is ES2015. The published bundle promises no engine requirement
+ * beyond ES5, and `target: es5` downlevels syntax rather than runtime APIs, so the language call
+ * would stay in the bundle and throw on an ES5 engine. The symbol half is feature-checked: an engine
+ * without `Object.getOwnPropertySymbols` has no symbol keys to report.
+ * @param object - the object whose own keys are listed
+ * @returns its own keys, the string keys then the symbol keys
+ */
+function ownKeys(object: object): (string | symbol)[] {
+    const keys: (string | symbol)[] = Object.getOwnPropertyNames(object);
+    if (typeof Object.getOwnPropertySymbols === "function") {
+        keys.push(...Object.getOwnPropertySymbols(object));
+    }
+    return keys;
+}
+
+/**
+ * The own property descriptors of `object`, keyed as `Object.getOwnPropertyDescriptors` keys them —
+ * which is ES2017, and so out of reach of the published ES5 promise for the same reason as
+ * `Reflect.ownKeys` above. `Object.getOwnPropertyNames` and `Object.getOwnPropertyDescriptor` are
+ * both ES5, and symbol keys are copied as well, so a copy still carries the source's whole shape.
+ * @param object - the object whose own descriptors are read
+ * @returns its own descriptors, keyed by string and symbol
+ */
+function ownPropertyDescriptors(object: object): Record<string | symbol, PropertyDescriptor> {
+    // Null-prototype: `descriptors[key] = …` on an ordinary object would send an own `__proto__` key to
+    // the inherited `Object.prototype.__proto__` setter, which repoints the prototype instead of
+    // creating an own entry — so `ownKeys()` would never list it and a rect carrying that field (one
+    // out of `JSON.parse`, say) would silently lose it. `Object.getOwnPropertyDescriptors` defines its
+    // result with `CreateDataProperty` and keeps the key, which is what this has to match.
+    const descriptors = Object.create(null) as Record<string | symbol, PropertyDescriptor>;
+    for (const key of ownKeys(object)) {
+        // `ownKeys` lists own keys only, and an own key always has a descriptor.
+        descriptors[key] = Object.getOwnPropertyDescriptor(object, key) as PropertyDescriptor;
+    }
+    return descriptors;
+}
+
 export class Rectangle implements IRectangle {
     /**
      * Oversized tag on a rect the packer could not put in a bin: one bigger than the packer itself, or
@@ -102,8 +141,8 @@ export class Rectangle implements IRectangle {
         if (typeof copier === "function") {
             copy = copier.call(rect);
             // Typed for symbol keys as well: a rect may carry them, and they are copied like any other.
-            const descriptors = Object.getOwnPropertyDescriptors(rect) as Record<string | symbol, PropertyDescriptor>;
-            for (const key of Reflect.ownKeys(descriptors)) {
+            const descriptors = ownPropertyDescriptors(rect);
+            for (const key of ownKeys(descriptors)) {
                 const descriptor = descriptors[key];
                 // An accessor never travels: the source's reads and writes the source through its closure, so
                 // putting it on the copy would hand the copy the original's coordinates.
@@ -129,7 +168,7 @@ export class Rectangle implements IRectangle {
             copy = Object.create(Object.getPrototypeOf(rect)) as T;
             // Descriptors rather than `Object.assign`: a rect may keep extra fields, or the backing fields
             // behind `width`/`height`, non-enumerable, and assignment would drop those silently.
-            Object.defineProperties(copy, Object.getOwnPropertyDescriptors(rect));
+            Object.defineProperties(copy, ownPropertyDescriptors(rect));
         }
         try {
             // Every field the packing replay reads or writes, not just the size: a class backing `x`, `y`,

@@ -9,6 +9,14 @@ constraints rather than preferences.
   `tsconfig.build.json`). This is the only reason the build still uses the TypeScript compiler API:
   esbuild refuses to transform to ES5 at all (`Transforming const to the configured target environment
   ("es5") is not supported yet`). Drop the ES5 target and the build could move to esbuild/rolldown.
+- **ES5 covers syntax only — the bundle must not call a runtime API newer than ES5 either.** `target:
+  es5` downlevels syntax and polyfills nothing, so `Array.prototype.find` (ES2015),
+  `Object.getOwnPropertyDescriptors` (ES2017) or `Reflect.ownKeys` (ES2015) would ship as written and
+  throw on an ES5 engine. Use the ES5 primitive instead (`Object.getOwnPropertyNames` plus
+  `Object.getOwnPropertyDescriptor`, an index loop for `find`), or guard the call with a
+  `typeof … === "function"` feature check the way `Object.getOwnPropertySymbols` is guarded in
+  `src/geom/Rectangle.ts`. `scripts/verify-es5.mjs` runs from `postbuild` and fails the build when a
+  bundle contains one of these calls, because the specs run `src/` and would never see it.
 - **Zero runtime dependencies**, in the bundle and in `package.json`.
 - No DOM and no Node API — geometry only, so the same bundle runs in the browser.
 

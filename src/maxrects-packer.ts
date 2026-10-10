@@ -7,6 +7,22 @@ import { EDGE_MAX_VALUE, PACKING_LOGIC, IOption } from "./types";
 // Re-export types for backward compatibility
 export { EDGE_MAX_VALUE, EDGE_MIN_VALUE, PACKING_LOGIC, IOption } from "./types";
 
+/**
+ * The first item `predicate` accepts, or `undefined`. `Array.prototype.find` is ES2015, and the
+ * published bundle promises no engine requirement beyond ES5: `target: es5` downlevels syntax, not
+ * runtime APIs, so the language method would stay in the bundle and throw on an ES5 engine. The
+ * predicate runs in order and the search stops at the first acceptance, as the language method does.
+ * @param items - the array to search
+ * @param predicate - the test each item is given, in order
+ * @returns the first accepted item, or `undefined` when none is accepted
+ */
+function find<T>(items: T[], predicate: (item: T) => boolean): T | undefined {
+    for (let i = 0; i < items.length; i++) {
+        if (predicate(items[i])) return items[i];
+    }
+    return undefined;
+}
+
 export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     /**
      * The Bin array added to the packer
@@ -74,7 +90,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
             ) {
                 this.bins.push(new OversizedElementBin<T>(rect));
             } else {
-                let added = this.bins.slice(this._currentBinIndex).find((bin) => bin.add(rect) !== undefined);
+                let added = find(this.bins.slice(this._currentBinIndex), (bin) => bin.add(rect) !== undefined);
                 if (!added) {
                     let bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
                     let tag = rect.data && rect.data.tag ? rect.data.tag : rect.tag ? rect.tag : undefined;
@@ -95,7 +111,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
             ) {
                 this.bins.push(new OversizedElementBin<T>(rect as T));
             } else {
-                let added = this.bins.slice(this._currentBinIndex).find((bin) => bin.add(rect as T) !== undefined);
+                let added = find(this.bins.slice(this._currentBinIndex), (bin) => bin.add(rect as T) !== undefined);
                 if (!added) {
                     let bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
                     if (this.options.tag && rect.data && rect.data.tag) bin.tag = rect.data.tag;
@@ -148,7 +164,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
             //
             let currentTag: any;
             let currentIdx: number = 0;
-            let targetBin = this.bins.slice(this._currentBinIndex).find((bin) => {
+            let targetBin = find(this.bins.slice(this._currentBinIndex), (bin) => {
                 let testBin: Bin<T>;
                 try {
                     testBin = bin.clone();

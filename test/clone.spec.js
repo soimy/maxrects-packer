@@ -232,6 +232,89 @@ describe("clone", () => {
         expect([clone.rects[0].x, clone.rects[0].y]).toEqual([rect.x, rect.y]);
     });
 
+    test("copies a rect with Object.getOwnPropertySymbols removed, the ES5 path", () => {
+        // Symbols are ES2015 and the bundle promises no engine requirement beyond ES5, so the copy reads
+        // them behind a feature check instead of calling for them. An ES5 engine takes the other branch:
+        // the string-keyed descriptors still have to travel and the copy still has to be placeable.
+        // The window has to stay free of `expect` — vitest's own equality checks call the API too — so
+        // the values are captured inside it and asserted after it closes.
+        const symbols = Object.getOwnPropertySymbols;
+        let added;
+        let clone;
+        let source;
+        delete Object.getOwnPropertySymbols;
+        try {
+            const bin = new MaxRectsBin(256, 256, 0, opt);
+            source = new Rectangle(100, 100);
+            source.extra = "kept";
+            Object.defineProperty(source, "hidden", {
+                value: 7,
+                enumerable: false,
+                writable: true,
+                configurable: true
+            });
+            added = bin.add(source);
+            clone = bin.clone();
+        } finally {
+            Object.getOwnPropertySymbols = symbols;
+        }
+
+        expect(added).toBeDefined();
+        expect(clone.rects).toHaveLength(1);
+        expect(clone.rects[0]).not.toBe(source);
+        expect(clone.rects[0].extra).toBe("kept");
+        expect(clone.rects[0].hidden).toBe(7);
+        expect([clone.rects[0].x, clone.rects[0].y]).toEqual([source.x, source.y]);
+    });
+
+    test("copies an own __proto__ field on the prototype-shell path", () => {
+        // `__proto__` is the one own key a plain `map[key] = descriptor` does not preserve: on an
+        // ordinary object that assignment reaches the inherited `Object.prototype.__proto__` setter and
+        // repoints the prototype instead of creating an own entry, so the key never reaches `ownKeys()`
+        // and the copy silently loses the field. A rect out of `JSON.parse` carries it as an own
+        // property, which is why the descriptor map is built on a null prototype.
+        const rect = new Rectangle(100, 100);
+        Object.defineProperty(rect, "__proto__", {
+            value: "kept",
+            enumerable: true,
+            writable: true,
+            configurable: true
+        });
+        expect(Object.prototype.hasOwnProperty.call(rect, "__proto__")).toBe(true);
+
+        const copy = Rectangle.Clone(rect);
+        expect(Object.prototype.hasOwnProperty.call(copy, "__proto__")).toBe(true);
+        expect(Object.getOwnPropertyDescriptor(copy, "__proto__").value).toBe("kept");
+    });
+
+    test("copies an own __proto__ field through a custom clone() and a bin clone", () => {
+        class JsonRect extends Rectangle {
+            constructor(width, height) {
+                super(width, height);
+            }
+            clone() {
+                return new JsonRect(this.width, this.height);
+            }
+        }
+        const rect = new JsonRect(100, 100);
+        Object.defineProperty(rect, "__proto__", {
+            value: "kept",
+            enumerable: true,
+            writable: true,
+            configurable: true
+        });
+
+        const copy = Rectangle.Clone(rect);
+        expect(Object.prototype.hasOwnProperty.call(copy, "__proto__")).toBe(true);
+        expect(Object.getOwnPropertyDescriptor(copy, "__proto__").value).toBe("kept");
+
+        const bin = new MaxRectsBin(256, 256, 0, opt);
+        expect(bin.add(rect)).toBeDefined();
+        const cloned = bin.clone();
+        expect(Object.prototype.hasOwnProperty.call(cloned.rects[0], "__proto__")).toBe(true);
+        expect(Object.getOwnPropertyDescriptor(cloned.rects[0], "__proto__").value).toBe("kept");
+    });
+
     test("reports a rect whose placement is out of reach", () => {
         // The size is a plain field here and only `x`/`y` sit behind `#private`, so a size-only check
         // would wave this copy through and then die on the setter the replay uses.
