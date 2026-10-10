@@ -471,13 +471,92 @@ describe("#save & load", () => {
                 maxWidth: 2048,
                 maxHeight: 2048,
                 freeRects: [],
-                rects: [],
-                options: {}
+                rects: []
+                // no options: an entry that carries none keeps the placeholder's own defaults
             }
         ]);
         expect(packer.bins[0]).toBeInstanceOf(OversizedElementBin);
         expect(packer.bins[0].width).toBe(2048);
         expect(packer.bins[0].height).toBe(2048);
+        expect(packer.bins[0].options).toEqual({ smart: false, pot: false, square: false });
+    });
+
+    test("load replaces the bin at its index even when the entry is oversized", () => {
+        // The packer already holds a bin, so the oversized entry used to be pushed to the end, where the
+        // next entry wrote over it: the round trip silently lost that bin.
+        packer.add(256, 256, { num: 0 });
+
+        packer.load([
+            {
+                width: 2048,
+                height: 2048,
+                maxWidth: 2048,
+                maxHeight: 2048,
+                freeRects: [],
+                rects: [],
+                options: {}
+            },
+            {
+                width: 512,
+                height: 512,
+                maxWidth: 512,
+                maxHeight: 512,
+                freeRects: [],
+                rects: [],
+                options: {}
+            }
+        ]);
+
+        expect(packer.bins).toHaveLength(2);
+        expect(packer.bins[0]).toBeInstanceOf(OversizedElementBin);
+        expect(packer.bins[0].width).toBe(2048);
+        expect(packer.bins[0].height).toBe(2048);
+        expect(packer.bins[1]).not.toBeInstanceOf(OversizedElementBin);
+        expect(packer.bins[1].width).toBe(512);
+    });
+
+    test("load carries the saved options and tag onto an oversized placeholder", () => {
+        const options = { ...opt, allowRotation: true, logic: PACKING_LOGIC.MAX_AREA };
+        packer.load([
+            {
+                width: 2048,
+                height: 2048,
+                maxWidth: 2048,
+                maxHeight: 2048,
+                freeRects: [],
+                rects: [],
+                options,
+                tag: "big"
+            }
+        ]);
+
+        const placeholder = packer.bins[0];
+        expect(placeholder).toBeInstanceOf(OversizedElementBin);
+        expect(placeholder.tag).toBe("big");
+        expect(placeholder.options).toEqual(options);
+    });
+
+    test("load keeps the saved maxima, so an oversized entry stays oversized after a round trip", () => {
+        // A smart bin saves the size it currently occupies — 128×128 after one 100×100 rect — next to the
+        // maxima it was allowed to grow to. Dropping the maxima here would make the next save() describe
+        // an entry the same packer loads back as a normal bin.
+        const source = new MaxRectsPacker(2048, 512, 0);
+        source.addArray([{ width: 100, height: 100 }]);
+        const [saved] = source.save();
+        expect(saved.width).toBeLessThan(saved.maxWidth); // the case the placeholder has to keep apart
+
+        packer.load([saved]);
+        expect(packer.bins[0]).toBeInstanceOf(OversizedElementBin);
+        expect(packer.bins[0].width).toBe(saved.width);
+        expect(packer.bins[0].height).toBe(saved.height);
+        expect(packer.bins[0].maxWidth).toBe(2048);
+        expect(packer.bins[0].maxHeight).toBe(512);
+
+        // one more cycle through a packer of the same size keeps the entry oversized
+        const reloaded = new MaxRectsPacker(1024, 1024, 0, opt);
+        reloaded.load(packer.save());
+        expect(reloaded.bins[0]).toBeInstanceOf(OversizedElementBin);
+        expect(reloaded.bins[0].maxWidth).toBe(2048);
     });
 });
 
