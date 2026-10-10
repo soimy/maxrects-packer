@@ -30,49 +30,46 @@ jobs:
       id: get_version
       run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
+    # Everything this step reads arrives through `env:`, never through `${{ }}` in the script body.
+    # An expression is substituted into the script *text* before bash parses it, so a value carrying
+    # `$(...)` or a backtick would run as a command — and a tag name may legally contain both, while
+    # CHANGELOG.md is built from commit subjects. Values in the environment are data, not source.
+    # The notes leave this step as a file: the `<<EOF` output format preserves text as written, so the
+    # `%0A` percent-encoding this step used to apply reached `gh` literally instead of decoding.
     - name: Extract changelog
-      id: extract_changelog
+      env:
+        VERSION: ${{ steps.get_version.outputs.version }}
       run: |
-        # Extract changelog for the current version
-        VERSION="${{ steps.get_version.outputs.version }}"
-        # Find the line number of the current version
-        VERSION_LINE=$(grep -n "### \[$VERSION\]" CHANGELOG.md | head -1 | cut -d: -f1)
+        # CHANGELOG.md writes minor releases as `## [` and patches as `### [`, so both forms have to
+        # match: requiring `### [` alone finds no minor release, and lets a patch run past the minor
+        # heading below it into older sections.
+        VERSION_LINE=$(grep -nE "^#{2,3} \[" CHANGELOG.md | grep -F "[$VERSION]" | head -1 | cut -d: -f1)
         if [ -n "$VERSION_LINE" ]; then
           # Find the next version line
-          NEXT_VERSION_LINE=$(tail -n +$((VERSION_LINE + 1)) CHANGELOG.md | grep -n "^### \[" | head -1 | cut -d: -f1)
+          NEXT_VERSION_LINE=$(tail -n +$((VERSION_LINE + 1)) CHANGELOG.md | grep -nE "^#{2,3} \[" | head -1 | cut -d: -f1)
           if [ -n "$NEXT_VERSION_LINE" ]; then
             # Extract lines between current version and next version
-            CHANGELOG=$(sed -n "$((VERSION_LINE + 1)),$((VERSION_LINE + NEXT_VERSION_LINE - 1))p" CHANGELOG.md)
+            sed -n "$((VERSION_LINE + 1)),$((VERSION_LINE + NEXT_VERSION_LINE - 1))p" CHANGELOG.md > release-notes.md
           else
             # This is the last version, extract to end of file
-            CHANGELOG=$(sed -n "$((VERSION_LINE + 1)),\$p" CHANGELOG.md)
+            sed -n "$((VERSION_LINE + 1)),\$p" CHANGELOG.md > release-notes.md
           fi
         else
-          CHANGELOG="No changelog found for version $VERSION"
+          echo "No changelog found for version $VERSION" > release-notes.md
         fi
-        # Escape newlines for GitHub output
-        CHANGELOG="${CHANGELOG//'%'/'%25'}"
-        CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
-        CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
-        echo "changelog<<EOF" >> $GITHUB_OUTPUT
-        echo "$CHANGELOG" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
 
     - name: Create release
-      id: create_release
       run: |
-        TAG_NAME="${{ github.ref_name }}"
-        gh release create "$TAG_NAME" \
-          --title "Release $TAG_NAME" \
-          --notes "${{ steps.extract_changelog.outputs.changelog }}" \
+        gh release create "$GITHUB_REF_NAME" \
+          --title "Release $GITHUB_REF_NAME" \
+          --notes-file release-notes.md \
           --generate-notes
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload release assets
       run: |
-        TAG_NAME="${{ github.ref_name }}"
-        gh release upload "$TAG_NAME" ./dist/maxrects-packer.js ./dist/maxrects-packer.min.js ./dist/maxrects-packer.mjs ./dist/maxrects-packer.cjs
+        gh release upload "$GITHUB_REF_NAME" ./dist/maxrects-packer.js ./dist/maxrects-packer.min.js ./dist/maxrects-packer.mjs ./dist/maxrects-packer.cjs
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -81,7 +78,6 @@ jobs:
         cd dist
         zip -r ../dist.zip .
         cd ..
-        TAG_NAME="${{ github.ref_name }}"
-        gh release upload "$TAG_NAME" ./dist.zip
+        gh release upload "$GITHUB_REF_NAME" ./dist.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
