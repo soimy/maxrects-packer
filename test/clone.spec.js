@@ -267,6 +267,54 @@ describe("clone", () => {
         expect([clone.rects[0].x, clone.rects[0].y]).toEqual([source.x, source.y]);
     });
 
+    test("copies an own __proto__ field on the prototype-shell path", () => {
+        // `__proto__` is the one own key a plain `map[key] = descriptor` does not preserve: on an
+        // ordinary object that assignment reaches the inherited `Object.prototype.__proto__` setter and
+        // repoints the prototype instead of creating an own entry, so the key never reaches `ownKeys()`
+        // and the copy silently loses the field. A rect out of `JSON.parse` carries it as an own
+        // property, which is why the descriptor map is built on a null prototype.
+        const rect = new Rectangle(100, 100);
+        Object.defineProperty(rect, "__proto__", {
+            value: "kept",
+            enumerable: true,
+            writable: true,
+            configurable: true
+        });
+        expect(Object.prototype.hasOwnProperty.call(rect, "__proto__")).toBe(true);
+
+        const copy = Rectangle.Clone(rect);
+        expect(Object.prototype.hasOwnProperty.call(copy, "__proto__")).toBe(true);
+        expect(Object.getOwnPropertyDescriptor(copy, "__proto__").value).toBe("kept");
+    });
+
+    test("copies an own __proto__ field through a custom clone() and a bin clone", () => {
+        class JsonRect extends Rectangle {
+            constructor(width, height) {
+                super(width, height);
+            }
+            clone() {
+                return new JsonRect(this.width, this.height);
+            }
+        }
+        const rect = new JsonRect(100, 100);
+        Object.defineProperty(rect, "__proto__", {
+            value: "kept",
+            enumerable: true,
+            writable: true,
+            configurable: true
+        });
+
+        const copy = Rectangle.Clone(rect);
+        expect(Object.prototype.hasOwnProperty.call(copy, "__proto__")).toBe(true);
+        expect(Object.getOwnPropertyDescriptor(copy, "__proto__").value).toBe("kept");
+
+        const bin = new MaxRectsBin(256, 256, 0, opt);
+        expect(bin.add(rect)).toBeDefined();
+        const cloned = bin.clone();
+        expect(Object.prototype.hasOwnProperty.call(cloned.rects[0], "__proto__")).toBe(true);
+        expect(Object.getOwnPropertyDescriptor(cloned.rects[0], "__proto__").value).toBe("kept");
+    });
+
     test("reports a rect whose placement is out of reach", () => {
         // The size is a plain field here and only `x`/`y` sit behind `#private`, so a size-only check
         // would wave this copy through and then die on the setter the replay uses.

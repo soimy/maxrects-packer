@@ -32,7 +32,12 @@ function ownKeys(object: object): (string | symbol)[] {
  * @returns its own descriptors, keyed by string and symbol
  */
 function ownPropertyDescriptors(object: object): Record<string | symbol, PropertyDescriptor> {
-    const descriptors: Record<string | symbol, PropertyDescriptor> = {};
+    // Null-prototype: `descriptors[key] = …` on an ordinary object would send an own `__proto__` key to
+    // the inherited `Object.prototype.__proto__` setter, which repoints the prototype instead of
+    // creating an own entry — so `ownKeys()` would never list it and a rect carrying that field (one
+    // out of `JSON.parse`, say) would silently lose it. `Object.getOwnPropertyDescriptors` defines its
+    // result with `CreateDataProperty` and keeps the key, which is what this has to match.
+    const descriptors = Object.create(null) as Record<string | symbol, PropertyDescriptor>;
     for (const key of ownKeys(object)) {
         // `ownKeys` lists own keys only, and an own key always has a descriptor.
         descriptors[key] = Object.getOwnPropertyDescriptor(object, key) as PropertyDescriptor;
