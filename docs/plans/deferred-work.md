@@ -53,8 +53,9 @@ on the spot.
 ## `load()` can drop the placeholder it appends
 
 **Verified resolved on 2026-10-10** — the placeholder now lands at its own index and carries the saved
-`options`/`tag` over, so a `save()`/`load()` round trip no longer loses that bin; tracked in
-[issue #89](https://github.com/soimy/maxrects-packer/issues/89). Kept for the record.
+`options`, `tag` and `maxWidth`/`maxHeight` over, so a `save()`/`load()` round trip no longer loses
+that bin; tracked in [issue #89](https://github.com/soimy/maxrects-packer/issues/89). Kept for the
+record.
 
 Found while documenting what `load()` does with a saved bin the current packer could not hold; the
 guide then stated the append, and this is the part of it that looked like a bug rather than a design.

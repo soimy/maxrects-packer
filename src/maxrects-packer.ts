@@ -282,7 +282,8 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     /**
      * Load bins to the packer: each one replaces the bin at its index, and existing bins past the
      * loaded array are kept. A saved bin too large for this packer is restored as an
-     * `OversizedElementBin` placeholder at its index, keeping the saved `options` and `tag`.
+     * `OversizedElementBin` placeholder at its index, keeping its `options`, `tag` and
+     * `maxWidth`/`maxHeight`.
      *
      * @param bins - MaxRectsBin objects
      */
@@ -292,6 +293,11 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 // The placeholder takes its own index like every other entry: appending it instead
                 // leaves the next entry free to write over the position the append landed on.
                 const placeholder = new OversizedElementBin<T>(bin.width, bin.height, {});
+                // The constructor sizes the maxima to the bin itself, but a smart bin saves a current
+                // size below them; without the saved maxima the next `save()` would describe an entry
+                // this packer loads back as a normal bin.
+                placeholder.maxWidth = bin.maxWidth;
+                placeholder.maxHeight = bin.maxHeight;
                 if (bin.options) placeholder.options = { ...bin.options };
                 if (bin.tag) placeholder.tag = bin.tag;
                 this.bins[index] = placeholder;
