@@ -350,11 +350,12 @@ English keeps the project history usable for every contributor and every downstr
   all deliberate: `eslint.config.js`, `.eslintrc.json` and `.github/workflows/node.js.yml` are no
   longer published, `dist/maxrects-packer.cjs` is new, and `UPGRADE_SUMMARY.md` was deleted as an
   obsolete dependency-upgrade log. There is **no `.npmignore`**, so npm falls back to `.gitignore`
-  (which lists `dist`/`lib`), but `files` wins and `dist` still ships. Note that `assets/*.png` is not
-  in the allowlist (2.7.x did not ship it either), so the README images stay broken on the npm page;
-  adding the whole `assets` directory would fix that at the cost of growing the tarball from ~66kB to
-  ~530kB (`assets/` is 468kB, mostly uncompressed PNG). `clean` removes both `dist` and the legacy
-  `lib`.
+  (which lists `dist`/`lib`), but `files` wins and `dist` still ships. `assets/*.png` is not in the
+  allowlist, and publishing it would not change what the npm page shows: npm does not resolve a
+  relative README path against the package (checked on the page on 2026-10-10), which is why the
+  README heading uses an absolute URL. Adding the whole `assets` directory would grow the tarball
+  from ~66kB to ~530kB (`assets/` is 468kB, mostly uncompressed PNG). `clean` removes both `dist`
+  and the legacy `lib`.
 - The `resolved` fields in `package-lock.json` must point at `registry.npmjs.org`: this machine has a
   China-based npm mirror configured at the user level, and regenerating the lockfile through it
   rewrites every absolute tarball URL to the mirror host, which breaks `npm ci` for everyone else
