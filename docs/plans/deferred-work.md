@@ -14,16 +14,6 @@ One behaviour question the measurements raised while the dead code around it was
 measurements came from the coverage report and from deleting the code in question and re-running the
 suite.
 
-- **`add(width, height, undefined)` throws an internal `TypeError` when `tag: true`.** Measured:
-  `new MaxRectsPacker(100, 100, 0, { tag: true }).add(50, 50, undefined)` is
-  `TypeError: Cannot read properties of undefined (reading 'tag')`, thrown by `rect.data.tag`, while the
-  single-argument overload guards the same read with `&&` and packs into one bin. `troubleshooting` now
-  states it and the `add()` JSDoc says the argument has to be an object in that mode, so a caller can
-  know; what is undecided is whether a bad call should keep reporting an internal message at all.
-  Rejecting `undefined` explicitly, or treating it as `{}` the way the single-argument form does, changes
-  what a caller sees on a bad call rather than what a valid call packs — decidable on its own, and no
-  spec pins either direction today.
-
 - **`add()` tags a non-exclusive bin with only the first rect's tag** (`src/maxrects-packer.ts:78`).
   In non-exclusive mode one bin may hold several tag groups — `test/maxrects-packer.spec.js` pins a bin
   whose rects carry `one`, `one`, `two`, `two` — so that tag names just one of them, and `save()`

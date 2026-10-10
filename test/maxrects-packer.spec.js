@@ -85,6 +85,38 @@ describe("#add", () => {
         expect(packer.bins[packer.bins.length - 1].tag).toBeUndefined();
     });
 
+    test("adds an undefined data argument as an untagged bin instead of throwing", () => {
+        // Regression for #91: this overload read `rect.data.tag` unguarded, so an explicit
+        // `undefined` threw `TypeError: Cannot read properties of undefined (reading 'tag')` while
+        // the rect overload guarded the same read and packed into one untagged bin.
+        packer.options.tag = true;
+        expect(() => packer.add(1000, 1000, undefined)).not.toThrow();
+        expect(packer.bins.length).toBe(1);
+        expect(packer.bins[0].rects.length).toBe(1);
+        expect(packer.bins[0].tag).toBeUndefined();
+    });
+
+    test("packs an undefined data argument exactly like an empty object", () => {
+        const withUndefined = new MaxRectsPacker(1024, 1024, 0, { ...opt, tag: true });
+        const withEmptyObject = new MaxRectsPacker(1024, 1024, 0, { ...opt, tag: true });
+        for (const [width, height] of [
+            [1000, 1000],
+            [10, 10],
+            [500, 500],
+            [1000, 1000]
+        ]) {
+            withUndefined.add(width, height, undefined);
+            withEmptyObject.add(width, height, {});
+        }
+        expect(withUndefined.bins.length).toBe(withEmptyObject.bins.length);
+        withUndefined.bins.forEach((bin, index) => {
+            expect(bin.tag).toBe(withEmptyObject.bins[index].tag);
+            expect(bin.rects.map((rect) => [rect.x, rect.y, rect.width, rect.height])).toEqual(
+                withEmptyObject.bins[index].rects.map((rect) => [rect.x, rect.y, rect.width, rect.height])
+            );
+        });
+    });
+
     test("adds to bins with non-exclusive tag matching", () => {
         packer.options = {
             ...packer.options,

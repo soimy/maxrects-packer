@@ -50,8 +50,10 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      *
      * @param width - width of the input bin/rectangle
      * @param height - height of the input bin/rectangle
-     * @param data - custom data object; with `tag: true` the packer reads `data.tag`, so this has to
-     * be an object there — passing `undefined` throws (`packer.add(w, h, {})` is the safe form)
+     * @param data - custom data object; with `tag: true` the packer reads `data.tag` to label a bin
+     * it has to open, so only an object can carry a tag. `undefined` is treated as untagged data
+     * rather than rejected: the rect is offered to the existing bins first, and a bin opened for it
+     * stays untagged — what the single-argument form does for a rect that carries no `data`
      */
     public add(width: number, height: number, data: any): T;
     /**
@@ -96,7 +98,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 let added = this.bins.slice(this._currentBinIndex).find((bin) => bin.add(rect as T) !== undefined);
                 if (!added) {
                     let bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
-                    if (this.options.tag && rect.data.tag) bin.tag = rect.data.tag;
+                    if (this.options.tag && rect.data && rect.data.tag) bin.tag = rect.data.tag;
                     if (this.addToBin(bin, rect as T)) this.bins.push(bin);
                 }
             }
