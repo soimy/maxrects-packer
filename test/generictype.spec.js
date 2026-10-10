@@ -3,8 +3,8 @@ import { MaxRectsPacker } from "../src/maxrects-packer";
 import { Rectangle } from "../src/geom/Rectangle";
 
 class Block extends Rectangle {
-    constructor(_width = 0, _height = 0, _x = 0, _y = 0, _rot = false) {
-        super();
+    constructor(width = 0, height = 0, x = 0, y = 0, rot = false) {
+        super(width, height, x, y, rot);
         this.color = 0xffffffff; // Extended attribution
     }
     getColor() {
@@ -33,6 +33,19 @@ test("generic type extends Rectangle class", () => {
     expect(packer.bins[0].rects.length).toBe(blocks.length);
     expect(packer.bins[0].rects[0].x).toBe(0);
     expect(packer.bins[0].rects[0].y).toBe(0);
+    // The constructor has to forward its arguments to `super()`. A `Block` that dropped them would be
+    // 0×0, and three 0×0 rects stack at the origin — the assertions above would still hold, so the
+    // sizes and the placement they produce are the part that catches it.
+    expect(packer.bins[0].rects.map((rect) => [rect.width, rect.height])).toEqual([
+        [512, 512],
+        [512, 512],
+        [512, 512]
+    ]);
+    expect(packer.bins[0].rects.map((rect) => [rect.x, rect.y])).toEqual([
+        [0, 0],
+        [512, 0],
+        [0, 512]
+    ]);
     expect(packer.bins[0].rects[0].color).toBe(colors[0]);
     expect(packer.bins[0].rects[0].getColor()).toBe(colors[0]);
     expect(packer.bins[0].rects[2].color).toBe(0xffffffff);
