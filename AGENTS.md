@@ -293,8 +293,6 @@ English keeps the project history usable for every contributor and every downstr
   broken and the fixed state alike.
 - `MaxRectsBin.reset(true, true)` replaces `options` with an incomplete object: `exclusiveTag`/`logic`
   are missing and `square` becomes `true` (unlike the class default).
-- `packer.add(w, h, undefined)` throws `TypeError` when `options.tag === true` (`rect.data.tag`; the
-  single-argument branch has an `&&` guard, this one does not).
 - **`OversizedElementBin`'s two-argument construction is a supported tolerance, not dead code.** The
   second overload declares `data?: any` so TypeScript callers can use the form JavaScript has always
   had; leaving `data` out makes the bin report `null`, and its inner rect keeps `{}` because
