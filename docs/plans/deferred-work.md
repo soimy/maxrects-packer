@@ -180,14 +180,11 @@ on the three pull requests is green — so each waits for a commit of its own.
   and its inputs have to be re-checked against the current `action.yml` — the versions in use were
   verified against `upload-pages-artifact@v3` and `configure-pages@v5`. Tracked in
  [issue #119](https://github.com/soimy/maxrects-packer/issues/119).
-- **The README's only local image is `assets/favicon32.png`, 2911 bytes, and it is not in the `files`
-  allowlist.** `AGENTS.md` frames the fix as adding the whole `assets` directory for ~468 kB, but
-  `assets/preview.png` alone is 444695 of those bytes, so a single allowlist entry would do it for
-  +2.9 kB — if the npm page resolves a relative image out of the tarball at all. That could not be
-  checked from here (npmjs.com answers 403 to a plain request) and npm's renderer may resolve against the
-  repository instead, in which case there is nothing to fix. The file is also served by neither site:
-  the old index only used it as an `<img>` in the README's heading, and that URL already 404s on the
-  published TypeDoc site. Tracked in
+- **Verified resolved on 2026-10-10** — npm does not resolve a relative README image against the
+  package, so the icon stayed broken on the page even though the file is in the repository; the
+  README heading now uses an absolute URL, which renders on both sites. `assets/*.png` stays out of
+  the `files` allowlist: publishing it would have grown the tarball from ~66 kB to ~530 kB, and the
+  renderer does not look inside the package for a relative path anyway. Tracked in
    [issue #102](https://github.com/soimy/maxrects-packer/issues/102).
 - **A CommonJS TypeScript consumer cannot import the package under `node16`/`nodenext`.** Measured on the
   published tarball, in a `.cts` file compiled with `module`/`moduleResolution` `node16`:

@@ -1,4 +1,4 @@
-# ![icon](./assets/favicon32.png) Max Rects Packer
+# ![icon](https://raw.githubusercontent.com/soimy/maxrects-packer/master/assets/favicon32.png) Max Rects Packer
 
 [![Node.js CI](https://github.com/soimy/maxrects-packer/actions/workflows/node.js.yml/badge.svg)](https://github.com/soimy/maxrects-packer/actions/workflows/node.js.yml)
 [![codecov](https://codecov.io/gh/soimy/maxrects-packer/branch/master/graph/badge.svg)](https://codecov.io/gh/soimy/maxrects-packer)
