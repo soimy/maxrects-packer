@@ -24,14 +24,15 @@ Every row is one PR: one logical change, an English conventional-commit title, n
 | 5 | `bin.tag` in non-exclusive mode names only the first tag group | `fix` | [#93](https://github.com/soimy/maxrects-packer/issues/93) | needs the semantics decision |
 | 6 | The documented return values of `add()`/`addArray()` are unasserted | `test` | [#97](https://github.com/soimy/maxrects-packer/issues/97) | yes — three assertions |
 | 7 | The workflows pin action majors several releases behind | `ci` | [#119](https://github.com/soimy/maxrects-packer/issues/119) | yes — one PR, three files |
-| 8 | Custom heading anchors read out with their braces | `docs` | [#101](https://github.com/soimy/maxrects-packer/issues/101) | yes — cosmetic |
-| 9 | An `exports` map for `require`/`import` under `node16`/`nodenext` | `feat!` | [#98](https://github.com/soimy/maxrects-packer/issues/98) | in scope for 3.0.0 |
-| 10 | Release `3.0.0` | release | [#61](https://github.com/soimy/maxrects-packer/issues/61), [#62](https://github.com/soimy/maxrects-packer/issues/62) | after 1–9 |
+| 8 | Four Dependabot alerts in the nested vitepress tree | `build(deps)` | — | needs the upgrade-or-dismiss decision |
+| 9 | Custom heading anchors read out with their braces | `docs` | [#101](https://github.com/soimy/maxrects-packer/issues/101) | yes — cosmetic |
+| 10 | An `exports` map for `require`/`import` under `node16`/`nodenext` | `feat!` | [#98](https://github.com/soimy/maxrects-packer/issues/98) | in scope for 3.0.0 |
+| 11 | Release `3.0.0` | release | [#61](https://github.com/soimy/maxrects-packer/issues/61), [#62](https://github.com/soimy/maxrects-packer/issues/62) | after 1–10 |
 | H | The tag `master` shadows the branch of the same name | `chore` | — | needs a remote tag deletion |
 
 Ordering is severity × readiness, not a schedule: 2 is the only item that can take an application down,
-3–5 are the three open holes in the behaviour contracts, 6–8 are cheap and independent, 9 is the
-breaking change that makes this release a major, and 10 is the milestone the rest feeds. Re-order
+3–5 are the three open holes in the behaviour contracts, 6–9 are cheap and independent, 10 is the
+breaking change that makes this release a major, and 11 is the milestone the rest feeds. Re-order
 whenever a decision lands.
 
 ## 1. Deprecate `2.7.4` on npm
@@ -109,14 +110,32 @@ inputs of `actions/deploy-pages` against its current `action.yml`: the deploy jo
 `master`, so it is the one step that has never run here.
 **Exit criteria:** all three workflows green, including one deployment from `master`.
 
-## 8. Heading anchors in the permalink label (#101)
+## 8. Dependabot alerts in the vitepress tree
+
+GitHub reports four open alerts on the default branch (1 high, 3 moderate). All four sit in the
+**docs-site** tree, on the copies vitepress nests: `node_modules/vitepress/node_modules/vite` is 5.4.21
+and `…/esbuild` is 0.21.5, both inside the vulnerable ranges (fixed in vite 6.4.3 and esbuild 0.25.0),
+while the top-level `vite` (6.4.4) and `esbuild` (0.25.12) are already past the fixes. They are dev-only
+and never published — the package has zero runtime dependencies — so this is hygiene rather than a
+consumer-facing risk, but the repository has no Dependabot version-update configuration, so nothing
+raises it on its own.
+
+**Decide first:** vitepress 1.6.4 pins `vite: ^5.4.14`, so the nested copy cannot move within 1.x.
+Options: bump to `vitepress@2.0.0-alpha` (it depends on `vite: ^8.2.1`, and the docs build is all it
+affects), force the nested copies with an `overrides` entry (vitepress 1.6.4 is not tested against
+vite 6+), or dismiss the alerts as dev-only and wait for vitepress 2.0.0 stable.
+**Verification:** `npm run docs:build` and the `Build documentation` job, plus the lockfile rules —
+`resolved` URLs must point at `registry.npmjs.org`, and `npm install` on npm 10.9.8 needs
+`--legacy-peer-deps`.
+
+## 9. Heading anchors in the permalink label (#101)
 
 Either drop the eight unreferenced `{#custom-id}` attributes and accept VitePress's `_N-` slugs, or keep
 the ids and treat the `aria-label` as an upstream quirk. Nothing links to the eight today.
 **Files:** `docs/contributor/behavior-contracts.md`, `docs/.vitepress/config.mts` if the slug source
 moves.
 
-## 9. `exports` map (#98)
+## 10. `exports` map (#98)
 
 Per-format conditions and declarations fix the `node16`/`nodenext` CommonJS import, and the map seals off
 the deep `maxrects-packer/dist/...` paths — which is why this is the breaking change that makes the
@@ -129,7 +148,7 @@ footer, because the squash body is what `commit-and-tag-version` parses.
 **Exit criteria:** the CommonJS `.cts` fixture compiles under `node16` and `nodenext` — the gap measured
 in the ledger — and the deep-import change is documented as breaking.
 
-## 10. Release `3.0.0`
+## 11. Release `3.0.0`
 
 `master` is 35 commits past `v2.7.4` (12 of them `fix`) and 48 past the version npm actually serves.
 Everything in this queue lands first, then:
@@ -141,7 +160,7 @@ npm publish                # manual — release.yml does not publish to npm
 ```
 
 The commits so far carry no `feat` and no breaking marker, so `commit-and-tag-version` would cut
-`2.7.5`; item 9's marker is what makes it a major, and `npm run version -- --release-as major` is the
+`2.7.5`; item 10's marker is what makes it a major, and `npm run version -- --release-as major` is the
 explicit fallback if the derived number is ever wrong.
 
 **Exit criteria:** `latest` on npm points at a build whose `main`/`types` match this repository;
