@@ -8,6 +8,29 @@ and specifications go to `docs/spec/`, named `YYYY-MM-DD-<topic>.md`. Neither di
 published site (`srcExclude` in `docs/.vitepress/config.mts`), and both are tracked source that
 `npm run docs:clean` must never touch — `npm run verify:docs` fails when it does.
 
+## `place()` recurses without bound when `padding` is not a number
+
+Found while triaging the untracked issues on 2026-10-11: [issue #43](https://github.com/soimy/maxrects-packer/issues/43)
+had been open since 2022 with no reproduction, and it is still live on `master`.
+
+- **A non-numeric `padding` makes `place()` re-enter itself forever** (`src/maxrects-bin.ts:225`, `:246`).
+  The report passes the options object into the padding slot —
+  `new MaxRectsPacker(512, 512, { padding: 1 })`, where the signature is `(width, height, padding,
+  options)` — and a plain `NaN` does the same. Every size in the bin arithmetic is then `NaN`, so
+  `updateBinSize()`'s bounds check `!(tmpWidth > this.maxWidth || tmpHeight > this.maxHeight)` reads as
+  "fits" (`src/maxrects-bin.ts:403`, `:427`), the bin "grows" and the method reports success, and
+  `place()` recurses to try the same placement again. Measured on the bundle built from `45cb7ce`:
+  numeric padding places a 512×512 rect into a 512×512 packer, while `{padding: 1}` and `NaN` never
+  return — at recursion depth 300 the bin is `NaN×NaN` holding 599 free rects (two are added per
+  round) and every round runs the O(n²) `pruneFreeList()`, so the process hangs and dies with
+  `RangeError: Maximum call stack size exceeded` after 113 s rather than failing fast. Nothing
+  validates the constructor's numbers (`src/maxrects-packer.ts:57`), and the growth retry has no
+  bound. Decide between rejecting a non-finite `padding` at construction, bounding the retry in
+  `place()`, or both: the first is the clearer error but is a new throw for JavaScript callers, the
+  second is the general guard against any other `NaN` source. TypeScript callers already get a compile
+  error for the call above; JavaScript callers get the hang. Tracked in
+  [issue #43](https://github.com/soimy/maxrects-packer/issues/43).
+
 ## Code changes (found while closing the test-coverage gaps, PR #73)
 
 One behaviour question the measurements raised while the dead code around it was removed. The
