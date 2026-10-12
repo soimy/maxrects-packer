@@ -49,7 +49,8 @@ These are the contract with downstream users — breaking one is a breaking chan
 version, with the reasoning, is [docs/contributor/behavior-contracts.md](./docs/contributor/behavior-contracts.md).
 
 1. **In-place mutation**: `add()/addArray()` write `x/y/rot/oversized` directly onto the object passed
-   in. `add()` returns that same object — except the multi-argument overload, which constructs an
+   in, and nothing else — a rect the caller sealed still packs, so the library never adds a property to
+   one. `add()` returns that same object — except the multi-argument overload, which constructs an
    internal `new Rectangle` and returns that instead — while `addArray()` returns nothing.
 2. **Tag grouping**: with `exclusiveTag: true` (the default) a tagged rect may only enter a bin with
    the same tag, and an untagged bin refuses tagged rects. The check lives in `MaxRectsBin.place()`,
@@ -80,12 +81,18 @@ version, with the reasoning, is [docs/contributor/behavior-contracts.md](./docs/
 8. **`clone()` isolates the two bins**: both implementations copy the rects (`Rectangle.Clone`, so a
    custom class keeps its prototype and its extra fields) and carry over `tag` and `data`. Mutating a
    rect one bin holds, or adding to one bin, therefore never reaches the other. The copy is **shallow**
-   — the object in `rect.data` is shared — and it is produced by re-packing the copies, which
-   reproduced the source's placements in every fixture measured (`test/clone.spec.js` pins one rotated
-   fixture and sweeps 80 seeded bins). That is a measurement, not a guarantee: the replay scores each
-   copy afresh, and a placed rect arrives with its footprint already swapped when `rot` is true, so a bin
-   holding rotated rects can land differently or refuse to build at all — the reproducers are in
-   `docs/plans/deferred-work.md#clone-re-decides-rotation`. That replay runs with the tag gate **off** and restores
+   — the object in `rect.data` is shared — and it is produced by re-packing the copies, which reproduces
+   the source's placements: the replay is handed each rect in the orientation the source was handed it,
+   and the bin keeps a per-placement record of the rects it turned, because the state alone cannot say
+   whether this bin turned a rect or the caller handed it over already rotated. The record lives on the bin
+   rather than on the rect, which invariant 1 forbids adding fields to (`test/clone.spec.js` pins both
+   reproducers that used to land differently or refuse to build, the sealed-rect case, and sweeps seeded
+   tight bins of plain and already-rotated rects). Two things are outside the guarantee, because the replay
+   runs under the bin's current `options`: a rect the caller **edits after** it was placed, where the replay
+   places what the rect is *now* and a resized rect can land elsewhere or be refused, and **`options`
+   changed after** the placement, where the recorded orientation can stop being one the bin takes — the rect
+   then falls back to the orientation it is stored in, and a rect neither orientation fits is still reported.
+   That replay runs with the tag gate **off** and restores
    the source's `options`/`tag`/`data` afterwards: a bin can hold rects its own gate would now refuse
    — it was tagged after it was filled, or it carries several tags in non-exclusive mode — and
    re-running the gate would give back a copy with fewer rects than the original.

@@ -2,12 +2,45 @@ import { EDGE_MAX_VALUE, PACKING_LOGIC, IOption } from "./types";
 import { Rectangle, IRectangle } from "./geom/Rectangle";
 import { Bin } from "./abstract-bin";
 
+/**
+ * Put a copy back into the orientation its source was handed over in, undoing the turn this bin applied to
+ * it: `rot` flips back and the dimensions swap with it. `Rectangle`'s setter swaps on the way; an object
+ * without one — the plain `{width, height}` rects the README advertises — keeps the footprint it has, so
+ * the dimensions are pinned afterwards either way.
+ *
+ * @param rect - the copy to restore, mutated in place
+ */
+function undoBinRotation(rect: IRectangle): void {
+    const width = rect.width;
+    const height = rect.height;
+    rect.rot = !rect.rot;
+    rect.width = height;
+    rect.height = width;
+}
+
 export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
     public width: number;
     public height: number;
     public freeRects: Rectangle[] = [];
+    /**
+     * The rects this bin holds, in the order they were placed. This is the packing output rather than an
+     * input: the bin keeps its own record of which placements turned their rect beside it, and a consumer
+     * that reshapes this array — a `splice()`, a `sort()`, an assignment — leaves records that no longer line
+     * up, which `clone()` ignores rather than applying to the wrong rect.
+     */
     public rects: T[] = [];
     private verticalExpand: boolean = false;
+    /**
+     * Whether each placement turned its rect, in placement order, each entry naming the rect it was recorded
+     * for. It is the one thing a placed rect cannot say about itself: `rot` true with the dimensions swapped
+     * describes both a rect this bin rotated and one the caller handed over already rotated, and `clone()`
+     * needs the difference to replay the same input. Recorded per placement rather than per rect, because the
+     * same object can be placed more than once, and kept here rather than on the rect, because a rect the
+     * caller sealed rejects a new property — and such a rect packed fine before this record existed. The rect
+     * each entry names is what lets `turned()` tell a record that still lines up from one a consumer reshaped
+     * `rects` out from under.
+     */
+    private turnedByPlacement: { rect: T; turned: boolean }[] = [];
     private stage: Rectangle;
     private border: number;
     public options: IOption = {
@@ -60,8 +93,12 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
 
         // The tag gate is in place(), which every path reaches; a rect this bin refuses comes back
         // from there as undefined.
+        const wasRotated = rect.rot === true;
         const result = this.place(rect);
-        if (result) this.rects.push(result);
+        if (result) {
+            this.rects.push(result);
+            this.turnedByPlacement.push({ rect: result, turned: this.turnedBy(wasRotated, result) });
+        }
         return result;
     }
 
@@ -75,11 +112,20 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
                 return a.hash > b.hash ? -1 : 1;
             } else return result;
         });
+        // Every rect is placed again below, so the record is rebuilt from scratch rather than carried over —
+        // a rect that goes back unrotated must not stay marked as turned.
+        this.turnedByPlacement = [];
         for (let rect of this.rects) {
-            if (!this.place(rect)) {
+            const wasRotated = rect.rot === true;
+            if (this.place(rect)) {
+                this.turnedByPlacement.push({ rect, turned: this.turnedBy(wasRotated, rect) });
+            } else {
                 unpacked.push(rect);
             }
         }
+        // A rect that could not be placed left no record behind — the loop above records the placements that
+        // succeeded and nothing else — so only `rects` has an entry to remove here. Splicing the record by
+        // this index would take a survivor's, which shifts every record after it.
         for (let rect of unpacked) this.rects.splice(this.rects.indexOf(rect), 1);
         return unpacked.length > 0 ? unpacked : undefined;
     }
@@ -89,6 +135,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
             if (this.data) delete this.data;
             if (this.tag) delete this.tag;
             this.rects = [];
+            this.turnedByPlacement = [];
             if (resetOption) {
                 this.options = {
                     smart: true,
@@ -121,13 +168,22 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
      * copies are shallow (`Rectangle.Clone`), so a payload stored in `rect.data` is still shared, and a
      * rect class that cannot be copied that way reports it from `Rectangle.Clone()`.
      *
-     * It throws when the replay cannot place a rect this bin holds. Two ways in: a rect resized after it
-     * was placed into something the bin can no longer hold, and a rotated rect the replay lands in the
-     * other orientation (the copies are re-packed, so orientation is decided again — see the deferred-work
-     * ledger). Reporting it beats handing back a bin that quietly holds fewer rects than the original.
+     * The copy reproduces the source's placements under the bin's current `options`. The replay is handed
+     * each rect in the orientation the source was handed it, which is what makes that work: a rect this bin
+     * turned is stored as the footprint it occupies, and the bin records which placements turned theirs,
+     * because the state alone cannot say whether the bin turned a rect or the caller handed it over already
+     * rotated. When that orientation is no longer one the bin takes — `options.allowRotation` turned off
+     * after the placement, say — the rect falls back to the orientation it is stored in rather than failing
+     * the copy.
+     *
+     * It throws when the replay cannot place a rect this bin holds in either orientation, which a rect
+     * resized after it was placed into something the bin can no longer hold brings about. Reporting it beats
+     * handing back a bin that quietly holds fewer rects than the original.
      *
      * @returns a bin holding copies of the same rects, with the same options, tag and data — the copies
-     * are re-packed, so the size it grows to and the placements it lands on can differ from the source's
+     * are re-packed under the current `options`, so the size it grows to and the placements it lands on can
+     * differ from the source's when a rect was edited after it was placed, or when the options changed
+     * since
      */
     public clone(): MaxRectsBin<T> {
         // The replay runs with the tag gate off. The source already settled which rects it accepts — in
@@ -139,18 +195,61 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
             ...this.options,
             exclusiveTag: false
         });
-        for (let rect of this.rects) {
+        for (let index = 0; index < this.rects.length; index++) {
+            const rect = this.rects[index];
             const copy = Rectangle.Clone(rect);
+            // The replay scores the dimensions it is handed, so hand it the ones the caller gave: a rect
+            // this bin turned would otherwise be scored as its rotated footprint, which picks a free rect
+            // the source never looked at and lands the rect somewhere else, or refuses it outright.
+            if (this.turned(index, rect)) undoBinRotation(copy);
             if (clonedBin.add(copy) === undefined) {
-                throw new Error(
-                    "MaxRectsBin.clone(): the bin holds a rect it can no longer place, so the copy would be incomplete — repack the bin before cloning it"
-                );
+                // A rect this bin turned is replayed in the orientation the caller gave it, and the bin's
+                // options can have changed since the placement — `allowRotation` turned off, say — which
+                // leaves that orientation one the replay no longer takes. Fall back to the orientation the
+                // rect is stored in, which is what this method did before it knew the difference: only the
+                // rect that needs it is affected, and a complete copy beats throwing over one that no longer
+                // fits.
+                const stored = this.turned(index, rect) ? Rectangle.Clone(rect) : undefined;
+                if (!stored || clonedBin.add(stored) === undefined) {
+                    throw new Error(
+                        "MaxRectsBin.clone(): the bin holds a rect it can no longer place, so the copy would be incomplete — repack the bin before cloning it"
+                    );
+                }
             }
         }
         clonedBin.options = { ...this.options };
         clonedBin.tag = this.tag;
         clonedBin.data = this.data;
         return clonedBin;
+    }
+
+    /**
+     * Whether this bin turned the rect `rects` holds at `index`, as the placement recorded it. `rects` is the
+     * packing output, and a consumer that reshapes it — a `splice()`, a `sort()`, an assignment — leaves the
+     * record describing placements that are no longer at those positions. So the record is only trusted where
+     * it still names the rect it was made for; an entry that no longer lines up is ignored, and that rect is
+     * replayed in the orientation it is stored in.
+     *
+     * @param index - the position in `rects`
+     * @param rect - the rect held there
+     * @returns true when the placement that put this rect in the bin rotated it
+     */
+    private turned(index: number, rect: T): boolean {
+        const entry = this.turnedByPlacement[index];
+        return entry !== undefined && entry.rect === rect && entry.turned;
+    }
+
+    /**
+     * Whether a placement turned its rect. `rot` is the one thing a placement changes about the orientation,
+     * so a rect that came out of it with a different value than it went in was turned — the fact `clone()`
+     * needs to hand its replay the same input.
+     *
+     * @param wasRotated - `rot` as the rect was handed to the placement
+     * @param rect - the rect the placement returned
+     * @returns true when the placement rotated it away from the orientation it was handed in
+     */
+    private turnedBy(wasRotated: boolean, rect: T): boolean {
+        return wasRotated !== (rect.rot === true);
     }
 
     private place(rect: IRectangle): T | undefined {
