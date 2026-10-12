@@ -655,6 +655,239 @@ describe("clone", () => {
         expect(placements(bin.clone())).toEqual(placements(bin));
     });
 
+    test("replays a rotated rect in the orientation it was handed over in", () => {
+        // The source rotated the 1×3 into the strip under the 6×13. The copy used to replay the
+        // footprint the source had rotated to (3×1), score a different free rect and land it unrotated
+        // across the bin, which then grew the other way. Two rects are enough: the divergence is in the
+        // replay's input, not in the size of the fixture.
+        const bin = new MaxRectsBin(12, 26, 0, { ...opt, pot: false, allowRotation: true, border: 1 });
+        bin.add(new Rectangle(6, 13));
+        bin.add(new Rectangle(1, 3));
+        expect(bin.rects[1].rot).toBe(true); // the fixture has to rotate a rect, or this proves nothing
+
+        const copy = bin.clone();
+        expect(placements(copy)).toEqual(placements(bin));
+        expect([copy.width, copy.height]).toEqual([bin.width, bin.height]);
+    });
+
+    test("clones a bin whose rotated rects the replay used to refuse", () => {
+        // The same divergence pushed until the replay cannot place the rect at all: the footprint the
+        // source rotated to (12×2) does not fit the strip it was placed in, so clone() threw instead of
+        // handing back a bin holding fewer rects.
+        const bin = new MaxRectsBin(12, 23, 0, { ...opt, pot: false, allowRotation: true, border: 2 });
+        bin.add(new Rectangle(6, 15));
+        bin.add(new Rectangle(12, 2));
+        expect(bin.rects[1].rot).toBe(true); // the fixture has to rotate a rect, or this proves nothing
+
+        expect(placements(bin.clone())).toEqual(placements(bin));
+    });
+
+    test("restores the orientation of a plain rect the bin rotated", () => {
+        // A plain rect has no `rot` setter, so the footprint has to be undone by swapping the dimensions
+        // by hand — the mirror of what `place()` does when it rotates one. Same fixture as above, plain
+        // objects instead of `Rectangle` instances, which is what the README advertises.
+        const bin = new MaxRectsBin(12, 26, 0, { ...opt, pot: false, allowRotation: true, border: 1 });
+        bin.add({ width: 6, height: 13 });
+        bin.add({ width: 1, height: 3 });
+        expect(bin.rects[1].rot).toBe(true);
+
+        expect(placements(bin.clone())).toEqual(placements(bin));
+    });
+
+    test("reproduces a bin whose rects were handed over already rotated", () => {
+        // A rect the caller hands over already rotated carries the same state as one this bin turned, so the
+        // stored state alone cannot say which orientation to replay. `place()` marks the rects it turns,
+        // which is what makes this exact rather than a guess.
+        const bin = new MaxRectsBin(21, 21, 0, { ...opt, pot: false, allowRotation: true, border: 1 });
+        for (const [width, height] of [
+            [10, 3],
+            [11, 4],
+            [6, 18]
+        ]) {
+            const rect = new Rectangle(width, height);
+            rect.rot = true; // handed over already rotated rather than turned by the bin
+            bin.add(rect);
+        }
+
+        expect(placements(bin.clone())).toEqual(placements(bin));
+    });
+
+    test("reproduces a bin whose rotated rects the replay used to refuse", () => {
+        // The same case, small enough to read: the source takes a 4×4 and a pre-rotated 1×3, and the copy
+        // used to replay that 1×3 as the 3×1 footprint it is stored as — landing it elsewhere, and, with the
+        // bin this tight, refusing it and throwing instead.
+        const bin = new MaxRectsBin(10, 26, 0, { ...opt, pot: false, allowRotation: true, border: 2 });
+        for (const [width, height] of [
+            [4, 4],
+            [1, 3]
+        ]) {
+            const rect = new Rectangle(width, height);
+            rect.rot = true; // handed over already rotated rather than turned by the bin
+            bin.add(rect);
+        }
+
+        expect(placements(bin.clone())).toEqual(placements(bin));
+    });
+
+    test("leaves the shape of the caller's rect alone", () => {
+        // The record of which rects this bin turned lives on the bin. It cannot live on the rect: adding a
+        // property is what a sealed rect rejects, and such a rect packed fine before the record existed.
+        const bin = new MaxRectsBin(256, 256, 0, { ...opt, allowRotation: true });
+        const kept = new Rectangle(200, 100);
+        const turned = new Rectangle(100, 200);
+        const keptNames = Object.getOwnPropertyNames(kept);
+        const turnedNames = Object.getOwnPropertyNames(turned);
+        bin.add(kept);
+        bin.add(turned);
+        expect(turned.rot).toBe(true); // the fixture has to rotate a rect, or this proves nothing
+        // Packing writes the placement onto the rect; it does not give it a new field.
+        expect(Object.getOwnPropertyNames(kept)).toEqual(keptNames);
+        expect(Object.getOwnPropertyNames(turned)).toEqual(turnedNames);
+
+        // A sealed rect still packs, rotation included: sealing forbids new properties, and the bin adds none.
+        const sealedBin = new MaxRectsBin(256, 256, 0, { ...opt, allowRotation: true });
+        sealedBin.add(new Rectangle(200, 100));
+        const sealed = Object.seal(new Rectangle(100, 200));
+        sealedBin.add(sealed);
+        expect(sealed.rot).toBe(true);
+        expect(placements(sealedBin.clone())).toEqual(placements(sealedBin));
+
+        const plainBin = new MaxRectsBin(256, 256, 0, { ...opt, allowRotation: true });
+        const plain = Object.seal({ width: 100, height: 200, x: 0, y: 0, rot: false });
+        plainBin.add(new Rectangle(200, 100));
+        plainBin.add(plain);
+        expect(plain.rot).toBe(true);
+        expect(placements(plainBin.clone())).toEqual(placements(plainBin));
+    });
+
+    test("reproduces a bin that dropped a rect in a repack", () => {
+        // `repack()` rebuilds the record from the placements that succeeded, so the record is shorter than
+        // `rects` while the failed rects are still in it — removing one of those must not take a survivor's
+        // record with it, which would leave every record after it shifted by one.
+        const bin = new MaxRectsBin(70, 70, 0, { ...opt, allowRotation: true });
+        const rects = [new Rectangle(49, 32), new Rectangle(5, 17), new Rectangle(36, 23)];
+        for (const rect of rects) bin.add(rect);
+        rects[0].width = 280; // too wide for the bin now, so the repack has to drop it
+
+        expect(bin.repack()).toHaveLength(1);
+        expect(placements(bin.clone())).toEqual(placements(bin));
+    });
+
+    test("falls back to the stored orientation when the options changed under it", () => {
+        // The orientation the caller gave is the one the replay prefers, and `options` is public and mutable:
+        // turning rotation off after the placement leaves that orientation one the replay no longer takes.
+        // The rect then falls back to the orientation it is stored in — what `clone()` did before it knew the
+        // difference — because a copy holding every rect beats a throw.
+        const bin = new MaxRectsBin(100, 60, 0, { smart: false, pot: false, allowRotation: true });
+        bin.add(new Rectangle(60, 100));
+        expect(bin.rects[0].rot).toBe(true); // placed rotated, so it has an orientation to restore
+        bin.options.allowRotation = false;
+
+        const copy = bin.clone();
+        expect(copy.rects).toHaveLength(1);
+        expect(placements(copy)).toEqual(placements(bin));
+    });
+
+    test("reports a rect neither orientation can place", () => {
+        // The fallback is not a licence to drop a rect: when the stored orientation does not fit either, the
+        // copy would be incomplete and `clone()` says so.
+        const bin = new MaxRectsBin(100, 60, 0, { smart: false, pot: false, allowRotation: true });
+        const rect = new Rectangle(60, 100);
+        bin.add(rect);
+        rect.width = 500; // neither the orientation it was handed over in nor the stored one fits now
+
+        expect(() => bin.clone()).toThrow("repack the bin before cloning it");
+    });
+
+    test("ignores a record a consumer's reshape left on the wrong rect", () => {
+        // `rects` is the packing output, but it is a public array: a consumer that splices an entry out leaves
+        // every record after it describing a placement that is no longer at that position. Each record names
+        // the rect it was made for, so a record that no longer lines up is ignored and the rect is replayed in
+        // the orientation it is stored in. Without that name the survivor below comes back with its `rot`
+        // flipped by the removed rect's record.
+        const bin = new MaxRectsBin(128, 128, 0, { ...opt, allowRotation: true });
+        for (const [width, height] of [
+            [49, 12],
+            [10, 116],
+            [82, 82]
+        ]) {
+            bin.add(new Rectangle(width, height));
+        }
+        bin.rects.splice(0, 1); // the consumer removes the first entry
+        expect(bin.rects[1].rot).toBe(false); // the survivor is stored unrotated, or this proves nothing
+
+        const copy = bin.clone();
+        expect(copy.rects).toHaveLength(bin.rects.length);
+        expect(copy.rects[1].rot).toBe(false);
+    });
+
+    test("reproduces the source placements over seeded tight bins", () => {
+        // The sweep below keeps the bins loose, which never rotates a rect into a strip the replay
+        // cannot reach. These bins are sized to the fixtures, so the replay's input decides the
+        // placement — before the orientation was restored this failed on roughly one round in fifty.
+        let seed = 7;
+        const random = () => {
+            seed = (seed * 1103515245 + 12345) % 2147483648;
+            return seed / 2147483648;
+        };
+        const int = (low, high) => low + Math.floor(random() * (high - low + 1));
+        for (let round = 0; round < 300; round++) {
+            const maxWidth = int(8, 26);
+            const maxHeight = int(8, 26);
+            const border = int(0, 2);
+            const padding = int(0, 1);
+            const bin = new MaxRectsBin(maxWidth, maxHeight, padding, {
+                ...opt,
+                pot: false,
+                allowRotation: true,
+                border
+            });
+            for (let i = 0, count = int(2, 5); i < count; i++) {
+                if (!bin.add(new Rectangle(int(1, maxWidth), int(1, maxHeight)))) break;
+            }
+            if (bin.rects.length < 2 || !bin.rects.some((rect) => rect.rot)) continue;
+            expect(
+                placements(bin.clone()),
+                `round=${round} maxWidth=${maxWidth} maxHeight=${maxHeight} padding=${padding} border=${border}`
+            ).toEqual(placements(bin));
+        }
+    });
+
+    test("reproduces the source placements over seeded bins of already-rotated rects", () => {
+        // The case the mark exists for: every rect is handed over claiming the rotated footprint, so the
+        // stored state cannot say which orientation to replay. Over these 1500 rounds the copy used to land
+        // 9 of the 542 bins it checks differently and throw on 7 more (the first throw at round 30, the
+        // first wrong placement at round 558); with the mark it lands all of them.
+        let seed = 7;
+        const random = () => {
+            seed = (seed * 1103515245 + 12345) % 2147483648;
+            return seed / 2147483648;
+        };
+        const int = (low, high) => low + Math.floor(random() * (high - low + 1));
+        for (let round = 0; round < 1500; round++) {
+            const maxWidth = int(8, 26);
+            const maxHeight = int(8, 26);
+            const border = int(0, 2);
+            const padding = int(0, 1);
+            const bin = new MaxRectsBin(maxWidth, maxHeight, padding, {
+                ...opt,
+                pot: false,
+                allowRotation: true,
+                border
+            });
+            for (let i = 0, count = int(2, 5); i < count; i++) {
+                const rect = new Rectangle(int(1, maxWidth), int(1, maxHeight));
+                rect.rot = true; // handed over already rotated rather than turned by the bin
+                if (!bin.add(rect)) break;
+            }
+            if (bin.rects.length < 2 || !bin.rects.some((rect) => rect.rot)) continue;
+            expect(
+                placements(bin.clone()),
+                `round=${round} maxWidth=${maxWidth} maxHeight=${maxHeight} padding=${padding} border=${border}`
+            ).toEqual(placements(bin));
+        }
+    });
+
     test("reproduces the source placements over seeded bins", () => {
         // The single fixture above samples the property; this sweeps it. A copy strategy that changed
         // the replayed input — a rect's dimensions swapped by rotation, say — would show up here as a
