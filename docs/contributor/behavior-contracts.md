@@ -70,15 +70,33 @@ Both bin implementations copy their rects (`Rectangle.Clone`), so a custom class
 and its extra fields, and carry over `tag` and `data`. Mutating a rect one bin holds, or adding to one
 bin, never reaches the other. The copy is **shallow**: the object in `rect.data` is shared.
 
-The copy is produced by re-packing the rect copies, which reproduced the source's placements in every
-fixture measured (a rotated fixture plus a sweep of 80 seeded bins) — that is a measurement, not a
-guarantee. The replay scores each copy afresh, and a placed rect arrives with its footprint already
-swapped when `rot` is true, so a bin holding rotated rects can come back with different placements, or
-refuse to build at all; the reproducers and a measured fix direction are in the deferred-work ledger
-(`docs/plans/deferred-work.md`, tracked but not part of this site). That replay runs with the tag gate
-**off** and restores the source's `options`/`tag`/`data` afterwards: a bin can hold rects its own gate
-would now refuse — it was tagged after it was filled, or it carries several tags in non-exclusive mode
-— and re-running the gate would give back a copy with fewer rects than the original.
+The copy is produced by re-packing the rect copies, and it reproduces the source's placements: the replay
+is handed each rect in the orientation the source was handed it. A rect this bin turned is stored as the
+footprint it occupies, which is the same state a rect the caller handed over already rotated has, so the bin
+records which placements turned their rect and `clone()` undoes those turns before replaying. The record is
+per placement, on the bin: per placement because the same object can be placed more than once, and on the
+bin because a rect the caller sealed rejects a new property — invariant 1 keeps the library from adding
+fields to it, and such a rect packed fine before the record existed. Each record also names the rect it was
+made for, because `rects` is a public array: a consumer that reshapes it leaves records describing
+placements that are no longer at those positions, and `clone()` trusts a record only where it still names
+the rect it finds there. `test/clone.spec.js` pins both
+reproducers that used to land differently or refuse to build, the sealed-rect case, the plain-rect branch
+(no `rot` setter to swap with), and seeded sweeps over tight bins of plain and already-rotated rects.
+
+Two things are outside the guarantee, because the replay runs under the bin's current `options` — which is
+public and mutable.
+
+- A rect the caller **edits after** it was placed. The replay places what the rect is now, so a resized rect
+  can land elsewhere, or make the replay refuse it and report that from `MaxRectsBin.clone()`.
+- **`options` changed after** the placement. The orientation the source was handed may no longer be one the
+  bin takes — `allowRotation` turned off, say — and the rect then falls back to the orientation it is stored
+  in, which is what `clone()` did before it knew the difference. Only the rect that needs it is affected; a
+  rect neither orientation fits is still reported.
+
+That replay runs with the tag gate **off** and restores the source's `options`/`tag`/`data` afterwards: a
+bin can hold rects its own gate would now refuse — it was tagged after it was filled, or it carries
+several tags in non-exclusive mode — and re-running the gate would give back a copy with fewer rects than
+the original.
 
 ### State travels, behaviour does not {#state-travels-behaviour-does-not}
 

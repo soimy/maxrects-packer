@@ -51,11 +51,22 @@ suite.
 
 ## Clone re-decides rotation
 
-Found while auditing the JSDoc against the code; a behaviour decision of its own, so it is not fixed
+**Verified resolved on 2026-10-11** — `clone()` reproduces its source for rotated rects. The bin records
+which placements turned their rect, and `clone()` undoes those turns before replaying, so the replay is
+handed the orientation the caller gave — which the stored state alone cannot say, because a rect this bin
+turned and one handed over already rotated look alike. The record is per placement and lives on the bin: a
+rect the caller sealed rejects a new property, and such a rect packed fine before the record existed. The
+reproducers below and seeded sweeps over tight bins of plain and already-rotated rects are pinned in
+`test/clone.spec.js`. The replay runs under the bin's current `options`, so a rect the caller edits after
+placement, or `options` changed after it, are outside the guarantee: the first can land elsewhere or be
+refused, the second falls back to the stored orientation. Tracked in
+[issue #117](https://github.com/soimy/maxrects-packer/issues/117). Kept for the record.
+
+Found while auditing the JSDoc against the code; a behaviour decision of its own, so it was not fixed
 on the spot.
 
-- **`MaxRectsBin.clone()` re-packs the copies, and a rotated rect arrives with its footprint already
-  swapped** (`src/maxrects-bin.ts:132`, `:196`). The replay therefore scores a different rect than the
+- **`MaxRectsBin.clone()` re-packed the copies, and a rotated rect arrived with its footprint already
+  swapped** (`src/maxrects-bin.ts:132`, `:196`). The replay therefore scored a different rect than the
   source did. Measured on the bundle with `allowRotation: true`:
 
   | Case | Source | `clone()` |
@@ -63,17 +74,34 @@ on the spot.
   | 18×18 packer, border 2, 10×11 + 3×1 + 13×13 + 11×2 | 17×15, `1×3 @12,2` and `2×11 @13,2` rotated | 15×18, all three unrotated, different placements |
   | 16×19 holding `11×15 @2,2` and `1×15 @13,2` rotated, untouched since | 16×19 | **throws** "the bin holds a rect it can no longer place" |
 
-  The rotated fixture and the 80-bin sweep in `test/clone.spec.js` reach neither case; a seeded sweep
+  The rotated fixture and the 80-bin sweep in `test/clone.spec.js` reached neither case; a seeded sweep
   over tight bins with rotation on hits them in roughly 2% of trials.
 
-  Fix direction, measured through the public API rather than guessed: restore each copy to the
-  orientation its source was handed over in before replaying it — set `rot` to false, and swap
-  `width`/`height` yourself when that did not do it, because `Rectangle.rot`'s setter swaps for a
-  `Rectangle` and does nothing for the plain `{width, height}` objects the README advertises. With that
-  normalization both reproducers above reproduce their source exactly, and the existing sweep still
-  passes. That makes the change about five lines plus the seeded sweep, in its own PR: it changes what
-  `clone()` returns for every bin holding rotated rects. Tracked in
-   [issue #117](https://github.com/soimy/maxrects-packer/issues/117).
+  What landed: the bin records, per placement, whether it turned its rect, because the state alone cannot
+  say (a rect this bin turned and one the caller handed over already rotated are both `rot` true with the
+  dimensions swapped). `clone()` undoes those turns before replaying, so the replay is handed the
+  orientation the caller gave. The record lives on the bin rather than on the rect — writing a field onto
+  the caller's rect is what a sealed rect rejects, and it packed fine before the record existed. Measured on the bundle over seeded tight bins: the
+  documented input went from 55 mismatches and 20 throws in 1302 rotated bins to 0 and 0, the
+  already-rotated inputs from 43/19 in 1670 and 30/16 in 1432 to 0/0, and the mixed input from 29/30 in
+  1475 to 0/0. Restoring the orientation unconditionally instead — without the mark — trades the documented
+  input for the already-rotated one (30 mismatches became 367 in 1432 bins). A `WeakMap` keyed by rect
+  would have been the alternative to the mark, and is out of reach: the bundles promise ES5, and
+  `scripts/verify-es5.mjs` fails the build on it.
+
+## `rects` is a public array with the bin's bookkeeping beside it
+
+Noticed while reviewing #121. Sound for the library's own paths — `add()`, `repack()` and `reset(true)` all
+maintain the record — so this records the exposure rather than a bug.
+
+- **`MaxRectsBin.rects` is a public mutable array, and `turnedByPlacement` is positional beside it**
+  (`src/maxrects-bin.ts`). Each record names the rect it was made for, so a consumer that splices, sorts or
+  assigns into `rects` leaves records that no longer line up, and those are ignored: the affected rect is
+  replayed in the orientation it is stored in, which is what `clone()` did before the record existed. What
+  the record cannot do is make a reshaped bin reproduce: the copy comes from the replay, not from the array,
+  so a consumer who restructures `rects` and then clones gets the placements the stored rects pack into, not
+  the reshaped list. Saying so in the types (`readonly T[]`) is breaking for anyone who pushes to the array,
+  so it belongs to 3.0.0 if it is wanted at all.
 
 ## `load()` can drop the placeholder it appends
 

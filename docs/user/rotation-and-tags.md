@@ -23,7 +23,8 @@ packer.addArray([rect]);                          // `addArray()` returns nothin
 console.log(rect.rot, rect.width, rect.height);   // true 300 1000 — the footprint in the bin
 ```
 
-If you need the original dimensions back, keep them: rotation happens in place, on your object.
+If you need the original dimensions back, keep them: rotation happens in place, on your object, and the
+packer adds no field of its own to it — a rect you sealed still packs.
 
 ### Per-rect rotation is much narrower than it looks
 
