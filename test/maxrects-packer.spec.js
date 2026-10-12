@@ -17,6 +17,26 @@ beforeEach(() => {
     packer = new MaxRectsPacker(1024, 1024, 0, opt);
 });
 
+describe("constructor", () => {
+    test("rejects a padding that is not a finite number", () => {
+        // Issue #43 passes the options object into the padding slot — `(width, height, padding, options)` —
+        // and the error names the constructor that was called, not the first bin it would have opened.
+        for (const padding of [{ padding: 1 }, NaN, Infinity, "2", null]) {
+            expect(() => new MaxRectsPacker(512, 512, padding)).toThrow("padding must be a finite number");
+        }
+        expect(() => new MaxRectsPacker(512, 512, { padding: 1 })).toThrow("(width, height, padding, options)");
+    });
+
+    test("still packs with a padding that is a finite number", () => {
+        for (const padding of [0, 1, 1.5, -1]) {
+            const packer = new MaxRectsPacker(512, 512, padding);
+            packer.add({ width: 100, height: 100 });
+            expect(packer.bins).toHaveLength(1);
+            expect(packer.bins[0].rects).toHaveLength(1);
+        }
+    });
+});
+
 describe("#add", () => {
     test("adds first element correctly", () => {
         packer.add(1000, 1000, { num: 1 });

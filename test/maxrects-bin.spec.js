@@ -316,6 +316,45 @@ describe("constructor", () => {
         expect(fixed.width).toBe(1024);
         expect(fixed.height).toBe(512);
     });
+
+    test("rejects a padding that is not a finite number", () => {
+        // A non-numeric padding used to reach the bin arithmetic, turn every size into `NaN`, and send
+        // `place()` into an endless retry (issue #43).
+        for (const padding of [{ padding: 1 }, NaN, Infinity, -Infinity, "2", null]) {
+            expect(() => new MaxRectsBin(512, 512, padding)).toThrow("padding must be a finite number");
+        }
+        // The message spells the signature out, because passing the options object in the padding slot is how
+        // the report got there.
+        expect(() => new MaxRectsBin(512, 512, { padding: 1 })).toThrow("(maxWidth, maxHeight, padding, options)");
+    });
+
+    test("accepts a finite padding, fractional or negative included", () => {
+        expect(new MaxRectsBin(512, 512, 0).padding).toBe(0);
+        expect(new MaxRectsBin(512, 512, 1.5).padding).toBe(1.5);
+        expect(new MaxRectsBin(512, 512, -1).padding).toBe(-1);
+        expect(new MaxRectsBin(512, 512, undefined).padding).toBe(0);
+    });
+});
+
+describe("a size that is not a finite number", () => {
+    test("refuses a rect it cannot size instead of retrying forever", () => {
+        // `updateBinSize()` reported success for a growth to `NaN` — every comparison against `NaN` is false,
+        // so its bounds check read as "fits" — and `place()` re-entered itself until the stack ran out
+        // (issue #43). The refusal must also leave the bin usable rather than half-grown.
+        const bin = new MaxRectsBin(512, 512);
+        expect(bin.add({ width: NaN, height: 10 })).toBeUndefined();
+        expect(bin.rects).toHaveLength(0);
+        expect(bin.add({ width: 100, height: 100 })).toBeDefined();
+        expect(bin.rects).toHaveLength(1);
+    });
+
+    test("refuses to grow for a padding replaced after construction", () => {
+        // `padding` is public, so this reaches the arithmetic without passing the constructor check.
+        const bin = new MaxRectsBin(512, 512);
+        bin.padding = NaN;
+        expect(bin.add({ width: 100, height: 100 })).toBeUndefined();
+        expect(bin.rects).toHaveLength(0);
+    });
 });
 
 describe("padding", () => {

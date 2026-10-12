@@ -54,6 +54,14 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         logic: PACKING_LOGIC.MAX_EDGE
     };
 
+    /**
+     * Creates an instance of MaxRectsBin.
+     *
+     * @param maxWidth - width of the bin (default is 4096)
+     * @param maxHeight - height of the bin (default is 4096)
+     * @param padding - padding between glyphs/images (default is 0); must be a finite number
+     * @param options - (Optional) packing options
+     */
     constructor(
         public maxWidth: number = EDGE_MAX_VALUE,
         public maxHeight: number = EDGE_MAX_VALUE,
@@ -61,6 +69,17 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         options: IOption = {}
     ) {
         super();
+        // Every size in the bin arithmetic is derived from `padding`, so a padding that is not a finite number
+        // makes them all `NaN`, which `updateBinSize()` reads as "fits" and `place()` then retries without end
+        // (issue #43). Reject it where it enters. The message spells the signature out because passing the
+        // options object in the padding slot is how the report reached this.
+        if (typeof padding !== "number" || !isFinite(padding)) {
+            throw new Error(
+                "MaxRectsBin: padding must be a finite number, got " +
+                    String(padding) +
+                    " — the constructor is (maxWidth, maxHeight, padding, options)"
+            );
+        }
         this.options = { ...this.options, ...options };
         this.width = this.options.smart ? 0 : maxWidth;
         this.height = this.options.smart ? 0 : maxHeight;
@@ -523,7 +542,13 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         if (this.options.square) {
             tmpWidth = tmpHeight = Math.max(tmpWidth, tmpHeight);
         }
-        tmpFits = !(tmpWidth > this.maxWidth || tmpHeight > this.maxHeight);
+        // A size that is not a finite number can never be a bin, and every comparison against `NaN` is false,
+        // so the bounds check above would read it as "fits" and grow the bin to `NaN` — the state that let
+        // `place()` retry the same placement without end (issue #43). Report the growth as failed instead,
+        // which refuses the placement: the retry in `place()` only runs for a bin that really grew, and growth
+        // is capped by maxWidth/maxHeight, so it cannot run away.
+        tmpFits =
+            isFinite(tmpWidth) && isFinite(tmpHeight) && !(tmpWidth > this.maxWidth || tmpHeight > this.maxHeight);
         if (!tmpFits) {
             return false;
         }

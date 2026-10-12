@@ -76,6 +76,9 @@ version, with the reasoning, is [docs/contributor/behavior-contracts.md](./docs/
    `MaxRectsPacker.add()` then puts that rect in an `OversizedElementBin` instead of dropping it.
    The other half of the same rule: a rotated rect reports the footprint it occupies, so `place()`
    swaps width/height itself for objects whose `rot` has no setter.
+   A size that is not a finite number can never become a bin: `updateBinSize()` refuses a growth whose
+   result is not finite, and both constructors reject a `padding` that is not a finite number, so the
+   `NaN` retry that hung `place()` (issue #43) cannot come back.
 7. **Generics**: `MaxRectsPacker<T extends IRectangle>` / `MaxRectsBin<T>` accept instances of custom
    classes and preserve their extra properties as-is.
 8. **`clone()` isolates the two bins**: both implementations copy the rects (`Rectangle.Clone`, so a
@@ -298,6 +301,11 @@ English keeps the project history usable for every contributor and every downstr
   <name>` is **not** a usable check here: this environment sets `NODE_ENV=production`, which hides
   every devDependency from `npm ls` unless `--include=dev` is passed, so the tree looks empty in the
   broken and the fixed state alike.
+- **A rect dimension is coerced, not validated.** `add()` takes whatever the arithmetic can coerce: a
+  `null` width behaves as `0`, `"10"` compares as `10` (while `"10" + padding` concatenates, so the probe
+  is a different box than the rect reports), `true` and `[]` are accepted too. Only `NaN` — what
+  `undefined` computes as — is refused, and that refusal comes from the size accounting (issue #43's fix),
+  not from rect input validation. Do not turn it into a type check: callers rely on the coercion.
 - `MaxRectsBin.reset(true, true)` replaces `options` with an incomplete object: `exclusiveTag`/`logic`
   are missing and `square` becomes `true` (unlike the class default).
 - **`OversizedElementBin`'s two-argument construction is a supported tolerance, not dead code.** The

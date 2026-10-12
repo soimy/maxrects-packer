@@ -10,6 +10,16 @@ published site (`srcExclude` in `docs/.vitepress/config.mts`), and both are trac
 
 ## `place()` recurses without bound when `padding` is not a number
 
+**Verified resolved on 2026-10-12** — the value is rejected where it enters and a growth that is not
+finite is refused. Both constructors throw for a `padding` that is not a finite number, and
+`updateBinSize()` reports failure instead of "growing" the bin to `NaN`, which is the state `place()`
+retried forever; the retry itself only runs for a bin that really grew, and growth is capped by
+`maxWidth`/`maxHeight`, so it cannot run away. Measured after the change: every case below returns or
+throws immediately instead of hanging, a `NaN` rect is refused by `add()` — oversized through the packer,
+`undefined` from a bin — and the bin is left usable rather than half-grown. The measurements below are
+kept as the record of what the fix is measured against. Tracked in
+[issue #43](https://github.com/soimy/maxrects-packer/issues/43).
+
 Found while triaging the untracked issues on 2026-10-11: [issue #43](https://github.com/soimy/maxrects-packer/issues/43)
 had been open since 2022 with no reproduction, and it is still live on `master`.
 
