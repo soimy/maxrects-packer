@@ -239,17 +239,6 @@ unaffected: `docs/` is not in the `files` allowlist.
 Noticed while auditing the stack before its first deployment. None of these is broken today — every run
 on the three pull requests is green — so each waits for a commit of its own.
 
-- **The workflows pin action majors that are several releases behind.** `.github/workflows/docs.yml` uses
-  `actions/checkout@v4`, `actions/setup-node@v4`, `actions/configure-pages@v5`,
-  `actions/upload-pages-artifact@v3` and `actions/deploy-pages@v4`; the current majors read through the
-  API on 2026-09-30 are v7, v7, v6, v5 and v5. `node.js.yml` and `release.yml` sit on
-  `checkout@v4`/`setup-node@v4` too, and the repository has no Dependabot or Renovate configuration, so
-  nothing raises these on its own — one `ci:` PR should move all three files together rather than leaving
-  the new workflow on majors the others do not use. Worth doing before the first deployment, because
-  `actions/deploy-pages` is the one step that has never run here (the job is gated on a push to `master`)
-  and its inputs have to be re-checked against the current `action.yml` — the versions in use were
-  verified against `upload-pages-artifact@v3` and `configure-pages@v5`. Tracked in
- [issue #119](https://github.com/soimy/maxrects-packer/issues/119).
 - **Verified resolved on 2026-10-10** — npm does not resolve a relative README image against the
   package, so the icon stayed broken on the page even though the file is in the repository; the
   README heading now uses an absolute URL, which renders on both sites. `assets/*.png` stays out of
