@@ -17,9 +17,8 @@ Every row is one PR: one logical change, an English conventional-commit title, n
 | # | Item | Type | Issue | Ready to start? |
 | --- | --- | --- | --- | --- |
 | 1 | Four Dependabot alerts in the nested vitepress tree | `build(deps)` | — | needs the upgrade-or-dismiss decision |
-| 2 | Custom heading anchors read out with their braces | `docs` | [#101](https://github.com/soimy/maxrects-packer/issues/101) | yes — cosmetic |
-| 3 | An `exports` map for `require`/`import` under `node16`/`nodenext` | `feat!` | [#98](https://github.com/soimy/maxrects-packer/issues/98) | in scope for 3.0.0 |
-| 4 | Release `3.0.0` | release | [#61](https://github.com/soimy/maxrects-packer/issues/61), [#62](https://github.com/soimy/maxrects-packer/issues/62) | after 1–3 |
+| 2 | An `exports` map for `require`/`import` under `node16`/`nodenext` | `feat!` | [#98](https://github.com/soimy/maxrects-packer/issues/98) | in scope for 3.0.0 |
+| 3 | Release `3.0.0` | release | [#61](https://github.com/soimy/maxrects-packer/issues/61), [#62](https://github.com/soimy/maxrects-packer/issues/62) | after 1–2 |
 
 Ordering is severity × readiness, not a schedule. Keep independent checks and tooling work separate
 from behaviour fixes, and settle the package entry points before releasing. Re-order whenever a decision lands.
@@ -60,14 +59,7 @@ vite 6+), or dismiss the alerts as dev-only and wait for vitepress 2.0.0 stable.
 `resolved` URLs must point at `registry.npmjs.org`, and `npm install` on npm 10.9.8 needs
 `--legacy-peer-deps`.
 
-## 2. Heading anchors in the permalink label (#101)
-
-Either drop the eight unreferenced `{#custom-id}` attributes and accept VitePress's `_N-` slugs, or keep
-the ids and treat the `aria-label` as an upstream quirk. Nothing links to the eight today.
-**Files:** `docs/contributor/behavior-contracts.md`, `docs/.vitepress/config.mts` if the slug source
-moves.
-
-## 3. `exports` map (#98)
+## 2. `exports` map (#98)
 
 Per-format conditions and declarations fix the `node16`/`nodenext` CommonJS import, and the map seals off
 the deep `maxrects-packer/dist/...` paths — which is why this is the breaking change that makes the
@@ -80,7 +72,7 @@ footer, because the squash body is what `commit-and-tag-version` parses.
 **Exit criteria:** the CommonJS `.cts` fixture compiles under `node16` and `nodenext` — the gap measured
 in the ledger — and the deep-import change is documented as breaking.
 
-## 4. Release `3.0.0`
+## 3. Release `3.0.0`
 
 The release includes the fixes accumulated since `v2.7.4`. Everything in this queue lands first, then:
 
