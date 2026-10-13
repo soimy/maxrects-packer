@@ -75,7 +75,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      *
      * @param width - width of the input bin/rectangle
      * @param height - height of the input bin/rectangle
-     * @param data - custom data object; with `tag: true` the packer reads `data.tag` to label a bin
+     * @param data - custom data object; with `tag: true` and `exclusiveTag: true` the packer reads `data.tag` to label a bin
      * it has to open, so only an object can carry a tag. `undefined` is treated as untagged data
      * rather than rejected: the rect is offered to the existing bins first, and a bin opened for it
      * stays untagged — what the single-argument form does for a rect that carries no `data`
@@ -83,6 +83,10 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     public add(width: number, height: number, data: any): T;
     /**
      * Add a bin/rectangle object extends IRectangle to packer
+     *
+     * With `tag: true`, a new bin is labelled only in exclusive mode. Non-exclusive bins may hold
+     * several tags: read each rect's `data.tag` or `tag`, rather than expecting an automatic `bin.tag`.
+     * Explicit or loaded bin labels are preserved.
      *
      * @param rect - the rect object add to the packer bin
      */
@@ -103,7 +107,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 if (!added) {
                     let bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
                     let tag = rect.data && rect.data.tag ? rect.data.tag : rect.tag ? rect.tag : undefined;
-                    if (this.options.tag && tag) bin.tag = tag;
+                    if (this.options.tag && this.options.exclusiveTag && tag) bin.tag = tag;
                     if (this.addToBin(bin, rect)) this.bins.push(bin);
                 }
             }
@@ -123,7 +127,8 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 let added = find(this.bins.slice(this._currentBinIndex), (bin) => bin.add(rect as T) !== undefined);
                 if (!added) {
                     let bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
-                    if (this.options.tag && rect.data && rect.data.tag) bin.tag = rect.data.tag;
+                    if (this.options.tag && this.options.exclusiveTag && rect.data && rect.data.tag)
+                        bin.tag = rect.data.tag;
                     if (this.addToBin(bin, rect as T)) this.bins.push(bin);
                 }
             }
@@ -153,6 +158,8 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * `Typescript`: object shall extends `MaxrectsPacker.IRectangle`.
      *
      * note: object has `hash` property will have more stable packing result
+     *
+     * Non-exclusive tag groups can share a bin, so newly opened bins have no automatic `tag` label.
      *
      * @param rects - Array of bin/rectangles
      */

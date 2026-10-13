@@ -15,7 +15,7 @@ export enum PACKING_LOGIC {
  * @property {boolean} square - use square size (default is false)
  * @property {boolean} allowRotation - allow rotation packing (default is false)
  * @property {boolean} tag - allow auto grouping based on `rect.tag` (default is false)
- * @property {boolean} exclusiveTag - tagged rects will have dependent bin, if set to `false`, packer will try to put tag rects into the same bin (default is true)
+ * @property {boolean} exclusiveTag - keep each tag in its own labelled bins; if false, groups may share bins and no bin tag is assigned automatically (default is true)
  * @property {number} border - atlas edge spacing (default is 0)
  * @property {PACKING_LOGIC} logic - MAX_AREA or MAX_EDGE based sorting logic (default is MAX_EDGE)
  */

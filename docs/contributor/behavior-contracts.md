@@ -29,6 +29,11 @@ without a tag refuses tagged rects. The check lives in `MaxRectsBin.place()`, wh
 copying it**, and a bin whose `clone()` throws counts as one the group does not fit. That way a single
 uncopyable bin cannot fail the whole `addArray()` call.
 
+Neither `add()` overload nor `addArray()` assigns an automatic bin label in non-exclusive mode;
+each rect keeps its own tag. Explicit and restored `bin.tag` metadata is preserved, including by
+`save()`/`load()`, and does not gate placement. This changes the saved output of bins opened by
+non-exclusive `add()` before 3.0.0: their first rect's tag is no longer copied onto the bin.
+
 ## 3. `next()` only affects what comes after {#next-only-affects-what-comes-after}
 
 It sets the current bin index to `bins.length` and returns that index: earlier bins stop accepting new

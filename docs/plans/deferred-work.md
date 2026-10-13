@@ -50,24 +50,6 @@ had been open since 2022 with no reproduction, and it is still live on `master`.
   error for the call above; JavaScript callers get the hang. Tracked in
   [issue #43](https://github.com/soimy/maxrects-packer/issues/43).
 
-## Code changes (found while closing the test-coverage gaps, PR #73)
-
-One behaviour question the measurements raised while the dead code around it was removed. The
-measurements came from the coverage report and from deleting the code in question and re-running the
-suite.
-
-- **`add()` tags a non-exclusive bin with only the first rect's tag** (`src/maxrects-packer.ts:78`).
-  In non-exclusive mode one bin may hold several tag groups — `test/maxrects-packer.spec.js` pins a bin
-  whose rects carry `one`, `one`, `two`, `two` — so that tag names just one of them, and `save()`
-  serializes it while `load()` restores it. `addArray()` leaves the bins it opens untagged
-  (`src/maxrects-packer.ts:203`, where the dead `bin.tag = tag` line used to sit), and the choice made
-  when that line was deleted was to keep that difference rather than spread the label. Decide whether
-  `bin.tag` should exist outside `exclusiveTag: true` at all: tagging in both paths is a user-visible
-  metadata change, tagging in neither drops a field from `save()` output. Neither direction changes a
-  packing decision — a bin copies its `options` at construction, so a bin created in non-exclusive
-  mode never gates on its own tag, even if `packer.options.exclusiveTag` is flipped later. Tracked in
-   [issue #93](https://github.com/soimy/maxrects-packer/issues/93).
-
 ## Clone re-decides rotation
 
 **Verified resolved on 2026-10-11** — `clone()` reproduces its source for rotated rects. The bin records
