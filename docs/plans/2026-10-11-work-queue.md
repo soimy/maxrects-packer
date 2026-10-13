@@ -18,7 +18,7 @@ Every row is one PR: one logical change, an English conventional-commit title, n
 | # | Item | Type | Issue | Ready to start? |
 | --- | --- | --- | --- | --- |
 | 1 | `clone()` on an oversized placeholder drops the restored state | `fix` | [#118](https://github.com/soimy/maxrects-packer/issues/118) | needs the contract decision |
-| 2 | `bin.tag` in non-exclusive mode names only the first tag group | `fix` | [#93](https://github.com/soimy/maxrects-packer/issues/93) | needs the semantics decision |
+| 2 | `bin.tag` in non-exclusive mode names only the first tag group | `fix!` | [#93](https://github.com/soimy/maxrects-packer/issues/93) | implemented in this PR — pending merge |
 | 3 | The documented return values of `add()`/`addArray()` are unasserted | `test` | [#97](https://github.com/soimy/maxrects-packer/issues/97) | yes — three assertions |
 | 4 | The workflows pin action majors several releases behind | `ci` | [#119](https://github.com/soimy/maxrects-packer/issues/119) | yes — one PR, three files |
 | 5 | Four Dependabot alerts in the nested vitepress tree | `build(deps)` | — | needs the upgrade-or-dismiss decision |
@@ -54,11 +54,12 @@ the non-exclusive tag probe, where a placeholder fails either way — but `clone
 
 ## 2. `bin.tag` in non-exclusive mode (#93)
 
-**Decide first:** tag in both paths (a user-visible metadata change) or in neither (drops a field from
-`save()` output). Neither direction changes a packing decision, because a bin copies its `options` at
-construction.
-**Files:** `src/maxrects-packer.ts:78` and the `addArray()` grouping path; `save()`/`load()` round-trip
-coverage in `test/maxrects-packer.spec.js`.
+**Implemented in this PR, pending merge (2026-10-13):** neither `add()` overload nor `addArray()`
+assigns automatic bin labels in non-exclusive mode. Rect tags and grouping are unchanged; explicit
+and loaded labels remain metadata. `save()` omits the formerly automatic first-tag label for new bins,
+so this is a `fix!` for 3.0.0. Tests cover all entry paths, persistence and the default exclusive gate;
+JSDoc, the behaviour contract and user guides include the compatibility change.
+**Files:** `src/maxrects-packer.ts`, `src/types.ts`, `test/maxrects-packer.spec.js` and the tag/persistence guides.
 
 ## 3. Return-value assertions (#97)
 

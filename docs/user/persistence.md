@@ -24,6 +24,10 @@ next.addArray([{ width: 300, height: 120 }]);   // lands in the space that was l
 Each entry of the array `save()` returns describes one bin: its `width`, `height`, `options`, `tag` and
 `freeRects` — the maximal free rectangles the packer would place into next.
 
+`tag` is optional. Non-exclusive bins receive no automatic label, so that field is absent unless you
+set it explicitly or loaded an existing label. Older non-exclusive snapshots keep their saved labels;
+see the [3.0.0 migration note](./rotation-and-tags.md#migrating-non-exclusive-bin-labels-in-3-0-0).
+
 **`rects` is always empty in a saved bin.** Already-placed rects are not serialized, and `load()` does
 not bring them back: it restores the free space, so whatever you add next avoids the area the earlier
 pack used without overlapping it. If you need the placements as well, store your own input list
