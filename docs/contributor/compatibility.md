@@ -48,8 +48,8 @@ returned an empty object for three and a half years.)
 Three gates protect the entry points: `postbuild` runs `scripts/fix-declaration-extensions.mjs`,
 `scripts/build-cjs-declarations.mjs` and `scripts/verify-entry.mjs`, and CI runs
 `npm run verify:package`, which packs a real tarball, installs it into a temp consumer and consumes it
-**by package name** under `require`, `import`, and two type fixtures compiled with `bundler`, `node16`
-and `nodenext`.
+**by package name** under `require`, `import`, and two type fixtures — an ESM one under `bundler`,
+`node16` and `nodenext`, and a CommonJS `.cts` one under `node16` and `nodenext`.
 
 An `exports` map gives each condition its own runtime file and its own declarations: `import` pairs
 `dist/maxrects-packer.mjs` with the ESM `dist/index.d.ts` barrel, `require` pairs
