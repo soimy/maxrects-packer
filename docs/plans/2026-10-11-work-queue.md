@@ -20,17 +20,16 @@ Every row is one PR: one logical change, an English conventional-commit title, n
 | 1 | `clone()` on an oversized placeholder drops the restored state | `fix` | [#118](https://github.com/soimy/maxrects-packer/issues/118) | needs the contract decision |
 | 2 | `bin.tag` in non-exclusive mode names only the first tag group | `fix` | [#93](https://github.com/soimy/maxrects-packer/issues/93) | needs the semantics decision |
 | 3 | The documented return values of `add()`/`addArray()` are unasserted | `test` | [#97](https://github.com/soimy/maxrects-packer/issues/97) | yes — three assertions |
-| 4 | Workflow action-major upgrade, merged in [#87](https://github.com/soimy/maxrects-packer/pull/87) | `ci` | [#119](https://github.com/soimy/maxrects-packer/issues/119) | resolved — verified 2026-10-13 |
-| 5 | Four Dependabot alerts in the nested vitepress tree | `build(deps)` | — | needs the upgrade-or-dismiss decision |
-| 6 | Custom heading anchors read out with their braces | `docs` | [#101](https://github.com/soimy/maxrects-packer/issues/101) | yes — cosmetic |
-| 7 | An `exports` map for `require`/`import` under `node16`/`nodenext` | `feat!` | [#98](https://github.com/soimy/maxrects-packer/issues/98) | in scope for 3.0.0 |
-| 8 | Release `3.0.0` | release | [#61](https://github.com/soimy/maxrects-packer/issues/61), [#62](https://github.com/soimy/maxrects-packer/issues/62) | after 1–7 |
+| 4 | Four Dependabot alerts in the nested vitepress tree | `build(deps)` | — | needs the upgrade-or-dismiss decision |
+| 5 | Custom heading anchors read out with their braces | `docs` | [#101](https://github.com/soimy/maxrects-packer/issues/101) | yes — cosmetic |
+| 6 | An `exports` map for `require`/`import` under `node16`/`nodenext` | `feat!` | [#98](https://github.com/soimy/maxrects-packer/issues/98) | in scope for 3.0.0 |
+| 7 | Release `3.0.0` | release | [#61](https://github.com/soimy/maxrects-packer/issues/61), [#62](https://github.com/soimy/maxrects-packer/issues/62) | after 1–6 |
 
-Ordering is severity × readiness, not a schedule: 1–2 are the open holes in the behaviour contracts, 3–6
-are cheap and independent, 7 is the breaking change that makes this release a major, and 8 is the milestone
+Ordering is severity × readiness, not a schedule: 1–2 are the open holes in the behaviour contracts, 3–5
+are cheap and independent, 6 is the breaking change that makes this release a major, and 7 is the milestone
 the rest feeds. Re-order whenever a decision lands.
 
-Four entries are done and off the list. The `padding` fix
+Five entries are done and off the list. The `padding` fix
 ([#43](https://github.com/soimy/maxrects-packer/issues/43)): numeric `NaN`/`Infinity`/`-Infinity` padding is
 rejected by the constructor that received it; other JavaScript values keep their original coercion.
 `updateBinSize()` refuses a non-finite result, so the `NaN` retry that hung `place()` cannot come back —
@@ -42,6 +41,11 @@ since 2026-10-12 — `npm warn deprecated maxrects-packer@2.7.4: Broken entry po
 published.` — verified by installing the published tarball, with `latest` left on `2.7.3` so a plain
 install is unaffected and a range that resolves to `2.7.4` says so at install time. And the tag `master`
 that used to shadow `refs/heads/master` is gone, so the ambiguity warning is gone with it.
+The workflow action-major upgrade landed in [PR #87](https://github.com/soimy/maxrects-packer/pull/87).
+Re-verified on 2026-10-13 at `master` commit `1c889cf`:
+[Node.js CI](https://github.com/soimy/maxrects-packer/actions/runs/38365767187) passed on Node 20/22/24,
+and [Documentation](https://github.com/soimy/maxrects-packer/actions/runs/38365767185) passed its build
+and actual Pages deployment. The release workflow was inspected only; publishing was not exercised.
 
 ## 1. `clone()` on an oversized placeholder (#118)
 
@@ -66,21 +70,7 @@ Three assertions, no source change: `add()` returns the very object it was hande
 nothing, and the `add(width, height, data)` overload returns an internal `Rectangle`.
 **Files:** `test/maxrects-packer.spec.js`, `test/maxrects-bin.spec.js`.
 
-## 4. Workflow action majors (#119)
-
-Resolved by [PR #87](https://github.com/soimy/maxrects-packer/pull/87), merged on 2026-10-01;
-no further workflow change is needed. Re-checked on 2026-10-13: all three workflows use
-`checkout@v7`/`setup-node@v7`, the Pages actions use `configure-pages@v6`,
-`upload-pages-artifact@v5` and `deploy-pages@v5`, and coverage uses `codecov-action@v7`.
-The inputs in use match the official action metadata.
-
-**Verification:** at `master` commit `1c889cf`,
-[Node.js CI](https://github.com/soimy/maxrects-packer/actions/runs/38365767187) passed on Node 20/22/24,
-and [Documentation](https://github.com/soimy/maxrects-packer/actions/runs/38365767185) passed its build
-and Pages deployment. The previous claim that the deploy step had never run is obsolete. The release
-workflow's action references and inputs were inspected only; publishing was not exercised.
-
-## 5. Dependabot alerts in the vitepress tree
+## 4. Dependabot alerts in the vitepress tree
 
 GitHub reports four open alerts on the default branch (1 high, 3 moderate). All four sit in the
 **docs-site** tree, on the copies vitepress nests: `node_modules/vitepress/node_modules/vite` is 5.4.21
@@ -98,14 +88,14 @@ vite 6+), or dismiss the alerts as dev-only and wait for vitepress 2.0.0 stable.
 `resolved` URLs must point at `registry.npmjs.org`, and `npm install` on npm 10.9.8 needs
 `--legacy-peer-deps`.
 
-## 6. Heading anchors in the permalink label (#101)
+## 5. Heading anchors in the permalink label (#101)
 
 Either drop the eight unreferenced `{#custom-id}` attributes and accept VitePress's `_N-` slugs, or keep
 the ids and treat the `aria-label` as an upstream quirk. Nothing links to the eight today.
 **Files:** `docs/contributor/behavior-contracts.md`, `docs/.vitepress/config.mts` if the slug source
 moves.
 
-## 7. `exports` map (#98)
+## 6. `exports` map (#98)
 
 Per-format conditions and declarations fix the `node16`/`nodenext` CommonJS import, and the map seals off
 the deep `maxrects-packer/dist/...` paths — which is why this is the breaking change that makes the
@@ -118,7 +108,7 @@ footer, because the squash body is what `commit-and-tag-version` parses.
 **Exit criteria:** the CommonJS `.cts` fixture compiles under `node16` and `nodenext` — the gap measured
 in the ledger — and the deep-import change is documented as breaking.
 
-## 8. Release `3.0.0`
+## 7. Release `3.0.0`
 
 `master` is 39 commits past `v2.7.4` (12 of them `fix`) and 52 past the version npm actually serves.
 Everything in this queue lands first, then:
@@ -130,7 +120,7 @@ npm publish                # manual — release.yml does not publish to npm
 ```
 
 The commits so far carry no `feat` and no breaking marker, so `commit-and-tag-version` would cut
-`2.7.5`; item 7's marker is what makes it a major, and `npm run version -- --release-as major` is the
+`2.7.5`; item 6's marker is what makes it a major, and `npm run version -- --release-as major` is the
 explicit fallback if the derived number is ever wrong.
 
 **Exit criteria:** `latest` on npm points at a build whose `main`/`types` match this repository;
