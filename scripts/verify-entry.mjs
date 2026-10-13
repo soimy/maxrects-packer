@@ -25,6 +25,36 @@ for (const field of ["main", "module", "types"]) {
     if (!existsSync(file)) failures.push(`package.json "${field}" points at a missing file: ${pkg[field]}`);
 }
 
+// The `exports` map is what a modern Node or TypeScript resolver actually reads — `main`/`module`/
+// `types` above only keep node10 and bundler-style resolvers working. Each condition needs a runtime
+// file *and* a declaration of the matching flavour: the `.d.ts` barrel is ESM because the package is
+// `"type": "module"`, so the require branch has to reach the CommonJS-flavoured `.d.cts` set or a
+// `.cts` consumer goes back to TS1479/TS1471 (issue #98).
+const conditions = pkg.exports?.["."] ?? {};
+for (const [condition, declaration] of [
+    ["import", ".d.ts"],
+    ["require", ".d.cts"]
+]) {
+    const branch = conditions[condition];
+    if (!branch || typeof branch !== "object") {
+        failures.push(`package.json "exports".".".${condition} is missing`);
+        continue;
+    }
+    for (const field of ["types", "default"]) {
+        const target = branch[field];
+        if (typeof target !== "string") failures.push(`package.json "exports".".".${condition}.${field} is missing`);
+        else if (!existsSync(fileURLToPath(new URL(target, root))))
+            failures.push(`"exports".".".${condition}.${field} points at a missing file: ${target}`);
+    }
+    if (typeof branch.types === "string" && !branch.types.endsWith(declaration)) {
+        failures.push(`"exports".".".${condition}.types must name a ${declaration} declaration: ${branch.types}`);
+    }
+}
+// Tooling reads the manifest through the map; sealing it off would break those consumers.
+if (pkg.exports?.["./package.json"] !== "./package.json") {
+    failures.push(`"exports" must keep "./package.json" reachable, found: ${pkg.exports?.["./package.json"]}`);
+}
+
 if (failures.length === 0) {
     check(`require(${pkg.main})`, Object.keys(require(fileURLToPath(new URL(pkg.main, root)))));
     const esm = await import(new URL(pkg.module, root).href);

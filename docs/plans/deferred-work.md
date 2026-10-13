@@ -190,15 +190,14 @@ on the three pull requests is green — so each waits for a commit of its own.
   the `files` allowlist: publishing it would have grown the tarball from ~66 kB to ~530 kB, and the
   renderer does not look inside the package for a relative path anyway. Tracked in
    [issue #102](https://github.com/soimy/maxrects-packer/issues/102).
-- **A CommonJS TypeScript consumer cannot import the package under `node16`/`nodenext`.** Measured on the
-  published tarball, in a `.cts` file compiled with `module`/`moduleResolution` `node16`:
-  `import { MaxRectsPacker } from "maxrects-packer"` is TS1479 ("the referenced file is an ECMAScript
-  module and cannot be imported with `require`") and `import pkg = require("maxrects-packer")` is TS1471,
-  while `await import(...)`, `moduleResolution` `node10`/`bundler` and a JavaScript `require()` all work;
-  neither `skipLibCheck` nor the compiler version changes anything (TS 6 and TS 7 both). No gate can see
-  it: `verify:package` compiles its type fixture in an ESM consumer, which is exactly what makes
-  `node16`/`nodenext` read it as ESM, and the runtime `require()` path it does cover is fine. The fix is
-  an `exports` map with per-format conditions and declarations — which also seals off the deep imports
-  `maxrects-packer/dist/...` that the entry-points section above keeps working, so it belongs to 3.0.0.
-  Documented as a sharp edge in `docs/user/troubleshooting.md` meanwhile. Tracked in
-   [issue #98](https://github.com/soimy/maxrects-packer/issues/98).
+- **Verified resolved on 2026-10-13** — a `.cts` consumer could not import the package under `node16`:
+  `import { MaxRectsPacker } from "maxrects-packer"` was TS1479 and
+  `import pkg = require("maxrects-packer")` was TS1471, in TS 6.0.3 and TS 7.0.2 alike, because there
+  was no `exports` map and a CommonJS consumer resolved the ESM-flavoured `dist/index.d.ts`; `nodenext`
+  already compiled on master. `package.json` now carries an `exports` map whose `require` condition
+  pairs `dist/maxrects-packer.cjs` with the CommonJS declaration set (`dist/index.d.cts` and the
+  parallel `.d.cts` copies, written from `postbuild` by `scripts/build-cjs-declarations.mjs`), while
+  `import` keeps `dist/index.d.ts`; both modes compile the `.cts` fixture with 0 errors, and
+  `npm run verify:package` compiles it against the packed tarball under `node16` and `nodenext` with
+  `skipLibCheck: false`. The map also seals off the deep imports — the deliberate 3.0.0 breaking change.
+  Tracked in [issue #98](https://github.com/soimy/maxrects-packer/issues/98).
