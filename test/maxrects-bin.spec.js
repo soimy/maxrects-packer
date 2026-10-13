@@ -317,15 +317,11 @@ describe("constructor", () => {
         expect(fixed.height).toBe(512);
     });
 
-    test("rejects a padding that is not a finite number", () => {
-        // A non-numeric padding used to reach the bin arithmetic, turn every size into `NaN`, and send
-        // `place()` into an endless retry (issue #43).
-        for (const padding of [{ padding: 1 }, NaN, Infinity, -Infinity, "2", null]) {
-            expect(() => new MaxRectsBin(512, 512, padding)).toThrow("padding must be a finite number");
+    test("rejects explicitly non-finite numeric padding", () => {
+        for (const padding of [NaN, Infinity, -Infinity]) {
+            expect(() => new MaxRectsBin(512, 512, padding)).toThrow("padding must not be NaN or Infinity");
         }
-        // The message spells the signature out, because passing the options object in the padding slot is how
-        // the report got there.
-        expect(() => new MaxRectsBin(512, 512, { padding: 1 })).toThrow("(maxWidth, maxHeight, padding, options)");
+        expect(() => new MaxRectsBin(512, 512, NaN)).toThrow("MaxRectsBin:");
     });
 
     test("accepts a finite padding, fractional or negative included", () => {
@@ -334,9 +330,42 @@ describe("constructor", () => {
         expect(new MaxRectsBin(512, 512, -1).padding).toBe(-1);
         expect(new MaxRectsBin(512, 512, undefined).padding).toBe(0);
     });
+
+    test("preserves JavaScript padding values and their arithmetic", () => {
+        for (const padding of [null, true, false, [], { valueOf: () => 2 }, Object(2)]) {
+            const bin = new MaxRectsBin(512, 512, padding);
+            const rect = { width: 100, height: 100 };
+            expect(bin.padding).toBe(padding);
+            expect(bin.add(rect)).toBe(rect);
+            expect([bin.width, bin.height, rect.x, rect.y]).toEqual([128, 128, 0, 0]);
+        }
+        // Strings and arrays still concatenate in the probe; converting them to numbers would change placement.
+        for (const padding of ["2", [2]]) {
+            const bin = new MaxRectsBin(512, 512, padding);
+            expect(bin.padding).toBe(padding);
+            expect(bin.add({ width: 100, height: 100 })).toBeUndefined();
+            expect(bin.rects).toHaveLength(0);
+            expect([bin.width, bin.height]).toEqual([0, 0]);
+        }
+    });
 });
 
 describe("a size that is not a finite number", () => {
+    test("refuses padding that coerces to an invalid size without retrying or changing free space", () => {
+        for (const padding of [{ padding: 1 }, {}, "invalid", { valueOf: () => NaN }]) {
+            const bin = new MaxRectsBin(512, 512, padding);
+            const freeRects = bin.freeRects.map((rect) => [rect.width, rect.height, rect.x, rect.y]);
+            expect(bin.padding).toBe(padding);
+            expect(bin.add({ width: 100, height: 100 })).toBeUndefined();
+            expect(bin.rects).toHaveLength(0);
+            expect([bin.width, bin.height]).toEqual([0, 0]);
+            expect(bin.freeRects.map((rect) => [rect.width, rect.height, rect.x, rect.y])).toEqual(freeRects);
+            bin.padding = 0;
+            bin.reset();
+            expect(bin.add({ width: 100, height: 100 })).toBeDefined();
+        }
+    });
+
     test("refuses a rect it cannot size instead of retrying forever", () => {
         // `updateBinSize()` reported success for a growth to `NaN` — every comparison against `NaN` is false,
         // so its bounds check read as "fits" — and `place()` re-entered itself until the stack ran out

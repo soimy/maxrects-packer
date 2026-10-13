@@ -77,8 +77,9 @@ version, with the reasoning, is [docs/contributor/behavior-contracts.md](./docs/
    The other half of the same rule: a rotated rect reports the footprint it occupies, so `place()`
    swaps width/height itself for objects whose `rot` has no setter.
    A size that is not a finite number can never become a bin: `updateBinSize()` refuses a growth whose
-   result is not finite, and both constructors reject a `padding` that is not a finite number, so the
-   `NaN` retry that hung `place()` (issue #43) cannot come back.
+   result is not finite, and both constructors reject numeric `NaN`/`Infinity`/`-Infinity` padding.
+   Omitted or `undefined` padding defaults to `0`; other JavaScript values retain their original
+   coercion behaviour, and a non-finite result refuses placement instead of retrying forever (issue #43).
 7. **Generics**: `MaxRectsPacker<T extends IRectangle>` / `MaxRectsBin<T>` accept instances of custom
    classes and preserve their extra properties as-is.
 8. **`clone()` isolates the two bins**: both implementations copy the rects (`Rectangle.Clone`, so a

@@ -31,10 +31,11 @@ are cheap and independent, 7 is the breaking change that makes this release a ma
 the rest feeds. Re-order whenever a decision lands.
 
 Four entries are done and off the list. The `padding` fix
-([#43](https://github.com/soimy/maxrects-packer/issues/43)): a `padding` that is not a finite number is
-rejected by the constructor that received it, and `updateBinSize()` refuses a growth that is not finite, so
-the `NaN` retry that hung `place()` cannot come back — the hang, the clear error and the bin-left-usable
-case are each pinned by a spec. The clone-rotation fix
+([#43](https://github.com/soimy/maxrects-packer/issues/43)): numeric `NaN`/`Infinity`/`-Infinity` padding is
+rejected by the constructor that received it; other JavaScript values keep their original coercion.
+`updateBinSize()` refuses a non-finite result, so the `NaN` retry that hung `place()` cannot come back —
+the hang, the numeric error, coercion compatibility and the bin-left-usable case are each pinned by a spec.
+The clone-rotation fix
 ([#117](https://github.com/soimy/maxrects-packer/issues/117)): the replay hands each copy the orientation
 its source was handed, so the queue starts at the other clone hole. The `2.7.4` deprecation: live on npm
 since 2026-10-12 — `npm warn deprecated maxrects-packer@2.7.4: Broken entry points: use 2.7.3 until 3.0.0 is

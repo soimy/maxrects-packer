@@ -48,7 +48,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      *
      * @param width - width of the output atlas (default is 4096)
      * @param height - height of the output atlas (default is 4096)
-     * @param padding - padding between glyphs/images (default is 0); must be a finite number
+     * @param padding - padding between glyphs/images (omitted or undefined defaults to 0); rejects NaN and infinities, while other JavaScript values retain their coercion behaviour
      * @param options - (Optional) packing options
      */
     constructor(
@@ -59,9 +59,9 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     ) {
         // Checked here as well as in `MaxRectsBin`, so the error names the constructor the padding was passed
         // to rather than the first bin the packer opens for it (issue #43).
-        if (typeof padding !== "number" || !isFinite(padding)) {
+        if (typeof padding === "number" && !isFinite(padding)) {
             throw new Error(
-                "MaxRectsPacker: padding must be a finite number, got " +
+                "MaxRectsPacker: padding must not be NaN or Infinity, got " +
                     String(padding) +
                     " — the constructor is (width, height, padding, options)"
             );

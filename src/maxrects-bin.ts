@@ -59,7 +59,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
      *
      * @param maxWidth - width of the bin (default is 4096)
      * @param maxHeight - height of the bin (default is 4096)
-     * @param padding - padding between glyphs/images (default is 0); must be a finite number
+     * @param padding - padding between glyphs/images (omitted or undefined defaults to 0); rejects NaN and infinities, while other JavaScript values retain their coercion behaviour
      * @param options - (Optional) packing options
      */
     constructor(
@@ -69,13 +69,10 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         options: IOption = {}
     ) {
         super();
-        // Every size in the bin arithmetic is derived from `padding`, so a padding that is not a finite number
-        // makes them all `NaN`, which `updateBinSize()` reads as "fits" and `place()` then retries without end
-        // (issue #43). Reject it where it enters. The message spells the signature out because passing the
-        // options object in the padding slot is how the report reached this.
-        if (typeof padding !== "number" || !isFinite(padding)) {
+        // Preserve JavaScript coercion; updateBinSize() refuses any invalid size it produces (issue #43).
+        if (typeof padding === "number" && !isFinite(padding)) {
             throw new Error(
-                "MaxRectsBin: padding must be a finite number, got " +
+                "MaxRectsBin: padding must not be NaN or Infinity, got " +
                     String(padding) +
                     " — the constructor is (maxWidth, maxHeight, padding, options)"
             );
@@ -511,7 +508,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
      * Grow the bin so that it contains the given node.
      * @param node - the node the bin has to contain
      * @param considerRotation - whether the node may also be placed rotated when `options.allowRotation` is on, in which case the bin grows by the smaller of the two (default is true)
-     * @returns true when the bin was grown
+     * @returns true when the node's required bin size was accepted and free space updated
      */
     private updateBinSize(node: IRectangle, considerRotation: boolean = true): boolean {
         if (!this.options.smart) return false;
@@ -542,11 +539,8 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         if (this.options.square) {
             tmpWidth = tmpHeight = Math.max(tmpWidth, tmpHeight);
         }
-        // A size that is not a finite number can never be a bin, and every comparison against `NaN` is false,
-        // so the bounds check above would read it as "fits" and grow the bin to `NaN` — the state that let
-        // `place()` retry the same placement without end (issue #43). Report the growth as failed instead,
-        // which refuses the placement: the retry in `place()` only runs for a bin that really grew, and growth
-        // is capped by maxWidth/maxHeight, so it cannot run away.
+        // Comparisons against NaN read as "fits"; refuse non-finite sizes before changing free space so
+        // place() cannot retry the same invalid arithmetic indefinitely (issue #43).
         tmpFits =
             isFinite(tmpWidth) && isFinite(tmpHeight) && !(tmpWidth > this.maxWidth || tmpHeight > this.maxHeight);
         if (!tmpFits) {

@@ -34,13 +34,17 @@ does not — and that formula is free space, not capacity: the oversized check c
 
 ## The constructor rejected my `padding`
 
-`padding` has to be a finite number: `NaN`, `Infinity`, a string, `null` or an object throws from the
-constructor. Every size in the bin arithmetic is derived from it, so a value that is not a number turns
-them all into `NaN`, and a `NaN` bin can never fit anything.
+Both constructors reject numeric `NaN`, `Infinity` and `-Infinity`. Omitting `padding` or passing
+`undefined` uses the default `0`. Other JavaScript values, such as `null`, strings, booleans, arrays
+and objects, retain the existing coercion behaviour; they are not converted to numbers up front.
+For example, `null` behaves like `0`, while `"2"` concatenates with a rect's width in the placement
+probe, so it need not pack the same way as numeric `2`. Use a finite number for predictable spacing.
 
 The easy way in is the argument order — the signature is `(width, height, padding, options)`, so
-`new MaxRectsPacker(1024, 1024, { padding: 2 })` puts the options object in the padding slot. The error
-message names the parameter and the signature for that reason.
+`new MaxRectsPacker(1024, 1024, { padding: 2 })` puts the options object in the padding slot. Construction
+still succeeds, but `add()` refuses the non-finite bin size that object's coercion produces: the packer
+reports the rect as [oversized](./packing.md#oversized-rects), and a bin returns `undefined` rather than
+retrying forever. Pass the gap as the third argument, for example `new MaxRectsPacker(1024, 1024, 2, {})`.
 
 A rect whose own `width`/`height` is `NaN` is refused rather than being allowed to poison the bin: the
 packer reports it as [oversized](./packing.md#oversized-rects), and a bin returns `undefined` from

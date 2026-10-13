@@ -18,21 +18,58 @@ beforeEach(() => {
 });
 
 describe("constructor", () => {
-    test("rejects a padding that is not a finite number", () => {
-        // Issue #43 passes the options object into the padding slot — `(width, height, padding, options)` —
-        // and the error names the constructor that was called, not the first bin it would have opened.
-        for (const padding of [{ padding: 1 }, NaN, Infinity, "2", null]) {
-            expect(() => new MaxRectsPacker(512, 512, padding)).toThrow("padding must be a finite number");
+    test("rejects explicitly non-finite numeric padding", () => {
+        for (const padding of [NaN, Infinity, -Infinity]) {
+            expect(() => new MaxRectsPacker(512, 512, padding)).toThrow("padding must not be NaN or Infinity");
         }
-        expect(() => new MaxRectsPacker(512, 512, { padding: 1 })).toThrow("(width, height, padding, options)");
+        expect(() => new MaxRectsPacker(512, 512, NaN)).toThrow("MaxRectsPacker:");
     });
 
     test("still packs with a padding that is a finite number", () => {
-        for (const padding of [0, 1, 1.5, -1]) {
+        for (const padding of [undefined, 0, 1, 1.5, -1]) {
             const packer = new MaxRectsPacker(512, 512, padding);
+            expect(packer.padding).toBe(padding === undefined ? 0 : padding);
             packer.add({ width: 100, height: 100 });
             expect(packer.bins).toHaveLength(1);
             expect(packer.bins[0].rects).toHaveLength(1);
+        }
+    });
+
+    test("preserves JavaScript padding values and their arithmetic", () => {
+        for (const padding of [null, true, false, [], { valueOf: () => 2 }, Object(2)]) {
+            const packer = new MaxRectsPacker(512, 512, padding);
+            const rect = { width: 100, height: 100 };
+            expect(packer.padding).toBe(padding);
+            expect(packer.add(rect)).toBe(rect);
+            expect(packer.bins).toHaveLength(1);
+            expect(packer.bins[0].padding).toBe(padding);
+            expect([packer.bins[0].width, packer.bins[0].height, rect.x, rect.y]).toEqual([128, 128, 0, 0]);
+        }
+        for (const padding of ["2", [2]]) {
+            const packer = new MaxRectsPacker(512, 512, padding);
+            const rect = { width: 100, height: 100 };
+            expect(packer.padding).toBe(padding);
+            expect(packer.add(rect)).toBe(rect);
+            expect(packer.bins).toHaveLength(1);
+            expect(packer.bins[0]).toBeInstanceOf(OversizedElementBin);
+            expect(packer.bins[0].rects).toEqual([rect]);
+            expect(rect.oversized).toBe(true);
+        }
+    });
+
+    test("reports a rect oversized when padding coerces to an invalid size", () => {
+        for (const padding of [{ padding: 1 }, {}, "invalid", { valueOf: () => NaN }]) {
+            const packer = new MaxRectsPacker(512, 512, padding);
+            const rect = { width: 100, height: 100 };
+            expect(packer.padding).toBe(padding);
+            expect(packer.add(rect)).toBe(rect);
+            expect(packer.bins).toHaveLength(1);
+            expect(packer.bins[0]).toBeInstanceOf(OversizedElementBin);
+            expect(packer.bins[0].rects).toEqual([rect]);
+            expect(rect.oversized).toBe(true);
+            packer.padding = 0;
+            expect(packer.add({ width: 100, height: 100 }).oversized).not.toBe(true);
+            expect(packer.bins).toHaveLength(2);
         }
     });
 });
