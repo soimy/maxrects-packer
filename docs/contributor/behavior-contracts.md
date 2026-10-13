@@ -58,6 +58,11 @@ puts that rect in an `OversizedElementBin` rather than dropping it. The other ha
 rotated rect reports the footprint it occupies, so `place()` swaps width/height itself for objects
 whose `rot` has no setter.
 
+Both constructors reject numeric `NaN`, `Infinity` and `-Infinity` padding. Omitting padding or passing
+`undefined` uses `0`; other JavaScript values retain their original coercion behaviour, without an
+up-front conversion to numbers. `updateBinSize()` refuses a non-finite result before changing the bin
+dimensions or free rectangles, so invalid arithmetic cannot trigger an endless placement retry.
+
 ## 7. Generics survive {#generics-survive}
 
 `MaxRectsPacker<T extends IRectangle>` and `MaxRectsBin<T>` accept instances of custom classes and

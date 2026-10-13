@@ -7,8 +7,12 @@ const packer = new MaxRectsPacker(maxWidth, maxHeight, padding = 0, options = {}
 `maxWidth` and `maxHeight` are the bounds a normal bin stays inside. The placeholder bin an oversized
 rect gets is that rect's own size and can pass them — see
 [oversized rects](packing.md#oversized-rects). `padding` keeps placed rects at least that many pixels
-apart, and is added to the footprint of each rect when the packer looks for free space. `options` is a
-partial [`IOption`](../api/interfaces/IOption.md):
+apart, and is added to the footprint of each rect when the packer looks for free space. Omitting it or
+passing `undefined` uses `0`. Numeric `NaN`, `Infinity` and `-Infinity` throw from the constructor;
+other JavaScript values retain the existing coercion behaviour, including string concatenation.
+If that arithmetic produces a non-finite bin size, placement is refused instead of retried indefinitely —
+see [padding troubleshooting](troubleshooting.md#the-constructor-rejected-my-padding).
+`options` is a partial [`IOption`](../api/interfaces/IOption.md):
 
 | Option | Default | Effect |
 | --- | --- | --- |

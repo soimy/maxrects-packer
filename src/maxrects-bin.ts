@@ -54,6 +54,14 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         logic: PACKING_LOGIC.MAX_EDGE
     };
 
+    /**
+     * Creates an instance of MaxRectsBin.
+     *
+     * @param maxWidth - width of the bin (default is 4096)
+     * @param maxHeight - height of the bin (default is 4096)
+     * @param padding - padding between glyphs/images (omitted or undefined defaults to 0); rejects NaN and infinities, while other JavaScript values retain their coercion behaviour
+     * @param options - (Optional) packing options
+     */
     constructor(
         public maxWidth: number = EDGE_MAX_VALUE,
         public maxHeight: number = EDGE_MAX_VALUE,
@@ -61,6 +69,14 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         options: IOption = {}
     ) {
         super();
+        // Preserve JavaScript coercion; updateBinSize() refuses any invalid size it produces (issue #43).
+        if (typeof padding === "number" && !isFinite(padding)) {
+            throw new Error(
+                "MaxRectsBin: padding must not be NaN or Infinity, got " +
+                    String(padding) +
+                    " — the constructor is (maxWidth, maxHeight, padding, options)"
+            );
+        }
         this.options = { ...this.options, ...options };
         this.width = this.options.smart ? 0 : maxWidth;
         this.height = this.options.smart ? 0 : maxHeight;
@@ -492,7 +508,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
      * Grow the bin so that it contains the given node.
      * @param node - the node the bin has to contain
      * @param considerRotation - whether the node may also be placed rotated when `options.allowRotation` is on, in which case the bin grows by the smaller of the two (default is true)
-     * @returns true when the bin was grown
+     * @returns true when the node's required bin size was accepted and free space updated
      */
     private updateBinSize(node: IRectangle, considerRotation: boolean = true): boolean {
         if (!this.options.smart) return false;
@@ -523,7 +539,10 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         if (this.options.square) {
             tmpWidth = tmpHeight = Math.max(tmpWidth, tmpHeight);
         }
-        tmpFits = !(tmpWidth > this.maxWidth || tmpHeight > this.maxHeight);
+        // Comparisons against NaN read as "fits"; refuse non-finite sizes before changing free space so
+        // place() cannot retry the same invalid arithmetic indefinitely (issue #43).
+        tmpFits =
+            isFinite(tmpWidth) && isFinite(tmpHeight) && !(tmpWidth > this.maxWidth || tmpHeight > this.maxHeight);
         if (!tmpFits) {
             return false;
         }

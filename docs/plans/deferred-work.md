@@ -10,6 +10,25 @@ published site (`srcExclude` in `docs/.vitepress/config.mts`), and both are trac
 
 ## `place()` recurses without bound when `padding` is not a number
 
+**Verified resolved on 2026-10-13** — both constructors throw for numeric `NaN`, `Infinity` and
+`-Infinity` padding, while other JavaScript values keep their original coercion behaviour. Omitted or
+`undefined` padding still defaults to `0`. `updateBinSize()` reports failure before changing dimensions
+or free space when its result is non-finite, instead of "growing" the bin to `NaN`, which is the state
+`place()` retried forever. The misplaced `{ padding: 1 }` object still constructs successfully, but
+placement now returns immediately: oversized through the packer, `undefined` from a bin. After correcting
+padding, resetting the bin rebuilds its initial free space and makes it usable again. A `NaN` rect is also
+refused without changing free space or dimensions, and the bin can accept the next valid rect.
+
+Compared with the pre-PR implementation, `null`, booleans, `[]` and objects with numeric `valueOf()`
+still pack the measured 100×100 rect into a 128×128 bin; `"2"` and `[2]` still refuse that input, because
+the probe concatenates instead of adding. No up-front number conversion or options-object detection is
+introduced. An unconditional "dimensions did not change" guard in `updateBinSize()` would break valid
+placements: with padding 2 and `pot: false`, adding 100×100, 150×50 and 150×48 places the last rect in
+the existing 252×100 bin even though its padded node extends past the reported width. The existing
+finite-result guard is retained. The measurements below are kept as the record of what the fix is
+measured against. Tracked in
+[issue #43](https://github.com/soimy/maxrects-packer/issues/43).
+
 Found while triaging the untracked issues on 2026-10-11: [issue #43](https://github.com/soimy/maxrects-packer/issues/43)
 had been open since 2022 with no reproduction, and it is still live on `master`.
 
