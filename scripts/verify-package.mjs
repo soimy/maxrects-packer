@@ -253,9 +253,13 @@ try {
         `  ✓ the published types accept a CommonJS .cts consumer (${CJS_MODES.map((mode) => mode.name).join(", ")})`
     );
 
-    // 6c) Deep paths into the package are sealed by the exports map. Every one of them used to resolve,
-    // so this is the breaking half of the change (documented in docs/user/troubleshooting.md) and the
-    // one a future `"./dist/*": "./dist/*"` entry would silently undo.
+    // 6c) Deep paths into the package are sealed by the exports map. The three specifiers below are
+    // deliberately different pre-map shapes, measured against the master tarball: `dist/maxrects-packer.cjs`
+    // resolved, `dist/geom/Rectangle.js` was MODULE_NOT_FOUND because no runtime file is emitted there
+    // (only the `.d.ts`), and `src/index.ts` was refused with ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING.
+    // After the map all three must fail the same way, with ERR_PACKAGE_PATH_NOT_EXPORTED. That seal is the
+    // breaking half of the change (documented in docs/user/troubleshooting.md) and the one a future
+    // `"./dist/*": "./dist/*"` entry would silently undo.
     const DEEP_IMPORTS = [
         "maxrects-packer/dist/maxrects-packer.cjs",
         "maxrects-packer/dist/geom/Rectangle.js",
