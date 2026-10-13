@@ -50,24 +50,6 @@ had been open since 2022 with no reproduction, and it is still live on `master`.
   error for the call above; JavaScript callers get the hang. Tracked in
   [issue #43](https://github.com/soimy/maxrects-packer/issues/43).
 
-## Code changes (found while closing the test-coverage gaps, PR #73)
-
-One behaviour question the measurements raised while the dead code around it was removed. The
-measurements came from the coverage report and from deleting the code in question and re-running the
-suite.
-
-- **`add()` tags a non-exclusive bin with only the first rect's tag** (`src/maxrects-packer.ts:78`).
-  In non-exclusive mode one bin may hold several tag groups — `test/maxrects-packer.spec.js` pins a bin
-  whose rects carry `one`, `one`, `two`, `two` — so that tag names just one of them, and `save()`
-  serializes it while `load()` restores it. `addArray()` leaves the bins it opens untagged
-  (`src/maxrects-packer.ts:203`, where the dead `bin.tag = tag` line used to sit), and the choice made
-  when that line was deleted was to keep that difference rather than spread the label. Decide whether
-  `bin.tag` should exist outside `exclusiveTag: true` at all: tagging in both paths is a user-visible
-  metadata change, tagging in neither drops a field from `save()` output. Neither direction changes a
-  packing decision — a bin copies its `options` at construction, so a bin created in non-exclusive
-  mode never gates on its own tag, even if `packer.options.exclusiveTag` is flipped later. Tracked in
-   [issue #93](https://github.com/soimy/maxrects-packer/issues/93).
-
 ## Clone re-decides rotation
 
 **Verified resolved on 2026-10-11** — `clone()` reproduces its source for rotated rects. The bin records
@@ -147,30 +129,6 @@ guide then stated the append, and this is the part of it that looked like a bug 
   `options`/`tag`. A `save()`/`load()` round trip that silently loses a bin is why this is recorded
   rather than left to the guide's prose.
 
-## `clone()` on an oversized placeholder drops the restored state
-
-Found while reviewing PR #114; a decision of its own, so it is recorded rather than fixed on the
-spot.
-
-- **`OversizedElementBin.clone()` does not carry the state `load()` restores.** Measured on the merged
-   branch: a placeholder holding two saved free rects, `maxWidth`/`maxHeight` 2048×512, the saved
-   `options` clones to another placeholder at its own 128×128 size with
-   `{smart: false, pot: false, square: false}`, no free rects, and the same `tag`. The copy is
-   re-derived from `this.rects[0]`, so the free space PR #114 restores is the first thing it drops.
-   The only internal caller is the non-exclusive tag probe (`src/maxrects-packer.ts:170`), where a
-   placeholder fails the probe either way, so nothing depends on the difference today. Invariant 8
-   says state travels and behaviour does not; here most of the state does not travel either, and
-   `clone()` is public API, so a caller can reach the difference directly. Tracked in
-   [issue #118](https://github.com/soimy/maxrects-packer/issues/118).
-
-## Test infrastructure
-
-- **Return-value promises are asserted (issue #97; implemented, pending merge).**
-  `test/maxrects-packer.spec.js` and `test/maxrects-bin.spec.js` now pin caller identity for plain
-  objects and `Rectangle` instances, and the numeric overloads return the internal `Rectangle` stored
-  in the bin. `addArray()` is asserted to return `undefined` for populated and empty arrays in normal
-  and non-exclusive tag modes. No runtime behaviour changed. Remove this entry once the PR merges.
-
 ## Custom heading anchors read out with their braces
 
 Found while scanning the built pages for unrendered markdown; cosmetic, and accepted for now rather
@@ -234,17 +192,6 @@ unaffected: `docs/` is not in the `files` allowlist.
 Noticed while auditing the stack before its first deployment. None of these is broken today — every run
 on the three pull requests is green — so each waits for a commit of its own.
 
-- **The workflows pin action majors that are several releases behind.** `.github/workflows/docs.yml` uses
-  `actions/checkout@v4`, `actions/setup-node@v4`, `actions/configure-pages@v5`,
-  `actions/upload-pages-artifact@v3` and `actions/deploy-pages@v4`; the current majors read through the
-  API on 2026-09-30 are v7, v7, v6, v5 and v5. `node.js.yml` and `release.yml` sit on
-  `checkout@v4`/`setup-node@v4` too, and the repository has no Dependabot or Renovate configuration, so
-  nothing raises these on its own — one `ci:` PR should move all three files together rather than leaving
-  the new workflow on majors the others do not use. Worth doing before the first deployment, because
-  `actions/deploy-pages` is the one step that has never run here (the job is gated on a push to `master`)
-  and its inputs have to be re-checked against the current `action.yml` — the versions in use were
-  verified against `upload-pages-artifact@v3` and `configure-pages@v5`. Tracked in
- [issue #119](https://github.com/soimy/maxrects-packer/issues/119).
 - **Verified resolved on 2026-10-10** — npm does not resolve a relative README image against the
   package, so the icon stayed broken on the page even though the file is in the repository; the
   README heading now uses an absolute URL, which renders on both sites. `assets/*.png` stays out of

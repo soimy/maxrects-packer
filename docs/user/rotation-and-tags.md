@@ -60,15 +60,21 @@ packer.addArray([
 The tag is read from `rect.data.tag`, falling back to a `tag` property on the rect itself — either
 works, and `data.tag` wins when both are set. With `tag: true`:
 
-- rects carrying the same tag go into bins carrying that tag — a group too large for one bin opens
-  more bins with the same tag;
 - with `exclusiveTag: true` (the default) a tagged rect only enters a bin with the same tag, and a bin
-  that has no tag refuses tagged rects, so one tag can never share a bin with another;
+  that has no tag refuses tagged rects, so one tag can never share a bin with another. A group too large
+  for one bin opens more bins with the same tag;
 - with `exclusiveTag: false` the packer instead tries to fit a tag group into an existing bin
   alongside other groups, and only opens a new bin when none of them has room. That probe copies the
   candidate bin, so it never disturbs the placements you already have.
 
-`bin.tag` records the label of a bin. In non-exclusive mode a bin may legitimately hold several tags,
-so the label names one of them rather than describing everything inside — and the bins `addArray()`
-opens in that mode carry no tag at all. Treat it as metadata, not as a constraint, and read the tags
-you care about from `bin.rects[i].data.tag` (or `rect.tag`).
+In non-exclusive mode, neither `add()` overload nor `addArray()` automatically assigns `bin.tag`.
+Read the tags you care about from `bin.rects[i].data.tag` (or `rect.tag`). An explicit bin label, or one
+restored by `load()`, is preserved as metadata and does not constrain non-exclusive placement.
+
+### Migrating non-exclusive bin labels in 3.0.0
+
+Previously, `add()` labelled a new non-exclusive bin with its first rect's tag, while `addArray()` left
+new bins unlabelled. From 3.0.0 both paths leave them unlabelled, so `save()` no longer emits that
+automatic `tag` field. Consumers that used it to identify a group must read the rect tags instead;
+if you need an atlas label in saved state, assign `bin.tag` explicitly. Existing saved labels still
+round-trip through `load()` and `save()`.

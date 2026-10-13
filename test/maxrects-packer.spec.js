@@ -470,6 +470,68 @@ describe("#addArray", () => {
     });
 });
 
+describe("tag metadata", () => {
+    const entryPoints = [
+        ["rect.data.tag", (packer, tag) => packer.add({ width: 32, height: 32, data: { tag } })],
+        ["rect.tag", (packer, tag) => packer.add({ width: 32, height: 32, tag })],
+        ["dimensions overload", (packer, tag) => packer.add(32, 32, { tag })],
+        ["addArray", (packer, tag) => packer.addArray([{ width: 32, height: 32, data: { tag } }])]
+    ];
+
+    test.each(entryPoints)("%s leaves non-exclusive bins unlabelled across save/load", (_name, add) => {
+        const options = { ...opt, tag: true, exclusiveTag: false };
+        const source = new MaxRectsPacker(128, 128, 0, options);
+        add(source, "one");
+        add(source, "two");
+
+        expect(source.bins).toHaveLength(1);
+        expect(source.bins[0].tag).toBeUndefined();
+        expect(source.bins[0].rects.map((rect) => rect.data?.tag ?? rect.tag)).toEqual(["one", "two"]);
+        expect(source.bins[0].rects.map((rect) => [rect.x, rect.y])).toEqual([
+            [0, 0],
+            [32, 0]
+        ]);
+        const saved = source.save();
+        expect(saved[0]).not.toHaveProperty("tag");
+        const restored = new MaxRectsPacker(128, 128, 0, options);
+        restored.load(saved);
+        expect(restored.bins[0].tag).toBeUndefined();
+        expect(restored.save()).toEqual(saved);
+    });
+
+    test.each(entryPoints)("%s keeps the default exclusive labels and tag gate", (_name, add) => {
+        const source = new MaxRectsPacker(128, 128, 0, { tag: true });
+        add(source, "one");
+        add(source, "two");
+        add(source, "one");
+
+        expect(source.bins.map((bin) => bin.tag)).toEqual(["one", "two"]);
+        expect(source.bins.map((bin) => bin.rects.length)).toEqual([2, 1]);
+        expect(source.save().map((bin) => bin.tag)).toEqual(["one", "two"]);
+    });
+
+    test("preserves explicit and restored non-exclusive bin labels when adding more rects", () => {
+        const options = { ...opt, tag: true, exclusiveTag: false };
+        const source = new MaxRectsPacker(128, 128, 0, options);
+        source.add(32, 32, { tag: "one" });
+        source.bins[0].tag = "atlas";
+        source.add({ width: 32, height: 32, tag: "two" });
+        expect(source.bins[0].tag).toBe("atlas");
+        const saved = source.save();
+        expect(saved[0].tag).toBe("atlas");
+
+        const restored = new MaxRectsPacker(128, 128, 0, options);
+        restored.load(saved);
+        expect(restored.save()).toEqual(saved);
+        restored.add(16, 16, { tag: "three" });
+        restored.addArray([{ width: 16, height: 16, tag: "four" }]);
+        expect(restored.bins).toHaveLength(1);
+        expect(restored.bins[0].tag).toBe("atlas");
+        expect(restored.bins[0].rects.map((rect) => rect.data?.tag ?? rect.tag)).toEqual(["three", "four"]);
+        expect(restored.save()[0].tag).toBe("atlas");
+    });
+});
+
 describe("#save & load", () => {
     test("Load old bins and continue packing", () => {
         packer.options.tag = true;

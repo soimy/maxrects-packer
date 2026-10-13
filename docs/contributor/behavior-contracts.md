@@ -28,6 +28,11 @@ without a tag refuses tagged rects. The check lives in `MaxRectsBin.place()`, wh
 copying it**, and a bin whose `clone()` throws counts as one the group does not fit. That way a single
 uncopyable bin cannot fail the whole `addArray()` call.
 
+Neither `add()` overload nor `addArray()` assigns an automatic bin label in non-exclusive mode;
+each rect keeps its own tag. Explicit and restored `bin.tag` metadata is preserved, including by
+`save()`/`load()`, and does not gate placement. This changes the saved output of bins opened by
+non-exclusive `add()` before 3.0.0: their first rect's tag is no longer copied onto the bin.
+
 ## 3. `next()` only affects what comes after {#next-only-affects-what-comes-after}
 
 It sets the current bin index to `bins.length` and returns that index: earlier bins stop accepting new
@@ -72,10 +77,17 @@ back.
 
 Both bin implementations copy their rects (`Rectangle.Clone`), so a custom class keeps its prototype
 and its extra fields, and carry over `tag` and `data`. Mutating a rect one bin holds, or adding to one
-bin, never reaches the other. The copy is **shallow**: the object in `rect.data` is shared.
+bin, never reaches the other. The copy is **shallow**: bin `data` and `rect.data` payloads are shared.
 
-The copy is produced by re-packing the rect copies, and it reproduces the source's placements: the replay
-is handed each rect in the orientation the source was handed it. A rect this bin turned is stored as the
+`OversizedElementBin.clone()` copies the placeholder's dimensions, maxima, options and free rectangles
+as well, including the state `load()` restored. The options object, free-space array and each free
+rectangle are independent copies. Bin data is kept separately from rect data, so a two-argument
+source and its clone both report bin `data: null` while their rects share the empty data object.
+The clone remains a placeholder whose `add()` returns `undefined`, even with restored free space;
+`load()` → `clone()` → `save()` preserves that snapshot and still saves an empty `rects` array.
+
+`MaxRectsBin.clone()` produces its copy by re-packing the rect copies, reproducing the source's placements:
+the replay is handed each rect in the orientation the source was handed it. A rect this bin turned is stored as the
 footprint it occupies, which is the same state a rect the caller handed over already rotated has, so the bin
 records which placements turned their rect and `clone()` undoes those turns before replaying. The record is
 per placement, on the bin: per placement because the same object can be placed more than once, and on the

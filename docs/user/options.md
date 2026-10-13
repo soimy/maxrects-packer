@@ -20,8 +20,8 @@ see [padding troubleshooting](troubleshooting.md#the-constructor-rejected-my-pad
 | `pot` | `true` | Round a grown bin up to the next power of two. |
 | `square` | `false` | Keep every normal bin square. |
 | `allowRotation` | `false` | Allow 90° rotation while packing. |
-| `tag` | `false` | Group rects by tag — `rect.data.tag`, or a `tag` property on the rect itself — into bins carrying that tag. |
-| `exclusiveTag` | `true` | With `tag`, keep one tag per bin. Set it to `false` to let several tags share a bin when they fit. |
+| `tag` | `false` | Group rects by tag — `rect.data.tag`, or a `tag` property on the rect itself. |
+| `exclusiveTag` | `true` | With `tag`, keep one tag per bin and label it with that tag. Set it to `false` to let several tags share a bin without an automatic bin label. |
 | `border` | `0` | Atlas edge spacing: free space is kept `border` pixels away from a bin's edges. |
 | `logic` | `MAX_EDGE` | How free space is scored — see [packing logic](#packing-logic). |
 

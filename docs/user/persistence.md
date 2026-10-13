@@ -24,6 +24,10 @@ next.addArray([{ width: 300, height: 120 }]);   // lands in the space that was l
 Each entry of the array `save()` returns describes one bin: its `width`, `height`, `options`, `tag` and
 `freeRects` — the maximal free rectangles the packer would place into next.
 
+`tag` is optional. Non-exclusive bins receive no automatic label, so that field is absent unless you
+set it explicitly or loaded an existing label. Older non-exclusive snapshots keep their saved labels;
+see the [3.0.0 migration note](./rotation-and-tags.md#migrating-non-exclusive-bin-labels-in-3-0-0).
+
 **`rects` is always empty in a saved bin.** Already-placed rects are not serialized, and `load()` does
 not bring them back: it restores the free space, so whatever you add next avoids the area the earlier
 pack used without overlapping it. If you need the placements as well, store your own input list
@@ -47,6 +51,11 @@ it as a placeholder [`OversizedElementBin`](../api/classes/OversizedElementBin.m
 the packer held there, and carrying the saved `options`, `tag`, `maxWidth`/`maxHeight` and free space.
 A snapshot that has to pass through a packer too small for it therefore comes back whole: load it into
 a packer that can hold the original limits and the free space it saved is there again.
+
+Cloning that placeholder also preserves its saved dimensions, maxima, options, tag and free space.
+The rect, free rectangles and options are separate copies, while bin `data` and `rect.data` remain
+shared payloads. The clone stays a placeholder: `add()` returns `undefined` even when free space is
+present. Saving the clone therefore keeps the restored snapshot, without serializing placed rects.
 
 Both methods are plain data in and out — no files, no JSON parsing inside the library, so the
 serialized form is yours to compress, version or store in a database.
