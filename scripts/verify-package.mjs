@@ -155,10 +155,11 @@ try {
         throw new Error(`require("maxrects-packer") loaded but misbehaves: expected 1 bin, got ${cjs.bins}`);
     console.log(`  ✓ require("maxrects-packer") -> ${cjs.keys.length} exports, real packing run OK`);
 
-    // 5) Verify ESM by package name (Node loads main through CJS interop; named exports come from cjs-module-lexer)
-    // Node 23+ also adds a synthetic "module.exports" key to the namespace of a CommonJS module, so the
-    // raw key count is 6 on Node 20/22 and 7 on Node 24. Drop it: this gate is about which real exports
-    // are reachable by name, and a count that changes with the Node version reads like a regression.
+    // 5) Verify ESM by package name. The exports map sends `import` to dist/maxrects-packer.mjs, so this
+    // loads the native ESM build: six named exports, no `default` (the `default` plus cjs-module-lexer
+    // shape was the pre-3.0.0 path through `main` and CJS interop). The key filter below is defensive
+    // only — a `default` would now mean a fallback to the CommonJS bundle, and Node 23+ adds a synthetic
+    // "module.exports" key to a CJS namespace — so this stays about reachable names, not the raw count.
     const esmKeys = JSON.parse(
         run(
             "node",

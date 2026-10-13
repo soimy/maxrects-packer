@@ -96,8 +96,9 @@ A rect class that keeps its state behind an own accessor is shared too unless it
 
 3.0.0 added an `exports` map, and a map is exhaustive: only the entry points it names resolve. Deep
 imports that used to work — `maxrects-packer/dist/maxrects-packer.cjs`,
-`maxrects-packer/dist/geom/Rectangle.js`, anything else under `dist/` or `src/` — now fail with
-`ERR_PACKAGE_PATH_NOT_EXPORTED` in Node and TypeScript alike. Import the package by name instead:
+`maxrects-packer/dist/geom/Rectangle.js`, anything else under `dist/` or `src/` — no longer resolve:
+Node fails with `ERR_PACKAGE_PATH_NOT_EXPORTED`, and TypeScript reports TS2307
+(`Cannot find module '…'`) for the same specifier. Import the package by name instead:
 `import { MaxRectsPacker } from "maxrects-packer"` resolves per format, so `require` gets
 `dist/maxrects-packer.cjs` with CommonJS declarations and `import` gets `dist/maxrects-packer.mjs`
 with the ESM ones. `maxrects-packer/package.json` stays reachable, because the map names it
@@ -106,6 +107,11 @@ explicitly. This is the breaking half of the 3.0.0 change; the other half closed
 (TS1479, or TS1471 for `import pkg = require(...)`) because the only declarations it could resolve
 were ESM-flavoured. Per-format declarations fixed that: the `require` condition now hands out the
 CommonJS `.d.cts` set.
+
+A process that both requires and imports the package now holds two module instances — two `Rectangle`
+classes, two `MaxRectsPacker` classes — because the two conditions load different files. Before the
+map both got the same `dist/maxrects-packer.cjs`, since the ESM import fell back to `main`; compare
+instances by shape rather than `instanceof`.
 
 ## Still stuck
 
