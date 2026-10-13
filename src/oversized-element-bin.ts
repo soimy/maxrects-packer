@@ -63,16 +63,25 @@ export class OversizedElementBin<T extends IRectangle = Rectangle> extends Bin<T
         return undefined;
     }
     /**
-     * Copy this bin around a copy of its rect, so mutating one bin's rect leaves the other's alone. The
-     * copy is shallow (`Rectangle.Clone`), so a payload stored in `rect.data` is still shared, and a rect
-     * class that cannot be copied that way reports it from there.
+     * Copy this placeholder's rect, free rectangles, dimensions, maxima, options, tag and bin data.
+     * The rect and free rectangles use `Rectangle.Clone`, and options are copied, so changing them
+     * leaves the source alone. Payloads in `rect.data` and bin `data` remain shared (a shallow copy),
+     * and a rect class that cannot be copied that way reports it from there. The copy still refuses
+     * additions, even when it carries free space restored by `load()`.
      *
-     * @returns a bin holding a copy of the same rect, with the same size and tag — its data is the copy
-     * of the rect's, so a two-argument source reports `{}` here instead of its `null`
+     * @returns a placeholder holding a copy of the same rect and restored state; bin data is kept
+     * separately from rect data, including `null` from a two-argument construction
      */
     clone(): Bin<T> {
         let clonedBin: OversizedElementBin<T> = new OversizedElementBin<T>(Rectangle.Clone(this.rects[0]));
+        clonedBin.width = this.width;
+        clonedBin.height = this.height;
+        clonedBin.maxWidth = this.maxWidth;
+        clonedBin.maxHeight = this.maxHeight;
+        clonedBin.options = { ...this.options };
+        clonedBin.freeRects = this.freeRects.map((rect) => Rectangle.Clone(rect));
         clonedBin.tag = this.tag;
+        clonedBin.data = this.data;
         return clonedBin;
     }
 }

@@ -147,22 +147,6 @@ guide then stated the append, and this is the part of it that looked like a bug 
   `options`/`tag`. A `save()`/`load()` round trip that silently loses a bin is why this is recorded
   rather than left to the guide's prose.
 
-## `clone()` on an oversized placeholder drops the restored state
-
-Found while reviewing PR #114; a decision of its own, so it is recorded rather than fixed on the
-spot.
-
-- **`OversizedElementBin.clone()` does not carry the state `load()` restores.** Measured on the merged
-   branch: a placeholder holding two saved free rects, `maxWidth`/`maxHeight` 2048×512, the saved
-   `options` clones to another placeholder at its own 128×128 size with
-   `{smart: false, pot: false, square: false}`, no free rects, and the same `tag`. The copy is
-   re-derived from `this.rects[0]`, so the free space PR #114 restores is the first thing it drops.
-   The only internal caller is the non-exclusive tag probe (`src/maxrects-packer.ts:170`), where a
-   placeholder fails the probe either way, so nothing depends on the difference today. Invariant 8
-   says state travels and behaviour does not; here most of the state does not travel either, and
-   `clone()` is public API, so a caller can reach the difference directly. Tracked in
-   [issue #118](https://github.com/soimy/maxrects-packer/issues/118).
-
 ## Test infrastructure
 
 - **Three return-value promises are documented but unasserted.** `add()` "returns that same object",
