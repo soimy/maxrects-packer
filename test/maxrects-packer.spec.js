@@ -76,8 +76,17 @@ describe("constructor", () => {
 
 describe("#add", () => {
     test("adds first element correctly", () => {
-        packer.add(1000, 1000, { num: 1 });
-        expect(packer.bins[0].rects[0].data.num).toBe(1);
+        const rect = packer.add(1000, 1000, { num: 1 });
+        expect(rect).toBeInstanceOf(Rectangle);
+        expect(rect).toBe(packer.bins[0].rects[0]);
+        expect(rect.data.num).toBe(1);
+    });
+
+    test("returns the caller's rect object", () => {
+        for (const rect of [{ width: 100, height: 100 }, new Rectangle(100, 100)]) {
+            expect(packer.add(rect)).toBe(rect);
+            expect(packer.bins[0].rects[packer.bins[0].rects.length - 1]).toBe(rect);
+        }
     });
 
     test("creates additional bin if element doesn't fit in existing bin", () => {
@@ -342,7 +351,7 @@ describe("#addArray", () => {
             { width: 1000, height: 1000, data: { num: 1 } },
             { width: 1000, height: 1000, data: { num: 2 } }
         ];
-        packer.addArray(input);
+        expect(packer.addArray(input)).toBeUndefined();
         expect(packer.bins.length).toBe(2);
     });
 
@@ -371,7 +380,7 @@ describe("#addArray", () => {
     });
 
     test("add empty array", () => {
-        packer.addArray([]); // test null array error
+        expect(packer.addArray([])).toBeUndefined();
         expect(packer.bins.length).toBe(0);
     });
 
@@ -383,16 +392,18 @@ describe("#addArray", () => {
 
     test("add empty array in non-exclusive tag mode", () => {
         packer = new MaxRectsPacker(1024, 1024, 0, { ...opt, tag: true, exclusiveTag: false });
-        packer.addArray([]);
+        expect(packer.addArray([])).toBeUndefined();
         expect(packer.bins).toHaveLength(0);
     });
 
     test("keeps one tag group together in non-exclusive tag mode", () => {
         packer = new MaxRectsPacker(1024, 1024, 0, { ...opt, tag: true, exclusiveTag: false });
-        packer.addArray([
-            { width: 256, height: 256, data: { tag: "one" } },
-            { width: 256, height: 256, data: { tag: "one" } }
-        ]);
+        expect(
+            packer.addArray([
+                { width: 256, height: 256, data: { tag: "one" } },
+                { width: 256, height: 256, data: { tag: "one" } }
+            ])
+        ).toBeUndefined();
         expect(packer.bins).toHaveLength(1);
         expect(packer.bins[0].rects).toHaveLength(2);
     });

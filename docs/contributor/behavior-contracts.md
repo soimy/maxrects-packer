@@ -12,11 +12,10 @@ Only the `add(width, height, data)` overload constructs an internal `Rectangle` 
 is what it hands back, not anything you passed in. Nothing is copied, so the object you keep a reference
 to is the object in the bin.
 
-The write-back is what the specs assert — the caller's own object is checked, `rect.oversized` among
-the four fields — while the three **return values** above are not asserted anywhere: no spec compares
-`add()`'s result with what it was given, and none asks what `addArray()` hands back. They are what the
-signatures promise rather than what the suite locks, and the deferred-work ledger (`docs/plans/deferred-work.md`,
-tracked but not part of this site) records the three assertions that would close it.
+The specs in `test/maxrects-packer.spec.js` and `test/maxrects-bin.spec.js` assert the write-back and
+return values: both `add(rect)` implementations return the caller's object, both numeric overloads
+return the `Rectangle` stored in the bin, and `addArray()` returns `undefined` for populated and empty
+arrays in normal and non-exclusive tag modes.
 
 ## 2. Tag grouping {#tag-grouping}
 

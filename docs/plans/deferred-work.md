@@ -129,19 +129,6 @@ guide then stated the append, and this is the part of it that looked like a bug 
   `options`/`tag`. A `save()`/`load()` round trip that silently loses a bin is why this is recorded
   rather than left to the guide's prose.
 
-## Test infrastructure
-
-- **Three return-value promises are documented but unasserted.** `add()` "returns that same object",
-  `addArray()` "returns nothing", and the `add(width, height, data)` overload returns an internal
-  `Rectangle` rather than anything the caller passed — no spec asserts any of the three. Searched the
-  suite: the only `toBe(<a rect>)` calls are six `not.toBe(rect)` isolation checks in
-  `test/clone.spec.js`, and every test that captures an `add(...)` result passes an inline literal, so
-  it can only prove the return is defined. The in-place half *is* pinned — the caller's own object is
-  checked (`expect(rect.oversized).toBe(true)`) — which is why a regression that quietly returned a
-  copy would keep every gate green. Three assertions across `test/maxrects-packer.spec.js` and
-  `test/maxrects-bin.spec.js` close it; its own PR, since it changes what the suite promises. Tracked in
-   [issue #97](https://github.com/soimy/maxrects-packer/issues/97).
-
 ## Custom heading anchors read out with their braces
 
 Found while scanning the built pages for unrendered markdown; cosmetic, and accepted for now rather
