@@ -82,10 +82,12 @@ that are new. See [persistence](./persistence.md).
 
 ## My clone shares state with the original
 
-`bin.clone()` copies the rects and the tag, and the copy is **shallow**: `MaxRectsBin.clone()` also
-carries a `data` set on the bin itself, while an oversized bin re-derives its `data` from its rect.
-The object in `rect.data` is shared between the two bins, and a rect class that keeps its state behind an own
-accessor is shared too unless it provides its own `clone()`. State travels into the copy; behaviour
+`bin.clone()` copies the rects and the tag, and both bin types carry the bin's own `data` separately
+from the rect's data. The copy is **shallow**: bin `data` and `rect.data` payloads remain shared.
+An oversized placeholder also copies its dimensions, maxima, options and restored free rectangles;
+changing the copied options or free space leaves the source alone, and `add()` still refuses new rects.
+A rect class that keeps its state behind an own accessor is shared too unless it provides its own
+`clone()`. State travels into the copy; behaviour
 (methods and accessors) does not — a class that wants its own methods on the copies defines them in
 `clone()`. The full rule is in the
 [behaviour contracts](../contributor/behavior-contracts.md#clone-isolates-the-two-bins).
