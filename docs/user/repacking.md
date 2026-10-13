@@ -29,3 +29,16 @@ rects do not keep the coordinates they had before. Do not hold on to a placement
 A plain object with `width`/`height` has no setters, so writing to it does not mark anything dirty.
 After resizing such a rect, make the bin dirty yourself — `bin.setDirty()` — or the quick repack will
 skip it.
+
+## Bin metadata lifetime
+
+Bins belong to the library. When `repack(false)` runs, it rebuilds the bin array and can merge or split
+contents. Explicit `bin.tag`, `bin.data` and custom bin fields are not migrated to the new bins;
+the library does not guess which new bin should inherit them. `reset()` discards the active bins,
+and `load()` replaces entries with the documented snapshot fields. Old references remain ordinary
+objects, but no longer represent the packer's current bins.
+
+Keep business identifiers and payloads on the rects, which full repacking reuses with their custom
+fields and payload references intact. Use names that avoid the [rect protocol](./packing.md#keeping-business-data).
+If an export needs bin labels or other derived bin metadata, compute and assign them after the final
+pack or full repack. No metadata migration callback is required or provided.

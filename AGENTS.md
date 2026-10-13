@@ -52,9 +52,12 @@ version, with the reasoning, is [docs/contributor/behavior-contracts.md](./docs/
    in, and nothing else — a rect the caller sealed still packs, so the library never adds a property to
    one. `add()` returns that same object — except the multi-argument overload, which constructs an
    internal `new Rectangle` and returns that instead — while `addArray()` returns nothing.
+   Input arrays keep their order in every mode; `addArray()` accepts readonly arrays and sorts copies.
+   Supplied payloads, including explicit `null`, retain their value; omitted numeric data keeps `{}`.
 2. **Tag grouping**: with `exclusiveTag: true` (the default) a tagged rect may only enter a bin with
    the same tag, and an untagged bin refuses tagged rects. The check lives in `MaxRectsBin.place()`,
-   which every path reaches — `MaxRectsBin.add()` deliberately does not pre-check, so a refused rect
+   which treats falsy labels as untagged on both sides while preserving bin label values for saving,
+   and which every path reaches — `MaxRectsBin.add()` deliberately does not pre-check, so a refused rect
    is simply the `undefined` `place()` returns. `exclusiveTag: false` takes the grouping + recursion
    path inside `addArray()`, which probes a candidate bin by **copying** it: a bin whose `clone()`
    throws (invariant 8) counts as one the group does not fit, so a single uncopyable bin can never
@@ -68,6 +71,9 @@ version, with the reasoning, is [docs/contributor/behavior-contracts.md](./docs/
    — dimensions/options/tag/freeRects only; `load()` restores free rectangles only. Already-placed
    rects have to be re-`add`ed by the caller (tests lock this behavior in — do not "helpfully" fill
    it in).
+   Saved options are shallow copies, not live aliases; explicit empty labels survive save/load.
+   Bins are library-owned: full repacking rebuilds them without migrating bin metadata. Durable
+   business data belongs on rects, with names that avoid the rect protocol's fields.
 6. **Size accounting**: the initial freeRect is `maxWidth + padding - border*2`; placement probes with
    `rect.width + padding`; inside `updateBinSize`, pot/square are rounded first and only then
    validated against `maxWidth/maxHeight`, and growth is abandoned when that check fails.
@@ -312,7 +318,8 @@ English keeps the project history usable for every contributor and every downstr
 - **`OversizedElementBin`'s two-argument construction is a supported tolerance, not dead code.** The
   second overload declares `data?: any` so TypeScript callers can use the form JavaScript has always
   had; leaving `data` out makes the bin report `null`, and its inner rect keeps `{}` because
-  `Rectangle.data` ignores `null`. `test/oversized-element-bin.spec.js` pins that default and the type
+  the constructor only assigns rect data when the third argument is supplied. Explicit `null` is
+  preserved on both fields. `test/oversized-element-bin.spec.js` pins that default and the type
   fixture in `npm run verify:package` pins the declaration — a dead-code pass removed the fallback as
   unreachable and this review had to put it back.
 - **Per-rect `allowRotation` is much narrower than it looks.** Only `MaxRectsBin.place()` honours it,

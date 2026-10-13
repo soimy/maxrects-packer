@@ -58,7 +58,10 @@ packer.addArray([
 ```
 
 The tag is read from `rect.data.tag`, falling back to a `tag` property on the rect itself — either
-works, and `data.tag` wins when both are set. With `tag: true`:
+works, and a truthy `data.tag` wins when both are set. Falsy rect tags use the fallback or count as
+untagged. Bin labels follow the same truthy rule during exclusive placement comparisons, while their
+original values remain intact for saving. An explicit empty bin label therefore still accepts
+untagged/empty-tag rects into its restored free space. With `tag: true`:
 
 - with `exclusiveTag: true` (the default) a tagged rect only enters a bin with the same tag, and a bin
   that has no tag refuses tagged rects, so one tag can never share a bin with another. A group too large
@@ -70,6 +73,14 @@ works, and `data.tag` wins when both are set. With `tag: true`:
 In non-exclusive mode, neither `add()` overload nor `addArray()` automatically assigns `bin.tag`.
 Read the tags you care about from `bin.rects[i].data.tag` (or `rect.tag`). An explicit bin label, or one
 restored by `load()`, is preserved as metadata and does not constrain non-exclusive placement.
+Bins are library-owned; this label lasts for that bin and is not carried into rebuilt bins by a full
+repack. Store durable group identifiers on rects instead.
+
+`add(rect)` keeps the caller's object, its `tag` and its `data` payload. Tags are read without moving,
+rewriting or removing them, even when `rect.tag` and `rect.data.tag` differ. The numeric
+`add(width, height, data)` overload keeps the supplied payload on the `Rectangle` it constructs.
+Grouping adds no metadata fields to the rect or its payload. Placement fields and rotated dimensions
+still change in place as described above.
 
 ### Migrating non-exclusive bin labels in 3.0.0
 
@@ -78,3 +89,8 @@ new bins unlabelled. From 3.0.0 both paths leave them unlabelled, so `save()` no
 automatic `tag` field. Consumers that used it to identify a group must read the rect tags instead;
 if you need an atlas label in saved state, assign `bin.tag` explicitly. Existing saved labels still
 round-trip through `load()` and `save()`.
+
+Free-space snapshots contain no placed rects, so reading rect tags requires keeping those rects or
+[persisting them explicitly](./persistence.md#what-is-stored). An explicit bin label belongs to that
+bin: a full `repack(false)` rebuilds bins and does not carry their labels over. Assign labels after
+the final packing or full repack when exporting an atlas.

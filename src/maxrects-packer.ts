@@ -79,6 +79,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * it has to open, so only an object can carry a tag. `undefined` is treated as untagged data
      * rather than rejected: the rect is offered to the existing bins first, and a bin opened for it
      * stays untagged — what the single-argument form does for a rect that carries no `data`
+     * Supplied data is preserved as-is, including null; omitting it at runtime retains the default {}.
      */
     public add(width: number, height: number, data: any): T;
     /**
@@ -161,13 +162,15 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      *
      * Non-exclusive tag groups can share a bin, so newly opened bins have no automatic `tag` label.
      *
-     * @param rects - Array of bin/rectangles
+     * The input array keeps its order; sorting uses a copy while placement still mutates its rects.
+     * @param input - Array of bin/rectangles, including readonly arrays
      */
-    public addArray(rects: T[]) {
+    public addArray(input: readonly T[]) {
         if (!this.options.tag || this.options.exclusiveTag) {
             // if not using tag or using exclusiveTag, old approach
-            this.sort(rects, this.options.logic).forEach((rect) => this.add(rect));
+            this.sort(input, this.options.logic).forEach((rect) => this.add(rect));
         } else {
+            const rects = input.slice();
             // sort rects by tags first
             if (rects.length === 0) return;
             rects.sort((a, b) => {
@@ -261,7 +264,8 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     }
 
     /**
-     * Repack all elements inside bins
+     * Repack all elements inside bins. A full repack rebuilds library-owned bins and does not migrate
+     * their tag, data or custom fields. Keep durable business data on the rects, which are reused.
      *
      * @param quick - quick repack only dirty bins (default is true)
      */
@@ -300,6 +304,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * loaded array are kept. A saved bin too large for this packer is restored as an
      * `OversizedElementBin` placeholder at its index, keeping its `options`, `tag`,
      * `maxWidth`/`maxHeight` and free space.
+     * Falsy labels remain metadata but act as untagged in exclusive placement comparisons.
      *
      * @param bins - MaxRectsBin objects
      */
@@ -315,7 +320,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 placeholder.maxWidth = bin.maxWidth;
                 placeholder.maxHeight = bin.maxHeight;
                 if (bin.options) placeholder.options = { ...bin.options };
-                if (bin.tag) placeholder.tag = bin.tag;
+                if (bin.tag !== undefined) placeholder.tag = bin.tag;
                 this.restoreFreeRects(bin, placeholder);
                 this.bins[index] = placeholder;
             } else {
@@ -323,7 +328,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 this.restoreFreeRects(bin, newBin);
                 newBin.width = bin.width;
                 newBin.height = bin.height;
-                if (bin.tag) newBin.tag = bin.tag;
+                if (bin.tag !== undefined) newBin.tag = bin.tag;
                 this.bins[index] = newBin;
             }
         }, this);
@@ -343,7 +348,8 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
     }
 
     /**
-     * Output current bins to save
+     * Output current free space, with empty rect arrays and shallow copies of each bin's options.
+     * Rect payloads and arbitrary bin data are outside this snapshot.
      */
     public save(): IBin[] {
         let saveBins: IBin[] = [];
@@ -355,9 +361,9 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                 maxHeight: bin.maxHeight,
                 freeRects: [],
                 rects: [],
-                options: bin.options
+                options: { ...bin.options }
             };
-            if (bin.tag) saveBin = { ...saveBin, tag: bin.tag };
+            if (bin.tag !== undefined) saveBin = { ...saveBin, tag: bin.tag };
             bin.freeRects.forEach((r) => {
                 saveBin.freeRects.push({
                     x: r.x,
@@ -380,7 +386,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * @param rects - array of rectangles to sort
      * @param logic - sorting logic, `PACKING_LOGIC.MAX_EDGE` or `PACKING_LOGIC.MAX_AREA` (default is MAX_EDGE)
      */
-    private sort(rects: T[], logic: IOption["logic"] = PACKING_LOGIC.MAX_EDGE) {
+    private sort(rects: readonly T[], logic: IOption["logic"] = PACKING_LOGIC.MAX_EDGE) {
         return rects.slice().sort((a, b) => {
             const result =
                 logic === PACKING_LOGIC.MAX_EDGE

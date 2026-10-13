@@ -12,6 +12,12 @@ Only the `add(width, height, data)` overload constructs an internal `Rectangle` 
 is what it hands back, not anything you passed in. Nothing is copied, so the object you keep a reference
 to is the object in the bin.
 
+The caller's input array keeps its order, including in non-exclusive tag mode; `addArray()` accepts
+readonly arrays and sorts copies. The elements still receive geometry writes. Supplied payloads are
+retained as-is, including explicit `null` and `undefined`; omitted numeric data keeps `{}`.
+Assigning `Rectangle.data = null` clears the old payload and marks a changed value dirty, without
+resetting an existing rotation override. Business fields must avoid the rect protocol's names.
+
 The specs in `test/maxrects-packer.spec.js` and `test/maxrects-bin.spec.js` assert the write-back and
 return values: both `add(rect)` implementations return the caller's object, both numeric overloads
 return the `Rectangle` stored in the bin, and `addArray()` returns `undefined` for populated and empty
@@ -24,13 +30,23 @@ without a tag refuses tagged rects. The check lives in `MaxRectsBin.place()`, wh
 `MaxRectsBin.add()` deliberately does not pre-check, so a refused rect is simply the `undefined`
 `place()` returns.
 
+Both sides of the exclusive gate use the historical truthy tag rule: falsy bin labels compare as
+untagged, matching the rect reader. Their original values remain on the bin for persistence. A restored
+empty-labelled bin therefore accepts untagged/empty-tag rects without opening another bin, while
+truthy labels still gate placement by group. Falsy `data.tag` still falls back to `rect.tag`.
+
 `exclusiveTag: false` takes the grouping path in `addArray()` instead: a candidate bin is probed **by
 copying it**, and a bin whose `clone()` throws counts as one the group does not fit. That way a single
 uncopyable bin cannot fail the whole `addArray()` call.
 
 Neither `add()` overload nor `addArray()` assigns an automatic bin label in non-exclusive mode;
-each rect keeps its own tag. Explicit and restored `bin.tag` metadata is preserved, including by
-`save()`/`load()`, and does not gate placement. This changes the saved output of bins opened by
+each rect keeps its own tag. `add(rect)` retains the caller's object and payload identity; neither tag
+location is rewritten or removed, and grouping adds no metadata fields to the rect or its payload.
+The numeric overload retains the supplied payload on its internal `Rectangle`.
+Explicit and restored `bin.tag` metadata, including empty-string labels, is preserved by
+`save()`/`load()` and does not gate non-exclusive placement.
+This preservation applies to the current bin, not to a full repack that rebuilds bins.
+This changes the saved output of bins opened by
 non-exclusive `add()` before 3.0.0: their first rect's tag is no longer copied onto the bin.
 
 ## 3. `next()` only affects what comes after {#next-only-affects-what-comes-after}
@@ -49,6 +65,11 @@ incremental repacking possible — a change to setter semantics breaks it.
 Bins produced by `save()` always carry an empty `rects` array: dimensions, options, tag and free
 rectangles, nothing else. `load()` restores exactly that. Placed rects have to be re-added by the
 caller — the tests lock this in, and it is not a bug to be "helpfully" fixed.
+
+Snapshots copy options shallowly and free-rectangle records separately, so top-level edits cannot
+change live state. Nested option values remain shared. Arbitrary bin data and custom fields are
+outside the schema. Bins are library-owned: full repacking rebuilds them without migrating explicit
+labels, data or custom fields. Durable user data belongs on the reused rects, not on bins.
 
 ## 6. Size accounting {#size-accounting}
 
