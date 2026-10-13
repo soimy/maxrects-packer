@@ -97,6 +97,8 @@ describe("no padding", () => {
 
     test("adds rects correctly", () => {
         let position = bin.add(200, 100, {});
+        expect(position).toBeInstanceOf(Rectangle);
+        expect(position).toBe(bin.rects[0]);
         expect(position.x).toBe(0);
         expect(position.y).toBe(0);
     });
@@ -122,7 +124,8 @@ describe("no padding", () => {
         expect(bin.dirty).toBe(true); // setDirty is dirty
         bin.reset();
         expect(bin.dirty).toBe(false); // reset clean dirty
-        let rect = bin.add(new Rectangle(200, 100));
+        const rect = new Rectangle(200, 100);
+        expect(bin.add(rect)).toBe(rect);
         bin.setDirty(false);
         rect.width = 256;
         expect(bin.dirty).toBe(true); // modify rects is dirty
@@ -175,7 +178,9 @@ describe("no padding", () => {
     });
 
     test("stores custom rect correctly", () => {
-        bin.add({ width: 200, height: 100, foo: "bar" });
+        const rect = { width: 200, height: 100, foo: "bar" };
+        expect(bin.add(rect)).toBe(rect);
+        expect(bin.rects[0]).toBe(rect);
         expect(bin.rects[0].foo).toBe("bar");
     });
 

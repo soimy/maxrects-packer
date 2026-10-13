@@ -19,7 +19,7 @@ Every row is one PR: one logical change, an English conventional-commit title, n
 | --- | --- | --- | --- | --- |
 | 1 | `clone()` on an oversized placeholder drops the restored state | `fix` | [#118](https://github.com/soimy/maxrects-packer/issues/118) | needs the contract decision |
 | 2 | `bin.tag` in non-exclusive mode names only the first tag group | `fix` | [#93](https://github.com/soimy/maxrects-packer/issues/93) | needs the semantics decision |
-| 3 | The documented return values of `add()`/`addArray()` are unasserted | `test` | [#97](https://github.com/soimy/maxrects-packer/issues/97) | yes — three assertions |
+| 3 | Assert the documented return values of `add()`/`addArray()` | `test` | [#97](https://github.com/soimy/maxrects-packer/issues/97) | implemented — pending merge |
 | 4 | The workflows pin action majors several releases behind | `ci` | [#119](https://github.com/soimy/maxrects-packer/issues/119) | yes — one PR, three files |
 | 5 | Four Dependabot alerts in the nested vitepress tree | `build(deps)` | — | needs the upgrade-or-dismiss decision |
 | 6 | Custom heading anchors read out with their braces | `docs` | [#101](https://github.com/soimy/maxrects-packer/issues/101) | yes — cosmetic |
@@ -62,9 +62,12 @@ coverage in `test/maxrects-packer.spec.js`.
 
 ## 3. Return-value assertions (#97)
 
-Three assertions, no source change: `add()` returns the very object it was handed, `addArray()` returns
-nothing, and the `add(width, height, data)` overload returns an internal `Rectangle`.
-**Files:** `test/maxrects-packer.spec.js`, `test/maxrects-bin.spec.js`.
+Implemented, pending merge; no source change. Both `add(rect)` implementations assert caller identity
+for plain objects and `Rectangle` instances, and both numeric overloads assert the returned internal
+`Rectangle` is stored in the bin. `addArray()` asserts `undefined` for populated and empty arrays in
+normal and non-exclusive tag modes. The behaviour-contract guide records the coverage.
+**Files:** `test/maxrects-packer.spec.js`, `test/maxrects-bin.spec.js`,
+`docs/contributor/behavior-contracts.md`. Remove this item once the PR merges.
 
 ## 4. Workflow action majors (#119)
 
