@@ -29,6 +29,8 @@ set it explicitly or loaded an existing label. Older non-exclusive snapshots kee
 see the [3.0.0 migration note](./rotation-and-tags.md#migrating-non-exclusive-bin-labels-in-3-0-0).
 Explicit empty-string labels also round-trip; an absent or `undefined` tag remains absent. JavaScript
 callers' other explicit falsy labels are preserved too, without changing how tag grouping reads them.
+In exclusive mode, a falsy bin label compares as untagged, just like a falsy rect tag, so an untagged
+rect can reuse that bin's restored free space. Placement leaves the stored label unchanged.
 
 The snapshot owns its options object and free-rectangle records: editing a saved option does not
 change the live bin, and later live option changes do not update the snapshot. Options are copied

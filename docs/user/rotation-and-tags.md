@@ -58,7 +58,10 @@ packer.addArray([
 ```
 
 The tag is read from `rect.data.tag`, falling back to a `tag` property on the rect itself — either
-works, and `data.tag` wins when both are set. With `tag: true`:
+works, and a truthy `data.tag` wins when both are set. Falsy rect tags use the fallback or count as
+untagged. Bin labels follow the same truthy rule during exclusive placement comparisons, while their
+original values remain intact for saving. An explicit empty bin label therefore still accepts
+untagged/empty-tag rects into its restored free space. With `tag: true`:
 
 - with `exclusiveTag: true` (the default) a tagged rect only enters a bin with the same tag, and a bin
   that has no tag refuses tagged rects, so one tag can never share a bin with another. A group too large

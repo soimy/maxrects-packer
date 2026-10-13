@@ -304,6 +304,7 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
      * loaded array are kept. A saved bin too large for this packer is restored as an
      * `OversizedElementBin` placeholder at its index, keeping its `options`, `tag`,
      * `maxWidth`/`maxHeight` and free space.
+     * Falsy labels remain metadata but act as untagged in exclusive placement comparisons.
      *
      * @param bins - MaxRectsBin objects
      */

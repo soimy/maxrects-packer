@@ -20,7 +20,8 @@ cloning keeps the existing state/behaviour rules and shallow payload sharing.
   Omitting data retains `{}`. Two-argument `OversizedElementBin` retains bin data `null` and rect
   data `{}`; explicitly passing a third `null` gives both fields `null`.
 - `save()` and `load()` distinguish an absent/undefined tag from an explicitly supplied value,
-  including an empty string. This does not change the tag reader's historical grouping rules.
+  including an empty string. Placement compares both bin and rect tags using the historical truthy
+  rule, so preserved falsy labels remain usable as untagged bins without rewriting their metadata.
 - `save()` copies the options object instead of exposing the active bin's object. This is shallow;
   nested objects are shared. Snapshot fields and the empty `rects` array stay unchanged.
 - Guides identify bin ownership, full-repack metadata lifetime and reserved rect fields. Business

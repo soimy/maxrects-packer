@@ -30,6 +30,11 @@ without a tag refuses tagged rects. The check lives in `MaxRectsBin.place()`, wh
 `MaxRectsBin.add()` deliberately does not pre-check, so a refused rect is simply the `undefined`
 `place()` returns.
 
+Both sides of the exclusive gate use the historical truthy tag rule: falsy bin labels compare as
+untagged, matching the rect reader. Their original values remain on the bin for persistence. A restored
+empty-labelled bin therefore accepts untagged/empty-tag rects without opening another bin, while
+truthy labels still gate placement by group. Falsy `data.tag` still falls back to `rect.tag`.
+
 `exclusiveTag: false` takes the grouping path in `addArray()` instead: a candidate bin is probed **by
 copying it**, and a bin whose `clone()` throws counts as one the group does not fit. That way a single
 uncopyable bin cannot fail the whole `addArray()` call.

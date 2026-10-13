@@ -78,6 +78,60 @@ describe("user data boundaries", () => {
         }
     });
 
+    test.each(["", null, false, 0])("exclusive restored bin with falsy label %s reuses free space", (tag) => {
+        const options = { tag: true, exclusiveTag: true, smart: false, pot: false };
+        const packer = new MaxRectsPacker(128, 128, 0, options);
+        packer.load([
+            {
+                width: 128,
+                height: 128,
+                maxWidth: 128,
+                maxHeight: 128,
+                options,
+                tag,
+                rects: [],
+                freeRects: [{ width: 64, height: 64, x: 64, y: 64 }]
+            }
+        ]);
+        const restored = packer.bins[0];
+        const input = [
+            { width: 16, height: 16 },
+            { width: 16, height: 16, tag },
+            { width: 16, height: 16, data: { tag } }
+        ];
+        for (const rect of input) {
+            expect(packer.add(rect)).toBe(rect);
+            expect(packer.bins).toHaveLength(1);
+            expect(packer.bins[0]).toBe(restored);
+            expect(restored.rects).toContain(rect);
+            expect(rect.x).toBeGreaterThanOrEqual(64);
+            expect(rect.y).toBeGreaterThanOrEqual(64);
+        }
+        expect(restored.tag).toBe(tag);
+        expect(packer.save()[0]).toHaveProperty("tag", tag);
+
+        // Falsy data tags still fall back to a truthy rect tag, which the untagged gate must refuse.
+        const tagged = { width: 16, height: 16, tag: "other", data: { tag } };
+        expect(packer.add(tagged)).toBe(tagged);
+        expect(packer.bins).toHaveLength(2);
+        expect(restored.rects).not.toContain(tagged);
+        expect(restored.tag).toBe(tag);
+        expect(tagged.data.tag).toBe(tag);
+        expect(packer.bins[1].tag).toBe("other");
+    });
+
+    test("truthy exclusive labels still refuse untagged and differently tagged rects", () => {
+        const bin = new MaxRectsBin(128, 128, 0, { tag: true, exclusiveTag: true });
+        bin.tag = "atlas";
+        expect(bin.add({ width: 16, height: 16 })).toBeUndefined();
+        expect(bin.add({ width: 16, height: 16, data: { tag: "" } })).toBeUndefined();
+        expect(bin.add({ width: 16, height: 16, tag: "other" })).toBeUndefined();
+        const matching = { width: 16, height: 16, data: { tag: "atlas" } };
+        expect(bin.add(matching)).toBe(matching);
+        expect(bin.rects).toEqual([matching]);
+        expect(bin.tag).toBe("atlas");
+    });
+
     test("saved options isolate the active bin while keeping nested values shallow", () => {
         const packer = new MaxRectsPacker(128, 128, 0, { tag: true, exclusiveTag: false });
         packer.add(16, 16, { tag: "hud" });

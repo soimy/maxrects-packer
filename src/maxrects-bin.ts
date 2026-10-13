@@ -273,9 +273,9 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
     }
 
     private place(rect: IRectangle): T | undefined {
-        // recheck if tag matched
+        // Preserve falsy bin labels as metadata, but use the rect reader's untagged rule on both sides.
         let tag = rect.data && rect.data.tag ? rect.data.tag : rect.tag ? rect.tag : undefined;
-        if (this.options.tag && this.options.exclusiveTag && this.tag !== tag) return undefined;
+        if (this.options.tag && this.options.exclusiveTag && (this.tag || undefined) !== tag) return undefined;
 
         let node: IRectangle | undefined;
         let allowRotation: boolean | undefined;

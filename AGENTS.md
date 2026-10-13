@@ -56,7 +56,8 @@ version, with the reasoning, is [docs/contributor/behavior-contracts.md](./docs/
    Supplied payloads, including explicit `null`, retain their value; omitted numeric data keeps `{}`.
 2. **Tag grouping**: with `exclusiveTag: true` (the default) a tagged rect may only enter a bin with
    the same tag, and an untagged bin refuses tagged rects. The check lives in `MaxRectsBin.place()`,
-   which every path reaches — `MaxRectsBin.add()` deliberately does not pre-check, so a refused rect
+   which treats falsy labels as untagged on both sides while preserving bin label values for saving,
+   and which every path reaches — `MaxRectsBin.add()` deliberately does not pre-check, so a refused rect
    is simply the `undefined` `place()` returns. `exclusiveTag: false` takes the grouping + recursion
    path inside `addArray()`, which probes a candidate bin by **copying** it: a bin whose `clone()`
    throws (invariant 8) counts as one the group does not fit, so a single uncopyable bin can never
