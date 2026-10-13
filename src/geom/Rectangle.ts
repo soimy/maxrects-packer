@@ -312,14 +312,19 @@ export class Rectangle implements IRectangle {
     }
 
     protected _data: any;
+    /** Opaque caller payload, including explicit null. Objects may also supply allowRotation. */
     get data(): any {
         return this._data;
     }
     set data(value: any) {
-        if (value === null || value === this._data) return;
+        if (value === this._data) return;
         this._data = value;
         // extract allowRotation settings
-        if (typeof value === "object" && Object.prototype.hasOwnProperty.call(value, "allowRotation")) {
+        if (
+            value !== null &&
+            typeof value === "object" &&
+            Object.prototype.hasOwnProperty.call(value, "allowRotation")
+        ) {
             this._allowRotation = value.allowRotation;
         }
         this._dirty++;

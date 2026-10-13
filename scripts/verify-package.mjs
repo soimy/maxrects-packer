@@ -40,7 +40,10 @@ class SheetRect extends Rectangle {
     label = "sheet";
 }
 const copiedSheet: SheetRect = Rectangle.Clone(new SheetRect(4, 4));
-export const summary = [saved.length, bins.length, bin.width, oversized.width, oversizedWithoutData.width, rect.width, copied.width, copiedSheet.label];
+const sheets = new MaxRectsPacker<SheetRect>(64, 64);
+const readonlySheets: readonly SheetRect[] = Object.freeze([new SheetRect(4, 4)]);
+sheets.addArray(readonlySheets);
+export const summary = [saved.length, bins.length, bin.width, oversized.width, oversizedWithoutData.width, rect.width, copied.width, copiedSheet.label, sheets.rects[0].label];
 `;
 // What `npm pack` is meant to produce, sorted. Almost all of it comes from the `files` allowlist in
 // package.json; `package.json`, `README.md` and `LICENSE` are npm's own additions. Edit this list only

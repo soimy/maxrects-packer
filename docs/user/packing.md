@@ -11,9 +11,30 @@ packer.addArray(rects);            // many at once, sorted first
 `add()` writes the placement onto the object it was given and returns it — it does not copy. The
 multi-argument form is the exception: it builds an internal `Rectangle` and returns that.
 
-`addArray()` sorts the input before placing it (`MAX_EDGE` or `MAX_AREA` order, ties broken by the
+`addArray()` sorts a copy before placing it (`MAX_EDGE` or `MAX_AREA` order, ties broken by the
 rects' own optional `hash` property, highest first, when both carry one) and groups rects by tag first when tags are not exclusive, which is why one
 `addArray()` call usually produces fewer bins than the same rects added one by one.
+
+The caller's array keeps its original order in every mode, including non-exclusive tags. A frozen or
+readonly array is accepted; its rect objects must still permit the documented geometry writes.
+
+## Keeping business data
+
+Packing preserves rect identity, custom fields and payload references. The numeric overload stores
+the supplied `data` value as-is, including `null` and `undefined`; omitting it keeps the default `{}`.
+Assigning `Rectangle.data = null` clears the payload and marks the rect dirty when its value changes.
+It does not clear a previously set `allowRotation` override.
+
+Keep durable business data on rects, for example `rect.data = { app: { assetId: "sprite" } }`.
+Choose your own namespace; the library adds none. Avoid collisions with rect protocol fields
+`width`, `height`, `x`, `y`, `rot`, `oversized`, `data`, `tag`, `hash`, `allowRotation`, `dirty`,
+`setDirty` and `clone`, and with `Rectangle`'s internal backing fields. Within `data`, `tag` controls
+grouping and `allowRotation` is read by `Rectangle`'s setter; keep unrelated business values elsewhere.
+Custom classes remain supported under the [clone contract](../contributor/behavior-contracts.md#clone-isolates-the-two-bins).
+
+For 3.0.0, stop relying on non-exclusive `addArray()` to reorder your array; read packing order from
+`packer.rects` or `bin.rects`. `Rectangle.data = null` now clears the payload rather than doing
+nothing, and numeric `add(width, height, null)` keeps `null` rather than substituting `{}`.
 
 ## What a bin holds
 
@@ -21,6 +42,10 @@ rects' own optional `hash` property, highest first, when both carry one) and gro
   the placeholder bin an oversized rect gets is that rect's own size instead, so it can be larger
   ([below](#oversized-rects)).
 - `bin.rects` — the placed rects, each with `x`, `y`, `rot` and whatever data you attached.
+
+Bins are library-owned packing state, not durable business records. Their fields and lifecycle may
+be managed by the library; [full repacking](./repacking.md#bin-metadata-lifetime) rebuilds them.
+An oversized bin carries its single rect's payload as `bin.data` too, without changing that payload.
 
 A bin never holds a rect it cannot contain: if the bin cannot grow to fit, the rect is not placed
 there. `MaxRectsPacker.add()` then falls back to an oversized bin instead of dropping it.

@@ -471,6 +471,37 @@ describe("#addArray", () => {
 });
 
 describe("tag metadata", () => {
+    test("non-exclusive add preserves the caller's tagged rect and payload without adding fields", () => {
+        const data = Object.freeze({ tag: "hud", asset: Object.freeze({ id: "sprite" }) });
+        const rect = Object.seal({ width: 32, height: 32, x: -1, y: -1, rot: false, tag: "rect-label", data });
+        const keys = Object.keys(rect);
+        const source = new MaxRectsPacker(128, 128, 0, { tag: true, exclusiveTag: false });
+
+        expect(source.add(rect)).toBe(rect);
+        expect(source.bins[0].rects[0]).toBe(rect);
+        expect(rect.data).toBe(data);
+        expect(rect.data).toEqual({ tag: "hud", asset: { id: "sprite" } });
+        expect(rect.tag).toBe("rect-label");
+        expect(Object.keys(rect)).toEqual(keys);
+        expect([rect.x, rect.y]).toEqual([0, 0]);
+        expect(source.bins[0].tag).toBeUndefined();
+        expect(source.save()[0].rects).toEqual([]);
+        expect(rect.data).toBe(data);
+        expect(rect.tag).toBe("rect-label");
+    });
+
+    test("non-exclusive numeric add keeps the supplied payload on its internal rect", () => {
+        const data = Object.freeze({ tag: "hud", asset: Object.freeze({ id: "sprite" }) });
+        const source = new MaxRectsPacker(128, 128, 0, { tag: true, exclusiveTag: false });
+        const rect = source.add(32, 32, data);
+
+        expect(source.bins[0].rects[0]).toBe(rect);
+        expect(rect.data).toBe(data);
+        expect(rect.data).toEqual({ tag: "hud", asset: { id: "sprite" } });
+        expect(rect).not.toHaveProperty("tag");
+        expect(source.bins[0].tag).toBeUndefined();
+    });
+
     const entryPoints = [
         ["rect.data.tag", (packer, tag) => packer.add({ width: 32, height: 32, data: { tag } })],
         ["rect.tag", (packer, tag) => packer.add({ width: 32, height: 32, tag })],

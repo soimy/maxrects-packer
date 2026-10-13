@@ -23,7 +23,8 @@ export class OversizedElementBin<T extends IRectangle = Rectangle> extends Bin<T
      * @param width - width of the element
      * @param height - height of the element
      * @param data - data attached to the element; optional, because the runtime has always accepted a
-     * two-argument construction and the bin then reports `data: null`
+     * two-argument construction and the bin then reports `data: null` while its rect keeps `{}`.
+     * An explicitly supplied value, including null, is kept on both the bin and its rect.
      */
     constructor(width: number, height: number, data?: any);
     constructor(...args: any[]) {
@@ -44,7 +45,7 @@ export class OversizedElementBin<T extends IRectangle = Rectangle> extends Bin<T
             this.data = args.length > 2 ? args[2] : null;
             const rect: IRectangle = new Rectangle(this.width, this.height);
             rect.oversized = true;
-            rect.data = this.data;
+            if (args.length > 2) rect.data = this.data;
             this.rects.push(rect as T);
         }
         this.freeRects = [];

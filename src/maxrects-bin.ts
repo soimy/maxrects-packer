@@ -93,17 +93,21 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
     }
 
     public add(rect: T): T | undefined;
+    /**
+     * Construct and place a rect with the supplied payload, including null.
+     * @param width - width of the rect
+     * @param height - height of the rect
+     * @param data - payload retained as-is; omitting it at runtime keeps the default {}
+     */
     public add(width: number, height: number, data: any): T | undefined;
     public add(...args: any[]): any {
-        let data: any;
         let rect: IRectangle;
         if (args.length === 1) {
             if (typeof args[0] !== "object") throw new Error("MacrectsBin.add(): Wrong parameters");
             rect = args[0] as T;
         } else {
-            data = args.length > 2 ? args[2] : null;
             rect = new Rectangle(args[0], args[1]);
-            rect.data = data;
+            if (args.length > 2) rect.data = args[2];
             rect.setDirty(false);
         }
 
