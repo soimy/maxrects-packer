@@ -57,7 +57,7 @@ measurements came from the coverage report and from deleting the code in questio
 suite.
 
 - **`add()` tags a non-exclusive bin with only the first rect's tag** (`src/maxrects-packer.ts`).
-  **Implemented in this PR, pending merge (2026-10-13):** neither `add()` overload nor `addArray()`
+  **Implemented in [PR #124](https://github.com/soimy/maxrects-packer/pull/124), pending merge (2026-10-13):** neither `add()` overload nor `addArray()`
   assigns automatic bin labels in non-exclusive mode. Rect tags and grouping are unchanged; explicit
   or loaded labels remain metadata and round-trip through persistence. New `save()` output omits the
   formerly automatic first-tag label, a breaking metadata change targeted at 3.0.0. Regression tests

@@ -18,7 +18,7 @@ Every row is one PR: one logical change, an English conventional-commit title, n
 | # | Item | Type | Issue | Ready to start? |
 | --- | --- | --- | --- | --- |
 | 1 | `clone()` on an oversized placeholder drops the restored state | `fix` | [#118](https://github.com/soimy/maxrects-packer/issues/118) | needs the contract decision |
-| 2 | `bin.tag` in non-exclusive mode names only the first tag group | `fix!` | [#93](https://github.com/soimy/maxrects-packer/issues/93) | implemented in this PR — pending merge |
+| 2 | `bin.tag` in non-exclusive mode names only the first tag group | `fix!` | [#93](https://github.com/soimy/maxrects-packer/issues/93) | implemented in [PR #124](https://github.com/soimy/maxrects-packer/pull/124) — pending merge |
 | 3 | The documented return values of `add()`/`addArray()` are unasserted | `test` | [#97](https://github.com/soimy/maxrects-packer/issues/97) | yes — three assertions |
 | 4 | The workflows pin action majors several releases behind | `ci` | [#119](https://github.com/soimy/maxrects-packer/issues/119) | yes — one PR, three files |
 | 5 | Four Dependabot alerts in the nested vitepress tree | `build(deps)` | — | needs the upgrade-or-dismiss decision |
@@ -27,7 +27,7 @@ Every row is one PR: one logical change, an English conventional-commit title, n
 | 8 | Release `3.0.0` | release | [#61](https://github.com/soimy/maxrects-packer/issues/61), [#62](https://github.com/soimy/maxrects-packer/issues/62) | after 1–7 |
 
 Ordering is severity × readiness, not a schedule: 1–2 are the open holes in the behaviour contracts, 3–6
-are cheap and independent, 7 is the breaking change that makes this release a major, and 8 is the milestone
+are cheap and independent, 2 and 7 carry breaking changes that make this release a major, and 8 is the milestone
 the rest feeds. Re-order whenever a decision lands.
 
 Four entries are done and off the list. The `padding` fix
@@ -54,7 +54,7 @@ the non-exclusive tag probe, where a placeholder fails either way — but `clone
 
 ## 2. `bin.tag` in non-exclusive mode (#93)
 
-**Implemented in this PR, pending merge (2026-10-13):** neither `add()` overload nor `addArray()`
+**Implemented in [PR #124](https://github.com/soimy/maxrects-packer/pull/124), pending merge (2026-10-13):** neither `add()` overload nor `addArray()`
 assigns automatic bin labels in non-exclusive mode. Rect tags and grouping are unchanged; explicit
 and loaded labels remain metadata. `save()` omits the formerly automatic first-tag label for new bins,
 so this is a `fix!` for 3.0.0. Tests cover all entry paths, persistence and the default exclusive gate;
@@ -102,7 +102,7 @@ moves.
 ## 7. `exports` map (#98)
 
 Per-format conditions and declarations fix the `node16`/`nodenext` CommonJS import, and the map seals off
-the deep `maxrects-packer/dist/...` paths — which is why this is the breaking change that makes the
+the deep `maxrects-packer/dist/...` paths — which, alongside item 2's metadata change, makes the
 release a major. Sequence it after the behaviour fixes so the entry-point surface is settled once.
 **Files:** `package.json`, the entry-point gates (`scripts/verify-entry.mjs`,
 `scripts/verify-package.mjs`, whose `PUBLISHED_FILES` list is pinned), the type fixture, and
@@ -124,7 +124,7 @@ npm publish                # manual — release.yml does not publish to npm
 ```
 
 The commits so far carry no `feat` and no breaking marker, so `commit-and-tag-version` would cut
-`2.7.5`; item 7's marker is what makes it a major, and `npm run version -- --release-as major` is the
+`2.7.5`; the breaking markers in items 2 and 7 make it a major, and `npm run version -- --release-as major` is the
 explicit fallback if the derived number is ever wrong.
 
 **Exit criteria:** `latest` on npm points at a build whose `main`/`types` match this repository;
