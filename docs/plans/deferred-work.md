@@ -149,19 +149,18 @@ guide then stated the append, and this is the part of it that looked like a bug 
 
 ## `clone()` on an oversized placeholder drops the restored state
 
-Found while reviewing PR #114; a decision of its own, so it is recorded rather than fixed on the
-spot.
+**Implemented on 2026-10-13; awaiting review/merge** on `codex/fix-oversized-clone-state` for
+[issue #118](https://github.com/soimy/maxrects-packer/issues/118). The chosen contract preserves the
+placeholder's dimensions, maxima, options, tag, bin data and restored free rectangles. Rects and free
+rectangles use `Rectangle.Clone`; options are copied, while bin and rect data payloads remain shared.
+Two-argument construction therefore keeps bin `data: null` in its copy instead of deriving `{}` from
+the rect. The placeholder still refuses additions. Regression tests cover `load()` → `clone()` →
+`save()` and isolation of free space/options; JSDoc, user guides and behaviour contracts state the rule.
 
-- **`OversizedElementBin.clone()` does not carry the state `load()` restores.** Measured on the merged
-   branch: a placeholder holding two saved free rects, `maxWidth`/`maxHeight` 2048×512, the saved
-   `options` clones to another placeholder at its own 128×128 size with
-   `{smart: false, pot: false, square: false}`, no free rects, and the same `tag`. The copy is
-   re-derived from `this.rects[0]`, so the free space PR #114 restores is the first thing it drops.
-   The only internal caller is the non-exclusive tag probe (`src/maxrects-packer.ts:170`), where a
-   placeholder fails the probe either way, so nothing depends on the difference today. Invariant 8
-   says state travels and behaviour does not; here most of the state does not travel either, and
-   `clone()` is public API, so a caller can reach the difference directly. Tracked in
-   [issue #118](https://github.com/soimy/maxrects-packer/issues/118).
+Found while reviewing PR #114: cloning a loaded placeholder used to retain its rect and tag but lose
+the two saved free rectangles, maxima 2048×512 and saved options, restoring constructor defaults at
+128×128 instead. The only internal caller is the non-exclusive tag probe, where a placeholder fails
+either way; this fix preserves state for callers of the public `clone()` API.
 
 ## Test infrastructure
 

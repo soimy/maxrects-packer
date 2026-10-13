@@ -48,5 +48,10 @@ the packer held there, and carrying the saved `options`, `tag`, `maxWidth`/`maxH
 A snapshot that has to pass through a packer too small for it therefore comes back whole: load it into
 a packer that can hold the original limits and the free space it saved is there again.
 
+Cloning that placeholder also preserves its saved dimensions, maxima, options, tag and free space.
+The rect, free rectangles and options are separate copies, while bin `data` and `rect.data` remain
+shared payloads. The clone stays a placeholder: `add()` returns `undefined` even when free space is
+present. Saving the clone therefore keeps the restored snapshot, without serializing placed rects.
+
 Both methods are plain data in and out — no files, no JSON parsing inside the library, so the
 serialized form is yours to compress, version or store in a database.

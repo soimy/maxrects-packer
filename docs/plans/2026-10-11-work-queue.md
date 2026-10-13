@@ -17,7 +17,7 @@ Every row is one PR: one logical change, an English conventional-commit title, n
 
 | # | Item | Type | Issue | Ready to start? |
 | --- | --- | --- | --- | --- |
-| 1 | `clone()` on an oversized placeholder drops the restored state | `fix` | [#118](https://github.com/soimy/maxrects-packer/issues/118) | needs the contract decision |
+| 1 | `clone()` on an oversized placeholder drops the restored state | `fix` | [#118](https://github.com/soimy/maxrects-packer/issues/118) | implemented on `codex/fix-oversized-clone-state`; awaiting review/merge |
 | 2 | `bin.tag` in non-exclusive mode names only the first tag group | `fix` | [#93](https://github.com/soimy/maxrects-packer/issues/93) | needs the semantics decision |
 | 3 | The documented return values of `add()`/`addArray()` are unasserted | `test` | [#97](https://github.com/soimy/maxrects-packer/issues/97) | yes — three assertions |
 | 4 | The workflows pin action majors several releases behind | `ci` | [#119](https://github.com/soimy/maxrects-packer/issues/119) | yes — one PR, three files |
@@ -45,12 +45,16 @@ that used to shadow `refs/heads/master` is gone, so the ambiguity warning is gon
 
 ## 1. `clone()` on an oversized placeholder (#118)
 
-**Decide first:** whether `clone()` carries the restored free rects, the maxima and the `options`, or
-whether the current behaviour is the contract. Invariant 8 says state travels and behaviour does not;
-today most of the state does not travel. Nothing internal depends on the difference — the only caller is
-the non-exclusive tag probe, where a placeholder fails either way — but `clone()` is public API.
-**Files:** `src/oversized-element-bin.ts`, `test/oversized-element-bin.spec.js`.
-**Exit criteria:** the chosen contract is asserted, and the JSDoc states it.
+**Implemented on 2026-10-13; not merged yet:** `clone()` preserves the placeholder's dimensions,
+maxima, options, tag, bin data and restored free rectangles. Rects, free rectangles and options are
+independent copies; bin and rect data payloads remain shallow/shared. A two-argument source keeps its
+`null` bin data in the copy, separately from its rect's `{}`. The clone still refuses additions.
+The only internal caller is the non-exclusive tag probe, where a placeholder fails either way.
+**Branch:** `codex/fix-oversized-clone-state`.
+**Files:** `src/oversized-element-bin.ts`, `test/oversized-element-bin.spec.js`, the persistence and
+troubleshooting guides, and the behaviour contracts.
+**Exit criteria:** review and merge the PR; regression tests cover `load()` → `clone()` → `save()`,
+free-space/options isolation, distinct bin data and dimensions, and two-argument `null` data.
 
 ## 2. `bin.tag` in non-exclusive mode (#93)
 
