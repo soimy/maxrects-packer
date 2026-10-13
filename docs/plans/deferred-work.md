@@ -239,17 +239,19 @@ unaffected: `docs/` is not in the `files` allowlist.
 Noticed while auditing the stack before its first deployment. None of these is broken today — every run
 on the three pull requests is green — so each waits for a commit of its own.
 
-- **The workflows pin action majors that are several releases behind.** `.github/workflows/docs.yml` uses
-  `actions/checkout@v4`, `actions/setup-node@v4`, `actions/configure-pages@v5`,
-  `actions/upload-pages-artifact@v3` and `actions/deploy-pages@v4`; the current majors read through the
-  API on 2026-09-30 are v7, v7, v6, v5 and v5. `node.js.yml` and `release.yml` sit on
-  `checkout@v4`/`setup-node@v4` too, and the repository has no Dependabot or Renovate configuration, so
-  nothing raises these on its own — one `ci:` PR should move all three files together rather than leaving
-  the new workflow on majors the others do not use. Worth doing before the first deployment, because
-  `actions/deploy-pages` is the one step that has never run here (the job is gated on a push to `master`)
-  and its inputs have to be re-checked against the current `action.yml` — the versions in use were
-  verified against `upload-pages-artifact@v3` and `configure-pages@v5`. Tracked in
- [issue #119](https://github.com/soimy/maxrects-packer/issues/119).
+- **Resolved in [PR #87](https://github.com/soimy/maxrects-packer/pull/87) on 2026-10-01;
+  re-verified on 2026-10-13.** All three workflows use `actions/checkout@v7` and
+  `actions/setup-node@v7`; documentation uses `actions/configure-pages@v6`,
+  `actions/upload-pages-artifact@v5` and `actions/deploy-pages@v5`, and coverage uses
+  `codecov/codecov-action@v7`. The inputs in use still match the official action metadata:
+  `fetch-depth`, `node-version`, `cache`, `path` and `token`; configure/deploy Pages use their
+  defaults, and deployment still returns `page_url`. At `master` commit `1c889cf`,
+  [Node.js CI](https://github.com/soimy/maxrects-packer/actions/runs/38365767187) passed on
+  Node 20/22/24, including the Node 24 Codecov upload, and
+  [Documentation](https://github.com/soimy/maxrects-packer/actions/runs/38365767185) passed both
+  the build and the actual Pages deployment. The release workflow's action references and inputs
+  were inspected; its publishing steps were not run. No further action-major upgrade is needed
+  for [issue #119](https://github.com/soimy/maxrects-packer/issues/119).
 - **Verified resolved on 2026-10-10** — npm does not resolve a relative README image against the
   package, so the icon stayed broken on the page even though the file is in the repository; the
   README heading now uses an absolute URL, which renders on both sites. `assets/*.png` stays out of

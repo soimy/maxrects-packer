@@ -20,7 +20,7 @@ Every row is one PR: one logical change, an English conventional-commit title, n
 | 1 | `clone()` on an oversized placeholder drops the restored state | `fix` | [#118](https://github.com/soimy/maxrects-packer/issues/118) | needs the contract decision |
 | 2 | `bin.tag` in non-exclusive mode names only the first tag group | `fix` | [#93](https://github.com/soimy/maxrects-packer/issues/93) | needs the semantics decision |
 | 3 | The documented return values of `add()`/`addArray()` are unasserted | `test` | [#97](https://github.com/soimy/maxrects-packer/issues/97) | yes — three assertions |
-| 4 | The workflows pin action majors several releases behind | `ci` | [#119](https://github.com/soimy/maxrects-packer/issues/119) | yes — one PR, three files |
+| 4 | Workflow action-major upgrade, merged in [#87](https://github.com/soimy/maxrects-packer/pull/87) | `ci` | [#119](https://github.com/soimy/maxrects-packer/issues/119) | resolved — verified 2026-10-13 |
 | 5 | Four Dependabot alerts in the nested vitepress tree | `build(deps)` | — | needs the upgrade-or-dismiss decision |
 | 6 | Custom heading anchors read out with their braces | `docs` | [#101](https://github.com/soimy/maxrects-packer/issues/101) | yes — cosmetic |
 | 7 | An `exports` map for `require`/`import` under `node16`/`nodenext` | `feat!` | [#98](https://github.com/soimy/maxrects-packer/issues/98) | in scope for 3.0.0 |
@@ -68,10 +68,17 @@ nothing, and the `add(width, height, data)` overload returns an internal `Rectan
 
 ## 4. Workflow action majors (#119)
 
-One `ci:` PR moving `.github/workflows/docs.yml`, `node.js.yml` and `release.yml` together. Re-check the
-inputs of `actions/deploy-pages` against its current `action.yml`: the deploy job is gated on a push to
-`master`, so it is the one step that has never run here.
-**Exit criteria:** all three workflows green, including one deployment from `master`.
+Resolved by [PR #87](https://github.com/soimy/maxrects-packer/pull/87), merged on 2026-10-01;
+no further workflow change is needed. Re-checked on 2026-10-13: all three workflows use
+`checkout@v7`/`setup-node@v7`, the Pages actions use `configure-pages@v6`,
+`upload-pages-artifact@v5` and `deploy-pages@v5`, and coverage uses `codecov-action@v7`.
+The inputs in use match the official action metadata.
+
+**Verification:** at `master` commit `1c889cf`,
+[Node.js CI](https://github.com/soimy/maxrects-packer/actions/runs/38365767187) passed on Node 20/22/24,
+and [Documentation](https://github.com/soimy/maxrects-packer/actions/runs/38365767185) passed its build
+and Pages deployment. The previous claim that the deploy step had never run is obsolete. The release
+workflow's action references and inputs were inspected only; publishing was not exercised.
 
 ## 5. Dependabot alerts in the vitepress tree
 
