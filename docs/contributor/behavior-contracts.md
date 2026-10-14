@@ -4,7 +4,7 @@ These are the promises the library makes to the software built on it. Each one i
 `test/`, and breaking one is a breaking change — the [troubleshooting](../user/troubleshooting.md) page
 is mostly these contracts seen from the outside.
 
-## 1. `add()` works in place {#add-works-in-place}
+## 1. `add()` works in place
 
 `add()` writes `x`, `y`, `rot` and `oversized` directly onto the object handed to it and returns that
 same object; `addArray()` writes the same four fields onto every rect it is given but returns nothing.
@@ -23,7 +23,7 @@ return values: both `add(rect)` implementations return the caller's object, both
 return the `Rectangle` stored in the bin, and `addArray()` returns `undefined` for populated and empty
 arrays in normal and non-exclusive tag modes.
 
-## 2. Tag grouping {#tag-grouping}
+## 2. Tag grouping
 
 With `exclusiveTag: true` (the default) a tagged rect may only enter a bin with the same tag, and a bin
 without a tag refuses tagged rects. The check lives in `MaxRectsBin.place()`, which every path reaches —
@@ -49,18 +49,18 @@ This preservation applies to the current bin, not to a full repack that rebuilds
 This changes the saved output of bins opened by
 non-exclusive `add()` before 3.0.0: their first rect's tag is no longer copied onto the bin.
 
-## 3. `next()` only affects what comes after {#next-only-affects-what-comes-after}
+## 3. `next()` only affects what comes after
 
 It sets the current bin index to `bins.length` and returns that index: earlier bins stop accepting new
 rects and every later lookup starts at that index. It creates nothing.
 
-## 4. Dirty propagation {#dirty-propagation}
+## 4. Dirty propagation
 
 Mutating a `Rectangle` property increments its `_dirty` counter; a bin is dirty when its own counter
 moved or any of its rects is dirty; `repack(quick = true)` only re-packs dirty bins. This is what makes
 incremental repacking possible — a change to setter semantics breaks it.
 
-## 5. `save()`/`load()` store free space only {#save-load-store-free-space-only}
+## 5. `save()`/`load()` store free space only
 
 Bins produced by `save()` always carry an empty `rects` array: dimensions, options, tag and free
 rectangles, nothing else. `load()` restores exactly that. Placed rects have to be re-added by the
@@ -71,7 +71,7 @@ change live state. Nested option values remain shared. Arbitrary bin data and cu
 outside the schema. Bins are library-owned: full repacking rebuilds them without migrating explicit
 labels, data or custom fields. Durable user data belongs on the reused rects, not on bins.
 
-## 6. Size accounting {#size-accounting}
+## 6. Size accounting
 
 The initial free rectangle is `maxWidth + padding - border * 2`; a placement probe uses
 `rect.width + padding`; inside `updateBinSize()` power-of-two and square rounding are applied *before*
@@ -88,7 +88,7 @@ Both constructors reject numeric `NaN`, `Infinity` and `-Infinity` padding. Omit
 up-front conversion to numbers. `updateBinSize()` refuses a non-finite result before changing the bin
 dimensions or free rectangles, so invalid arithmetic cannot trigger an endless placement retry.
 
-## 7. Generics survive {#generics-survive}
+## 7. Generics survive
 
 `MaxRectsPacker<T extends IRectangle>` and `MaxRectsBin<T>` accept instances of custom classes and
 preserve their extra properties as they are — a rect is never converted to a `Rectangle` behind your
@@ -135,7 +135,7 @@ bin can hold rects its own gate would now refuse — it was tagged after it was 
 several tags in non-exclusive mode — and re-running the gate would give back a copy with fewer rects than
 the original.
 
-### State travels, behaviour does not {#state-travels-behaviour-does-not}
+### State travels, behaviour does not
 
 `Rectangle.Clone` copies *own property descriptors* rather than assigned values, so a rect that keeps
 extra fields, or the backing fields behind `width`/`height`, non-enumerable, still arrives intact.
