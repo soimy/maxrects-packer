@@ -292,6 +292,14 @@ English keeps the project history usable for every contributor and every downstr
   (`Cannot read properties of null (reading 'edgesOut')` from `#loadPeerSet`) on vitest's peer set
   unless it is run with `--legacy-peer-deps` — `npm ci` is unaffected and installs the committed
   lockfile on npm 10, 11 and 12.
+- **vitepress is deliberately on the `2.0.0-alpha` line, and that is what clears the Dependabot
+  alerts.** `vitepress@1.6.4` pins `vite: ^5.4.14`, which nested `vite@5.4.21` and `esbuild@0.21.5`;
+  both lines are dead ends — 5.4.21 and 0.21.5 are the newest releases they ever got, and no advisory
+  backported a fix below `vite@6.4.2`. `2.0.0-alpha.20` asks for `vite: ^8.2.1` instead, so the tree
+  carries a single `vite@8.3.4` and no `esbuild` at all (vite 8 is rolldown-based). Do not "downgrade
+  to stable" before `2.0.0` ships: `1.6.4` is what put the four alerts back. The site is default-theme
+  only — `docs/.vitepress/` holds `config.mts` and nothing else — so a bump is a config question, not
+  a theme migration.
 - **npm will not reconcile a changed package identity while the locked version still fits.** If a
   dependency's spec starts naming a different package — the swap to an `npm:` alias — and the version
   already in the lockfile still satisfies the new range, `npm install` silently reuses that node: it

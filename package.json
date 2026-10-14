@@ -89,7 +89,7 @@
     "typedoc-plugin-markdown": "^4.13.1",
     "typedoc-vitepress-theme": "^1.1.4",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
-    "vitepress": "^1.6.4",
+    "vitepress": "^2.0.0-alpha.20",
     "vitest": "^4.1.11"
   },
   "config": {

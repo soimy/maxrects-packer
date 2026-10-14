@@ -1,6 +1,6 @@
 # Work queue — the open ledger, ordered into one PR each
 
-Updated: 2026-10-13. Completed items are removed in the PR that implements them.
+Updated: 2026-10-15. Completed items are removed in the PR that implements them.
 
 **Target: clear this queue, then cut `3.0.0` once.** The next release is a major, not a patch, so the
 `exports` map ([#98](https://github.com/soimy/maxrects-packer/issues/98)) has landed rather than being
@@ -16,8 +16,7 @@ Every row is one PR: one logical change, an English conventional-commit title, n
 
 | # | Item | Type | Issue | Ready to start? |
 | --- | --- | --- | --- | --- |
-| 1 | Four Dependabot alerts in the nested vitepress tree | `build(deps)` | — | needs the upgrade-or-dismiss decision |
-| 2 | Release `3.0.0` | release | [#61](https://github.com/soimy/maxrects-packer/issues/61), [#62](https://github.com/soimy/maxrects-packer/issues/62) | after 1 |
+| 1 | Release `3.0.0` | release | [#61](https://github.com/soimy/maxrects-packer/issues/61), [#62](https://github.com/soimy/maxrects-packer/issues/62) | yes — nothing else is queued |
 
 Ordering is severity × readiness, not a schedule. Keep independent checks and tooling work separate
 from behaviour fixes, and settle the package entry points before releasing. Re-order whenever a decision lands.
@@ -34,32 +33,17 @@ since 2026-10-12 — `npm warn deprecated maxrects-packer@2.7.4: Broken entry po
 published.` — verified by installing the published tarball, with `latest` left on `2.7.3` so a plain
 install is unaffected and a range that resolves to `2.7.4` says so at install time. And the tag `master`
 that used to shadow `refs/heads/master` is gone, so the ambiguity warning is gone with it.
-The workflow action-major upgrade landed in [PR #87](https://github.com/soimy/maxrects-packer/pull/87).
+The four Dependabot alerts in the docs-site tree: resolved by moving to `vitepress@2.0.0-alpha.20`,
+whose `vite: ^8.2.1` leaves a single `vite@8.3.4` and no `esbuild` at all. The nested `vite@5.4.21`
+and `esbuild@0.21.5` the `1.6.4` pin dragged in could not have been patched in place: 5.4.21 and
+0.21.5 are the newest releases those lines ever got, and no advisory backported a fix below
+`vite@6.4.2`. The workflow action-major upgrade landed in [PR #87](https://github.com/soimy/maxrects-packer/pull/87).
 Re-verified on 2026-10-13 at `master` commit `1c889cf`:
 [Node.js CI](https://github.com/soimy/maxrects-packer/actions/runs/38365767187) passed on Node 20/22/24,
 and [Documentation](https://github.com/soimy/maxrects-packer/actions/runs/38365767185) passed its build
 and actual Pages deployment. The release workflow was inspected only; publishing was not exercised.
 
-## 1. Dependabot alerts in the vitepress tree
-
-GitHub reports four open alerts on the default branch (1 high, 3 moderate). All four sit in the
-**docs-site** tree, on the copies vitepress nests: `node_modules/vitepress/node_modules/vite` is 5.4.21
-and `…/esbuild` is 0.21.5, both inside the vulnerable ranges (fixed in vite 6.4.3 and esbuild 0.25.0),
-while the top-level `vite` (6.4.4) and `esbuild` (0.25.12) are already past the fixes. They are dev-only
-and never published — the package has zero runtime dependencies — so this is hygiene rather than a
-consumer-facing risk, but the repository has no Dependabot version-update configuration, so nothing
-raises it on its own.
-
-**Decide first:** vitepress 1.6.4 pins `vite: ^5.4.14`, so the nested copy cannot move within 1.x.
-Options: bump to `vitepress@2.0.0-alpha` (it depends on `vite: ^8.2.1`, and the docs build is all it
-affects), force the nested copies with an `overrides` entry (vitepress 1.6.4 is not tested against
-vite 6+), or dismiss the alerts as dev-only and wait for vitepress 2.0.0 stable.
-**Verification:** `npm run docs:build` and the `Build documentation` job, plus the lockfile rules —
-`resolved` URLs must point at `registry.npmjs.org`, and `npm install` on npm 10.9.8 needs
-`--legacy-peer-deps`.
-
-
-## 2. Release `3.0.0`
+## 1. Release `3.0.0`
 
 The release includes the fixes accumulated since `v2.7.4`. Everything in this queue lands first, then:
 
