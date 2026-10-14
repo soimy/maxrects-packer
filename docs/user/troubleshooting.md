@@ -92,31 +92,26 @@ A rect class that keeps its state behind an own accessor is shared too unless it
 `clone()`. The full rule is in the
 [behaviour contracts](../contributor/behavior-contracts.md#clone-isolates-the-two-bins).
 
-## A CommonJS TypeScript project cannot import the package
+## A deep import fails with `ERR_PACKAGE_PATH_NOT_EXPORTED`
 
-The package is `"type": "module"` and carries no `exports` field, so a TypeScript file that compiles to
-CommonJS and resolves modules the `node16` or `nodenext` way cannot import it: the compiler reports
-**TS1479** — "the referenced file is an ECMAScript module and cannot be imported with `require`" — or
-**TS1471** for `import pkg = require("maxrects-packer")`. That is the module format of the
-*declarations* being read, not the runtime: a plain JavaScript `require("maxrects-packer")` works, and
-the package gate consumes the real tarball that way.
+3.0.0 added an `exports` map, and a map is exhaustive: only the entry points it names resolve. Deep
+imports that used to work — `maxrects-packer/dist/maxrects-packer.cjs`,
+`maxrects-packer/dist/geom/Rectangle.js`, anything else under `dist/` or `src/` — no longer resolve:
+Node fails with `ERR_PACKAGE_PATH_NOT_EXPORTED`, and TypeScript reports TS2307
+(`Cannot find module '…'`) for the same specifier. Import the package by name instead:
+`import { MaxRectsPacker } from "maxrects-packer"` resolves per format, so `require` gets
+`dist/maxrects-packer.cjs` with CommonJS declarations and `import` gets `dist/maxrects-packer.mjs`
+with the ESM ones. `maxrects-packer/package.json` stays reachable, because the map names it
+explicitly. This is the breaking half of the 3.0.0 change; the other half closed the old gap where a
+`.cts` file compiled under `module`/`moduleResolution` `node16` could not import the package at all
+(TS1479, or TS1471 for `import pkg = require(...)`) because the only declarations it could resolve
+were ESM-flavoured. Per-format declarations fixed that: the `require` condition now hands out the
+CommonJS `.d.cts` set.
 
-Measured against the published tarball from a CommonJS consumer, `skipLibCheck` either way, with
-TypeScript 6.0.3 and 7.0.2 agreeing on the two diagnostics:
-
-| How the consumer imports | `node16` / `nodenext` |
-| --- | --- |
-| `import { MaxRectsPacker } from "maxrects-packer"` | TS1479 |
-| `import pkg = require("maxrects-packer")` | TS1471 |
-| `await import("maxrects-packer")` inside an `async` function | compiles |
-| `moduleResolution` `bundler` | compiles |
-| `moduleResolution` `node10` | TypeScript 6 only: TS5107 without `"ignoreDeprecations": "6.0"`; TypeScript 7 removed the option (TS5108) |
-
-So: use a dynamic `import()`, leave the `require` in JavaScript, or resolve with `bundler`. `node10` is a
-TypeScript 6 escape hatch, not a workaround for 7. An
-`exports` map with per-format declarations would close the gap, but it seals off deep imports
-(`maxrects-packer/dist/...`) as well, which is why it waits for a major release — the deferred-work
-ledger (`docs/plans/deferred-work.md`, tracked but not part of this site) records it.
+A process that both requires and imports the package now holds two module instances — two `Rectangle`
+classes, two `MaxRectsPacker` classes — because the two conditions load different files. Before the
+map both got the same `dist/maxrects-packer.cjs`, since the ESM import fell back to `main`; compare
+instances by shape rather than `instanceof`.
 
 ## Still stuck
 

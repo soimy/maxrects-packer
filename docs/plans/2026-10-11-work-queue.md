@@ -3,7 +3,7 @@
 Updated: 2026-10-13. Completed items are removed in the PR that implements them.
 
 **Target: clear this queue, then cut `3.0.0` once.** The next release is a major, not a patch, so the
-`exports` map ([#98](https://github.com/soimy/maxrects-packer/issues/98)) is in scope rather than
+`exports` map ([#98](https://github.com/soimy/maxrects-packer/issues/98)) has landed rather than being
 deferred, and no intermediate `2.7.5` is planned.
 
 The **findings** live in [`deferred-work.md`](./deferred-work.md) — measurements, reproducers and the
@@ -17,8 +17,7 @@ Every row is one PR: one logical change, an English conventional-commit title, n
 | # | Item | Type | Issue | Ready to start? |
 | --- | --- | --- | --- | --- |
 | 1 | Four Dependabot alerts in the nested vitepress tree | `build(deps)` | — | needs the upgrade-or-dismiss decision |
-| 2 | An `exports` map for `require`/`import` under `node16`/`nodenext` | `feat!` | [#98](https://github.com/soimy/maxrects-packer/issues/98) | in scope for 3.0.0 |
-| 3 | Release `3.0.0` | release | [#61](https://github.com/soimy/maxrects-packer/issues/61), [#62](https://github.com/soimy/maxrects-packer/issues/62) | after 1–2 |
+| 2 | Release `3.0.0` | release | [#61](https://github.com/soimy/maxrects-packer/issues/61), [#62](https://github.com/soimy/maxrects-packer/issues/62) | after 1 |
 
 Ordering is severity × readiness, not a schedule. Keep independent checks and tooling work separate
 from behaviour fixes, and settle the package entry points before releasing. Re-order whenever a decision lands.
@@ -59,20 +58,8 @@ vite 6+), or dismiss the alerts as dev-only and wait for vitepress 2.0.0 stable.
 `resolved` URLs must point at `registry.npmjs.org`, and `npm install` on npm 10.9.8 needs
 `--legacy-peer-deps`.
 
-## 2. `exports` map (#98)
 
-Per-format conditions and declarations fix the `node16`/`nodenext` CommonJS import, and the map seals off
-the deep `maxrects-packer/dist/...` paths — which is why this is the breaking change that makes the
-release a major. Sequence it after the behaviour fixes so the entry-point surface is settled once.
-**Files:** `package.json`, the entry-point gates (`scripts/verify-entry.mjs`,
-`scripts/verify-package.mjs`, whose `PUBLISHED_FILES` list is pinned), the type fixture, and
-`docs/user/troubleshooting.md`.
-**Mark it in the commit message**, not only in the PR description: `feat!:` or a `BREAKING CHANGE:`
-footer, because the squash body is what `commit-and-tag-version` parses.
-**Exit criteria:** the CommonJS `.cts` fixture compiles under `node16` and `nodenext` — the gap measured
-in the ledger — and the deep-import change is documented as breaking.
-
-## 3. Release `3.0.0`
+## 2. Release `3.0.0`
 
 The release includes the fixes accumulated since `v2.7.4`. Everything in this queue lands first, then:
 
@@ -82,8 +69,8 @@ git push --follow-tags     # release.yml builds the GitHub release
 npm publish                # manual — release.yml does not publish to npm
 ```
 
-The non-exclusive tag metadata fix carries a breaking marker, so `commit-and-tag-version` selects
-`3.0.0`. The `exports` map also needs its own breaking marker. Use
+The non-exclusive tag metadata fix and the `exports` map both carry breaking markers, so
+`commit-and-tag-version` selects `3.0.0`. Use
 `npm run version -- --release-as major` if the derived version is ever wrong.
 
 **Exit criteria:** `latest` on npm points at a build whose `main`/`types` match this repository;

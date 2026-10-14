@@ -33,7 +33,7 @@ everywhere in the repository's own documentation.
 | `npm run lint` / `lint:fix` | oxlint over `src`, `test`, `scripts` and the docs config; baseline is 0 warnings / 0 errors. |
 | `npm run format` / `format:check` | oxfmt writes back / checks, including `docs/.vitepress/*.mts`. |
 | `npm run cover` | Coverage run plus the artifact self-check; writes `test/coverage/` (gitignored). |
-| `npm run verify:package` | Packs a tarball, installs it into a temp consumer and consumes it **by package name**; compile the type fixture under `bundler`, `node16` and `nodenext`. Needs a build first. |
+| `npm run verify:package` | Packs a tarball, installs it into a temp consumer and consumes it **by package name**; compiles the ESM type fixture under `bundler`, `node16` and `nodenext`, and a CommonJS `.cts` one under `node16` and `nodenext`. Needs a build first. |
 | `npm run verify:docs` | Asserts the documentation boundary: tracked source, ignored build products, and what `docs:clean` may delete. |
 | `npm run docs:build` | Generates `docs/api/`, builds the site into `docs/.vitepress/dist/`, writes the legacy-URL redirects, then checks the output. |
 | `npx vitest run test/maxrects-bin.spec.js` | A single spec, no rebuild needed. |

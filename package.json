@@ -6,6 +6,19 @@
   "main": "dist/maxrects-packer.cjs",
   "module": "dist/maxrects-packer.mjs",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/maxrects-packer.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/maxrects-packer.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
     "dist",
     "src",
@@ -18,7 +31,7 @@
   "scripts": {
     "clean": "rimraf ./dist ./lib",
     "build": "rollup -c",
-    "postbuild": "node scripts/fix-declaration-extensions.mjs && node scripts/verify-entry.mjs && node scripts/verify-es5.mjs",
+    "postbuild": "node scripts/fix-declaration-extensions.mjs && node scripts/build-cjs-declarations.mjs && node scripts/verify-entry.mjs && node scripts/verify-es5.mjs",
     "build:clean": "npm run clean && npm run build",
     "docs:api": "rimraf docs/api && typedoc",
     "docs:dev": "npm run docs:api && vitepress dev docs",

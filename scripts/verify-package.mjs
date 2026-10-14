@@ -45,6 +45,15 @@ const readonlySheets: readonly SheetRect[] = Object.freeze([new SheetRect(4, 4)]
 sheets.addArray(readonlySheets);
 export const summary = [saved.length, bins.length, bin.width, oversized.width, oversizedWithoutData.width, rect.width, copied.width, copiedSheet.label, sheets.rects[0].label];
 `;
+// The CommonJS twin of TYPE_FIXTURE: the same nine documented exports, read by a `.cts` file, plus the
+// `import … = require(…)` form. `.cts` is CommonJS to TypeScript whatever the surrounding
+// `package.json` says, so this fixture resolves through the `require` condition of the exports map —
+// which is the shape that used to fail with TS1479 (ESM import) and TS1471 (`= require`) under
+// `node16`, while every check above stayed green (issue #98).
+const CJS_FIXTURE = `import pkg = require("maxrects-packer");
+${TYPE_FIXTURE}
+export const requiredSummary = [typeof pkg.MaxRectsPacker, pkg.PACKING_LOGIC.MAX_EDGE];
+`;
 // What `npm pack` is meant to produce, sorted. Almost all of it comes from the `files` allowlist in
 // package.json; `package.json`, `README.md` and `LICENSE` are npm's own additions. Edit this list only
 // together with the allowlist — it is the record of what consumers download.
@@ -53,18 +62,25 @@ const PUBLISHED_FILES = [
     "LICENSE",
     "README.md",
     "assets/favicon.ico",
+    "dist/abstract-bin.d.cts",
     "dist/abstract-bin.d.ts",
+    "dist/geom/Rectangle.d.cts",
     "dist/geom/Rectangle.d.ts",
+    "dist/index.d.cts",
     "dist/index.d.ts",
+    "dist/maxrects-bin.d.cts",
     "dist/maxrects-bin.d.ts",
     "dist/maxrects-packer.cjs",
+    "dist/maxrects-packer.d.cts",
     "dist/maxrects-packer.d.ts",
     "dist/maxrects-packer.js",
     "dist/maxrects-packer.js.map",
     "dist/maxrects-packer.min.js",
     "dist/maxrects-packer.mjs",
     "dist/maxrects-packer.mjs.map",
+    "dist/oversized-element-bin.d.cts",
     "dist/oversized-element-bin.d.ts",
+    "dist/types.d.cts",
     "dist/types.d.ts",
     "package.json",
     "src/abstract-bin.ts",
@@ -139,27 +155,70 @@ try {
         throw new Error(`require("maxrects-packer") loaded but misbehaves: expected 1 bin, got ${cjs.bins}`);
     console.log(`  ✓ require("maxrects-packer") -> ${cjs.keys.length} exports, real packing run OK`);
 
-    // 5) Verify ESM by package name (Node loads main through CJS interop; named exports come from cjs-module-lexer)
-    // Node 23+ also adds a synthetic "module.exports" key to the namespace of a CommonJS module, so the
-    // raw key count is 6 on Node 20/22 and 7 on Node 24. Drop it: this gate is about which real exports
-    // are reachable by name, and a count that changes with the Node version reads like a regression.
-    const esmKeys = JSON.parse(
+    // 5) Verify ESM by package name. The exports map sends `import` to dist/maxrects-packer.mjs, and this
+    // step exists to prove that routing, so it asserts the route itself rather than the names alone:
+    //   - the full namespace must carry the six documented names, and none of the CommonJS-only markers
+    //     (`default`, plus the synthetic `module.exports` Node 24 adds to a CJS namespace). A `default`
+    //     here means Node reached dist/maxrects-packer.cjs through interop — the pre-3.0.0 `main` path.
+    //     Filtering those keys out hid exactly the regression this gate has to catch.
+    //   - `import.meta.resolve` must land on dist/maxrects-packer.mjs, which holds however the namespace
+    //     is shaped, including a key a future Node adds that this list does not know about.
+    // Extra keys are reported but not rejected: their set is decided by the Node version, and a check
+    // that breaks on an unrelated addition is a check somebody deletes.
+    const CJS_FALLBACK_KEYS = ["default", "module.exports"];
+    const esm = JSON.parse(
         run(
             "node",
             [
                 "--input-type=module",
                 "-e",
-                `import("maxrects-packer").then((m) => console.log(JSON.stringify(Object.keys(m))));`
+                `import("maxrects-packer").then((m) => {
+                    let resolved = null;
+                    try {
+                        resolved = import.meta.resolve("maxrects-packer");
+                    } catch {
+                        resolved = null;
+                    }
+                    console.log(JSON.stringify({ keys: Object.keys(m), resolved }));
+                });`
             ],
             {
                 cwd: workdir
             }
         )
-    ).filter((key) => key !== "default" && key !== "module.exports");
-    const missingEsm = EXPECTED.filter((name) => !esmKeys.includes(name));
+    );
+    const missingEsm = EXPECTED.filter((name) => !esm.keys.includes(name));
     if (missingEsm.length > 0)
-        throw new Error(`import("maxrects-packer") is missing named exports: ${missingEsm.join(", ")}`);
-    console.log(`  ✓ import("maxrects-packer") -> ${esmKeys.length} named exports`);
+        throw new Error(
+            `import("maxrects-packer") is missing named exports: ${missingEsm.join(", ")}; ` +
+                `measured namespace: ${esm.keys.join(", ") || "<empty>"}; required: ${EXPECTED.join(", ")}`
+        );
+    // `default`/`module.exports` are the signal that `import` fell back to the CommonJS bundle, so they
+    // are the failure this gate is here to prevent — never something to filter out. The resolution is
+    // quoted too, so a genuine `default` export added to the ESM build is distinguishable from a misroute.
+    const fallbackKeys = CJS_FALLBACK_KEYS.filter((key) => esm.keys.includes(key));
+    if (fallbackKeys.length > 0)
+        throw new Error(
+            `import("maxrects-packer") resolved the CommonJS bundle, not the ESM build: the namespace ` +
+                `carries the CJS-interop key(s) ${fallbackKeys.join(", ")}; measured namespace: ` +
+                `${esm.keys.join(", ")}; import.meta.resolve measured: ${esm.resolved}; required: the exports ` +
+                `map must send \`import\` to dist/maxrects-packer.mjs with no CJS-interop keys in the namespace`
+        );
+    if (esm.resolved === null)
+        throw new Error(
+            "import.meta.resolve is unavailable in this Node build, so the `import` route cannot be measured; " +
+                `required: Node >= 20.6, measured: ${process.version}`
+        );
+    if (!esm.resolved.endsWith("/dist/maxrects-packer.mjs"))
+        throw new Error(
+            `import.meta.resolve("maxrects-packer") must resolve to dist/maxrects-packer.mjs; ` +
+                `measured: ${esm.resolved}`
+        );
+    const extraEsm = esm.keys.filter((key) => !EXPECTED.includes(key));
+    console.log(
+        `  ✓ import("maxrects-packer") -> ${esm.keys.length} namespace keys, resolves to dist/maxrects-packer.mjs` +
+            (extraEsm.length > 0 ? ` (unexpected extra keys: ${extraEsm.join(", ")})` : "")
+    );
 
     // 6) Verify the published types by package name, in every resolution mode a consumer can use.
     // package.json "types" decides what a TypeScript consumer resolves, and it pointed at the
@@ -168,7 +227,7 @@ try {
     // import of them catches that. The declarations have to satisfy the strictest modes: this package
     // is `"type": "module"`, so its relative imports need explicit extensions under node16/nodenext
     // (postbuild writes them) or a consumer with skipLibCheck: false sees TS2834/TS2835.
-    // The consumer project is ESM so that node16 and nodenext read the fixture as ESM too.
+    // The consumer project is ESM so that node16 and nodenext read the `.ts` fixture as ESM too.
     writeFileSync(
         join(workdir, "package.json"),
         JSON.stringify({ name: "consumer", private: true, type: "module" }, null, 2)
@@ -180,8 +239,8 @@ try {
         { name: "node16", module: ts.ModuleKind.Node16, moduleResolution: ts.ModuleResolutionKind.Node16 },
         { name: "nodenext", module: ts.ModuleKind.NodeNext, moduleResolution: ts.ModuleResolutionKind.NodeNext }
     ];
-    const compileFixture = ({ module, moduleResolution }) => {
-        const program = ts.createProgram([join(workdir, "consumer.ts")], {
+    const compileFixture = (file, { module, moduleResolution }) => {
+        const program = ts.createProgram([file], {
             strict: true,
             noEmit: true,
             skipLibCheck: false,
@@ -204,7 +263,7 @@ try {
     };
 
     for (const mode of MODES) {
-        const errors = compileFixture(mode);
+        const errors = compileFixture(join(workdir, "consumer.ts"), mode);
         if (errors.length > 0) {
             reportErrors(errors);
             throw new Error(
@@ -213,6 +272,66 @@ try {
         }
     }
     console.log(`  ✓ the published types accept the documented imports (${MODES.map((mode) => mode.name).join(", ")})`);
+
+    // 6b) The same surface from a `.cts` consumer. This is the gap issue #98 measured: no exports map
+    // meant `require` resolved the ESM-flavoured `dist/index.d.ts`, so `import … from` was TS1479 and
+    // `import … = require(…)` was TS1471 under node16. `.cts` is CommonJS to TypeScript regardless of
+    // the consumer's `type`, which is exactly what makes it reach the `require` condition — a `.ts`
+    // fixture in an ESM project never would. Both node16 and nodenext are compiled: nodenext already
+    // accepted the ESM declaration before this change, so it is the mode that catches a require-branch
+    // regression rather than the one that reproduced the bug.
+    writeFileSync(join(workdir, "consumer.cts"), CJS_FIXTURE);
+    const CJS_MODES = MODES.filter((mode) => mode.moduleResolution !== ts.ModuleResolutionKind.Bundler);
+    for (const mode of CJS_MODES) {
+        const errors = compileFixture(join(workdir, "consumer.cts"), mode);
+        if (errors.length > 0) {
+            reportErrors(errors);
+            throw new Error(
+                `the published types reject a CommonJS .cts consumer under ${mode.name} (${errors.length} error(s))`
+            );
+        }
+    }
+    console.log(
+        `  ✓ the published types accept a CommonJS .cts consumer (${CJS_MODES.map((mode) => mode.name).join(", ")})`
+    );
+
+    // 6c) Deep paths into the package are sealed by the exports map. The three specifiers below are
+    // deliberately different pre-map shapes, measured against the master tarball: `dist/maxrects-packer.cjs`
+    // resolved, `dist/geom/Rectangle.js` was MODULE_NOT_FOUND because no runtime file is emitted there
+    // (only the `.d.ts`), and `src/index.ts` was refused with ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING.
+    // After the map all three must fail the same way, with ERR_PACKAGE_PATH_NOT_EXPORTED. That seal is the
+    // breaking half of the change (documented in docs/user/troubleshooting.md) and the one a future
+    // `"./dist/*": "./dist/*"` entry would silently undo.
+    const DEEP_IMPORTS = [
+        "maxrects-packer/dist/maxrects-packer.cjs",
+        "maxrects-packer/dist/geom/Rectangle.js",
+        "maxrects-packer/src/index.ts"
+    ];
+    const deepImports = JSON.parse(
+        run(
+            "node",
+            [
+                "-e",
+                `const results = {};
+             for (const specifier of ${JSON.stringify(DEEP_IMPORTS)}) {
+                 try { require(specifier); results[specifier] = "resolved"; } catch (error) { results[specifier] = error.code ?? error.message; }
+             }
+             console.log(JSON.stringify(results));`
+            ],
+            { cwd: workdir }
+        )
+    );
+    const unsealed = Object.entries(deepImports).filter(([, code]) => code !== "ERR_PACKAGE_PATH_NOT_EXPORTED");
+    if (unsealed.length > 0) {
+        throw new Error(
+            `deep imports into the package must be sealed off with ERR_PACKAGE_PATH_NOT_EXPORTED, but ` +
+                unsealed.map(([specifier, code]) => `"${specifier}" -> ${code}`).join("; ")
+        );
+    }
+    const manifest = run("node", ["-e", `console.log(require("maxrects-packer/package.json").name)`], { cwd: workdir });
+    if (manifest !== "maxrects-packer")
+        throw new Error(`"maxrects-packer/package.json" must stay reachable through the exports map, got: ${manifest}`);
+    console.log(`  ✓ deep imports fail with ERR_PACKAGE_PATH_NOT_EXPORTED, ./package.json stays reachable`);
 
     // 7) Run the documentation examples marked with `<!-- docs-example: name -->`, against the package
     // installed by name. The guides are the first thing a user copies, and nothing else would notice an

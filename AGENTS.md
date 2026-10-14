@@ -337,11 +337,14 @@ English keeps the project history usable for every contributor and every downstr
   (`dist/maxrects-packer.cjs`). Historically `main` pointed at the UMD `.js`, and `require()` returned
   an empty object for three and a half years. Three gates protect the entry points: `postbuild` runs
   `scripts/fix-declaration-extensions.mjs` (rewrites the relative specifiers in `dist/**/*.d.ts`, see
-  below) and then `scripts/verify-entry.mjs` (fast, checks file paths), while CI runs
+  below), then `scripts/build-cjs-declarations.mjs` (writes the `.d.cts` set the `require` condition
+  hands out, see below) and then `scripts/verify-entry.mjs` (fast, checks the `main`/`module`/`types`
+  paths plus every `exports` condition target), while CI runs
   `npm run verify:package` (slow — `npm pack`s a real tarball, installs it into a temp consumer and
-  verifies `require`/`import` by **package name**, then compiles a fixture against the published
-  `types` under `bundler`, `node16` and `nodenext`). All of them will stop you after a change to the
-  entry points, `files` or artifact names.
+  verifies `require`/`import` by **package name**, then compiles two fixtures against the published
+  declarations: an ESM one under `bundler`, `node16` and `nodenext`, and a CommonJS `.cts` one under
+  `node16` and `nodenext`). All of them will stop you after a change to the
+  entry points, `files`, `exports` or artifact names.
   `postbuild` also runs `scripts/verify-es5.mjs`, which fails the build when a bundle calls a runtime
   API newer than ES5 (`Array.prototype.find`, `Object.getOwnPropertyDescriptors`, `Reflect.ownKeys`).
   `target: es5` downlevels syntax and polyfills nothing, and the specs run `src/` and never touch
@@ -361,11 +364,20 @@ English keeps the project history usable for every contributor and every downstr
   `node10`/CommonJS all compile the type fixture. `npm run verify:package` compiles it under
   `bundler`, `node16` and `nodenext`, so those three are gated; `node10` is measured by hand, since
   the extension only ever had to be `.js` (not the `.mjs` TS2835 suggests) for it to keep working.
-  There is still no `exports` field, so deep imports (`maxrects-packer/dist/...`) work; adding one
-  would seal off deep paths, which is breaking and therefore reserved for 3.0.0.
+  The `exports` map is what a modern resolver reads, and it is **exhaustive**: `import` gets
+  `dist/maxrects-packer.mjs` + `dist/index.d.ts`, `require` gets `dist/maxrects-packer.cjs` +
+  `dist/index.d.cts`, and only `./package.json` is reachable besides `.` — so deep imports
+  (`maxrects-packer/dist/...`, `maxrects-packer/src/...`) now fail with
+  `ERR_PACKAGE_PATH_NOT_EXPORTED`. That sealing is the documented breaking change of 3.0.0
+  ([troubleshooting](./docs/user/troubleshooting.md#a-deep-import-fails-with-err-package-path-not-exported)).
+  Because the package is `"type": "module"` every `.d.ts` is ESM-flavoured, so the require branch
+  needs the CommonJS `.d.cts` set that `scripts/build-cjs-declarations.mjs` writes from `postbuild`;
+  its relative specifiers are the `.cjs` twins of the `.js` ones above, and `verify:package` compiles a
+  `.cts` fixture under `node16` and `nodenext` with `skipLibCheck: false` so the branch cannot regress
+  unnoticed (that was issue #98's gap: the old gate only had an ESM fixture).
 - Published content is decided by the `files` allowlist in `package.json`: `dist` + `src` +
   `assets/favicon.ico` + `CHANGELOG.md` + `tsconfig*.json` + `typedoc.json`
-  (measured `npm pack`: ~66kB / 28 files — the byte count drifts slightly between builds, the file
+  (measured `npm pack`: ~75kB / 35 files — the byte count drifts slightly between builds, the file
   count does not; the published 2.7.4 tarball was 67.0kB / 33 files). That file list is **pinned**:
   `PUBLISHED_FILES` in `scripts/verify-package.mjs` is compared against `npm pack --dry-run --json`, so
   an entry added to the allowlist (the site's `docs/` tree, `assets/*.png`) or dropped from it (`src/`,
