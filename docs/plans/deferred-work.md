@@ -201,3 +201,10 @@ on the three pull requests is green — so each waits for a commit of its own.
   `npm run verify:package` compiles it against the packed tarball under `node16` and `nodenext` with
   `skipLibCheck: false`. The map also seals off the deep imports — the deliberate 3.0.0 breaking change.
   Tracked in [issue #98](https://github.com/soimy/maxrects-packer/issues/98).
+- **The docs site is on a vitepress pre-release, and nothing will raise the move back to stable.**
+  `vitepress@2.0.0-alpha.20` is what cleared the four Dependabot alerts — the mechanism and the reason
+  the `1.6.4` pin could not be patched in place are recorded in
+  [AGENTS.md](../../AGENTS.md)'s pitfalls. Moving to `2.0.0` stable when it ships is a version bump
+  plus a lockfile refresh, and the site is default-theme only, so there is no theme migration to
+  schedule. With no Dependabot version-update configuration in the repository, this needs a reminder
+  or that config to surface on its own.
