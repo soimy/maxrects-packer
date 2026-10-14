@@ -34,7 +34,8 @@ The repository runs two compilers on purpose:
   does.
 
 Typedoc only supports the TS 6 API so far, which is why the alias cannot become a real `typescript@7`
-yet. Tests are unaffected: vitest transforms TypeScript with esbuild and never touches the compiler API.
+yet. Tests are unaffected: vitest transforms TypeScript through Vite's pipeline — Oxc since Vite 8, with
+esbuild no longer in the tree — and never touches the compiler API.
 When touching `tsconfig`: TS 7 removed `baseUrl`, `moduleResolution: node10` and `target: es5`, which is
 why the type-checking config stays clean while `target: es5` lives in the build config with
 `ignoreDeprecations: "6.0"` for TS 6.

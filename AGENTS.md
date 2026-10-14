@@ -174,10 +174,11 @@ npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild ne
   `@typescript/typescript6`, which provides the JS compiler API consumed by typedoc and the
   rollup plugin; `@typescript/native` is native TS 7 and `node_modules/.bin/tsc` points at it. So
   `npm run typecheck` runs TS 7 while the build and docs run the TS 6 API — the tests do not, because
-  vitest transforms TypeScript with esbuild and never touches the compiler API. Both sides matter
-  when you touch tsconfig: TS 7 removed `baseUrl` / `moduleResolution: node10` / `target: es5`, which
-  is why `tsconfig.json` (type checking) stays clean, while `target: es5` in `tsconfig.build.json` is
-  kept quiet for TS 6 by `ignoreDeprecations: "6.0"`. `@typescript/typescript6` is a forwarding
+  vitest transforms TypeScript through Vite's pipeline — Oxc since Vite 8, with esbuild gone from the
+  tree — and never touches the compiler API. Both sides matter when you touch tsconfig: TS 7 removed
+  `baseUrl` / `moduleResolution: node10` / `target: es5`, which is why `tsconfig.json` (type checking)
+  stays clean, while `target: es5` in `tsconfig.build.json` is kept quiet for TS 6 by
+  `ignoreDeprecations: "6.0"`. `@typescript/typescript6` is a forwarding
   shim, not a compiler: `lib/typescript.js` is the single line
   `module.exports = require("@typescript/old")`, and `@typescript/old` is its own dependency on the
   stock `typescript@^6`. `require("typescript")` therefore still yields the TS 6 JS API, while
