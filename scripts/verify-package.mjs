@@ -155,28 +155,70 @@ try {
         throw new Error(`require("maxrects-packer") loaded but misbehaves: expected 1 bin, got ${cjs.bins}`);
     console.log(`  ✓ require("maxrects-packer") -> ${cjs.keys.length} exports, real packing run OK`);
 
-    // 5) Verify ESM by package name. The exports map sends `import` to dist/maxrects-packer.mjs, so this
-    // loads the native ESM build: six named exports, no `default` (the `default` plus cjs-module-lexer
-    // shape was the pre-3.0.0 path through `main` and CJS interop). The key filter below is defensive
-    // only — a `default` would now mean a fallback to the CommonJS bundle, and Node 23+ adds a synthetic
-    // "module.exports" key to a CJS namespace — so this stays about reachable names, not the raw count.
-    const esmKeys = JSON.parse(
+    // 5) Verify ESM by package name. The exports map sends `import` to dist/maxrects-packer.mjs, and this
+    // step exists to prove that routing, so it asserts the route itself rather than the names alone:
+    //   - the full namespace must carry the six documented names, and none of the CommonJS-only markers
+    //     (`default`, plus the synthetic `module.exports` Node 24 adds to a CJS namespace). A `default`
+    //     here means Node reached dist/maxrects-packer.cjs through interop — the pre-3.0.0 `main` path.
+    //     Filtering those keys out hid exactly the regression this gate has to catch.
+    //   - `import.meta.resolve` must land on dist/maxrects-packer.mjs, which holds however the namespace
+    //     is shaped, including a key a future Node adds that this list does not know about.
+    // Extra keys are reported but not rejected: their set is decided by the Node version, and a check
+    // that breaks on an unrelated addition is a check somebody deletes.
+    const CJS_FALLBACK_KEYS = ["default", "module.exports"];
+    const esm = JSON.parse(
         run(
             "node",
             [
                 "--input-type=module",
                 "-e",
-                `import("maxrects-packer").then((m) => console.log(JSON.stringify(Object.keys(m))));`
+                `import("maxrects-packer").then((m) => {
+                    let resolved = null;
+                    try {
+                        resolved = import.meta.resolve("maxrects-packer");
+                    } catch {
+                        resolved = null;
+                    }
+                    console.log(JSON.stringify({ keys: Object.keys(m), resolved }));
+                });`
             ],
             {
                 cwd: workdir
             }
         )
-    ).filter((key) => key !== "default" && key !== "module.exports");
-    const missingEsm = EXPECTED.filter((name) => !esmKeys.includes(name));
+    );
+    const missingEsm = EXPECTED.filter((name) => !esm.keys.includes(name));
     if (missingEsm.length > 0)
-        throw new Error(`import("maxrects-packer") is missing named exports: ${missingEsm.join(", ")}`);
-    console.log(`  ✓ import("maxrects-packer") -> ${esmKeys.length} named exports`);
+        throw new Error(
+            `import("maxrects-packer") is missing named exports: ${missingEsm.join(", ")}; ` +
+                `measured namespace: ${esm.keys.join(", ") || "<empty>"}; required: ${EXPECTED.join(", ")}`
+        );
+    // `default`/`module.exports` are the signal that `import` fell back to the CommonJS bundle, so they
+    // are the failure this gate is here to prevent — never something to filter out. The resolution is
+    // quoted too, so a genuine `default` export added to the ESM build is distinguishable from a misroute.
+    const fallbackKeys = CJS_FALLBACK_KEYS.filter((key) => esm.keys.includes(key));
+    if (fallbackKeys.length > 0)
+        throw new Error(
+            `import("maxrects-packer") resolved the CommonJS bundle, not the ESM build: the namespace ` +
+                `carries the CJS-interop key(s) ${fallbackKeys.join(", ")}; measured namespace: ` +
+                `${esm.keys.join(", ")}; import.meta.resolve measured: ${esm.resolved}; required: the exports ` +
+                `map must send \`import\` to dist/maxrects-packer.mjs with no CJS-interop keys in the namespace`
+        );
+    if (esm.resolved === null)
+        throw new Error(
+            "import.meta.resolve is unavailable in this Node build, so the `import` route cannot be measured; " +
+                `required: Node >= 20.6, measured: ${process.version}`
+        );
+    if (!esm.resolved.endsWith("/dist/maxrects-packer.mjs"))
+        throw new Error(
+            `import.meta.resolve("maxrects-packer") must resolve to dist/maxrects-packer.mjs; ` +
+                `measured: ${esm.resolved}`
+        );
+    const extraEsm = esm.keys.filter((key) => !EXPECTED.includes(key));
+    console.log(
+        `  ✓ import("maxrects-packer") -> ${esm.keys.length} namespace keys, resolves to dist/maxrects-packer.mjs` +
+            (extraEsm.length > 0 ? ` (unexpected extra keys: ${extraEsm.join(", ")})` : "")
+    );
 
     // 6) Verify the published types by package name, in every resolution mode a consumer can use.
     // package.json "types" decides what a TypeScript consumer resolves, and it pointed at the
