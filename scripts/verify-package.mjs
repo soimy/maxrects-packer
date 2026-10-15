@@ -58,7 +58,23 @@ const copiedSheet: SheetRect = Rectangle.Clone(new SheetRect(4, 4));
 const sheets = new MaxRectsPacker<SheetRect>(64, 64);
 const readonlySheets: readonly SheetRect[] = Object.freeze([new SheetRect(4, 4)]);
 sheets.addArray(readonlySheets);
-export const summary = [saved.length, bins.length, bin.width, oversized.width, oversizedWithoutData.width, rect.width, copied.width, copiedSheet.label, sheets.rects[0].label, plain.bins.length, plainBin.width, plainOversized.width, plainCopied.width];
+// \`rects\` has to stay \`T[]\`, and only an explicit array annotation can say so. \`IRectangleInput\`'s
+// index signature types any field read as \`any\`, so \`sheets.rects[0].label\` kept compiling even when
+// \`get rects()\` was widened to \`IRectangleInput[]\` — reading a field cannot pin a generic. These two
+// annotations do bite, and they are separate: the getter and \`Bin.rects\` widen independently.
+const packedSheets: SheetRect[] = sheets.rects;
+const binRects: Rectangle[] = bins[0].rects;
+// A custom input type with no coordinates at all, checked on the way back out: the rects that come
+// out of the packer must still be \`Sprite\`s, extra field intact, not \`IRectangleInput\`s.
+interface Sprite {
+    width: number;
+    height: number;
+    name: string;
+}
+const spritePacker = new MaxRectsPacker<Sprite>(64, 64);
+spritePacker.addArray([{ width: 8, height: 8, name: "sprite" }]);
+const sprites: Sprite[] = spritePacker.rects;
+export const summary = [saved.length, bins.length, bin.width, oversized.width, oversizedWithoutData.width, rect.width, copied.width, copiedSheet.label, packedSheets[0].label, binRects.length, sprites[0].name, plain.bins.length, plainBin.width, plainOversized.width, plainCopied.width];
 `;
 // The CommonJS twin of TYPE_FIXTURE: the same ten documented exports, read by a `.cts` file, plus the
 // `import … = require(…)` form. `.cts` is CommonJS to TypeScript whatever the surrounding
