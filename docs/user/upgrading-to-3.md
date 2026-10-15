@@ -37,6 +37,7 @@ instead of as `Rectangle` members. Name the class to get it back:
 import { MaxRectsPacker, Rectangle } from "maxrects-packer";
 
 const packer = new MaxRectsPacker<Rectangle>(1024, 1024, 2);
+packer.add(new Rectangle(100, 100));
 const rect: Rectangle = packer.bins[0].rects[0]; // collide(), contain(), area — all typed again
 ```
 
@@ -67,14 +68,25 @@ Three behaviours a 2.x consumer may have leaned on:
 import { MaxRectsPacker } from "maxrects-packer";
 
 // What 3.0.0 pinned down, and what this example gates: a plain object is accepted, the caller's array
-// keeps its order, and the placement is written back onto the very object that was passed in.
+// keeps its order, and the placement is written back onto the very objects that were passed in.
 const packer = new MaxRectsPacker(1024, 1024, 2);
-const input = [{ width: 600, height: 20, name: "tree" }];
+const input = [
+    { width: 20, height: 20, name: "leaf" },
+    { width: 600, height: 20, name: "tree" }
+];
+const order = input.slice();
 packer.addArray(input);
 
-const placed = packer.bins[0].rects[0];
-if (placed !== input[0]) throw new Error("the packer stopped writing back onto the caller's object");
-if (placed.name !== "tree" || placed.x < 0 || placed.y < 0) throw new Error("the placement did not survive");
+if (input.some((rect, index) => rect !== order[index])) throw new Error("the caller's array was reordered");
+
+for (const rect of order) {
+    const placed = packer.bins.flatMap((bin) => bin.rects).find((item) => item === rect);
+    if (!placed) throw new Error("the packer stopped writing back onto the caller's object");
+    if (!Number.isFinite(placed.x) || !Number.isFinite(placed.y) || placed.x < 0 || placed.y < 0) {
+        throw new Error("the placement did not survive");
+    }
+}
+if (order[0].name !== "leaf" || order[1].name !== "tree") throw new Error("the extra fields did not survive");
 ```
 
 ## Not breaking, but different in 3.0.0
@@ -83,8 +95,9 @@ if (placed.name !== "tree" || placed.x < 0 || placed.y < 0) throw new Error("the
   `oversized`, `allowRotation` and `data` when they carry something, and any extra enumerable field.
   `JSON.stringify(rect)` no longer emits the private backing fields, and the result can be fed back to
   `addArray()`.
-- A `padding` that is not a finite number is rejected by the constructor that received it instead of
-  driving `place()` into an unbounded retry loop.
+- Numeric `NaN`, `Infinity` and `-Infinity` values for `padding` are rejected by the constructor that
+  received them instead of driving `place()` into an unbounded retry loop. Other JavaScript values keep
+  their original coercion behaviour.
 - `clone()` replays a rotated rect in the orientation the caller handed it over in, an oversized
   placeholder keeps its saved state across `load()`, and a custom `clone()` keeps the properties it
   defines.
