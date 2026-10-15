@@ -43,6 +43,7 @@ export default defineConfig({
                         { text: "Rotation and tags", link: "/user/rotation-and-tags" },
                         { text: "Repacking", link: "/user/repacking" },
                         { text: "Persistence", link: "/user/persistence" },
+                        { text: "Upgrading to 3.0", link: "/user/upgrading-to-3" },
                         { text: "Troubleshooting", link: "/user/troubleshooting" }
                     ]
                 }

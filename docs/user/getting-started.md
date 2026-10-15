@@ -63,6 +63,10 @@ packer.bins.forEach((bin) => {
   gives you the module, so use `require("maxrects-packer").MaxRectsPacker` or `import`.
 - **2.1.0** accepts any object with `width`/`height` instead of a fixed `{ width, height, data }`
   shape, and changed the `Rectangle` constructor to `new Rectangle(width, height, x, y, rotated)`.
+- **3.0.0** seals the package behind an `exports` map (deep imports no longer resolve), defaults the
+  packing generics to `IRectangleInput`, stops labelling non-exclusive bins automatically, and
+  preserves caller data and saved state instead of normalising it. See
+  [Upgrading to 3.0](./upgrading-to-3.md).
 
 It is a rewrite of [Multi-Bin-Packer](https://github.com/marekventur/multi-bin-packer) with the same
 interface names, so migrating usually means changing the import.
