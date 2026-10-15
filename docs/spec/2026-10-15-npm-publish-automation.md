@@ -12,6 +12,13 @@ would have to be renamed to `@soimy/maxrects-packer` — a breaking rename for e
 for the package-name fixtures in `scripts/verify-package.mjs` — and it authenticates installs even for
 public packages, which a public library cannot ask of its users.
 
+The npmjs.com record is part of the design, not just setup. It must have **Allow npm publish** enabled:
+`npm stage publish` is allowed by default but a direct `npm publish` is not, so a record created without
+that box completes the OIDC exchange and then rejects the publish itself. And a newly created record must
+complete its first real publish within 2 days, after which it expires and can no longer be used or edited
+— a successful token exchange does not validate it. Both rules are npm's, so the safe sequence is to
+create the record immediately before the first prerelease and publish within that window.
+
 `release.yml` keeps owning the GitHub release; the new `publish.yml` owns npm. The two run from the same
 tag and neither depends on the other.
 
@@ -25,10 +32,13 @@ tag and neither depends on the other.
   stripped so npm cannot fall back to the legacy `NODE_AUTH_TOKEN` path.
 - `package.json` gains a `publishConfig` that pins `registry.npmjs.org` (this machine has a mirror
   configured at the user level) and `access: public`. It is not part of the tarball's file list, so
-  `PUBLISHED_FILES` in `scripts/verify-package.mjs` is unchanged.
-- `docs/contributor/releasing.md` and `CONTRIBUTING.md` describe the automated flow and the one-time
-  npmjs.com record it depends on: publisher GitHub Actions, user `soimy`, repository
-  `maxrects-packer`, workflow filename `publish.yml`.
+  `PUBLISHED_FILES` in `scripts/verify-package.mjs` is unchanged. Its `repository.url` also drops the
+  embedded `soimy@` user, leaving `git+https://github.com/soimy/maxrects-packer.git` as the one form
+  provenance's repository-identity check has to normalize.
+- `docs/contributor/releasing.md` and `CONTRIBUTING.md` describe the automated flow and the npmjs.com
+  record it depends on: publisher GitHub Actions, user `soimy`, repository `maxrects-packer`, workflow
+  filename `publish.yml`, environment blank, and **Allow npm publish** enabled. The guide also records
+  the 2-day validation window, which no local check can observe.
 
 ## Rejected alternatives
 
@@ -51,6 +61,9 @@ tag and neither depends on the other.
   environment; the branch was deleted afterwards and npm's dist-tags were unchanged (`latest` still
   `2.7.3`, no version beyond `2.7.4`). The exchange endpoint is npm's, not a documented public API, so
   the probe is evidence rather than a shipped gate.
-- What the probe does not cover is the publish command itself — packing, the `--tag` mapping and the
-  provenance attestation. That is what the first prerelease verifies, publishing under `next` so
-  `latest` stays untouched until it has passed.
+- What the probe deliberately does not prove: the exchange is allowed whether or not *Allow npm publish*
+  is set, and it does not count as the record's validating publish, so it says nothing about the 2-day
+  window. Those two are confirmed by the maintainer on npmjs.com and then by the first real publish.
+- What the first prerelease verifies is everything downstream of the token: the publish command itself
+  (packing, the `--tag` mapping, the provenance attestation) and the record's Allowed actions. It
+  publishes under `next`, so `latest` stays untouched until it has passed.

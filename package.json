@@ -60,7 +60,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://soimy@github.com/soimy/maxrects-packer.git"
+    "url": "git+https://github.com/soimy/maxrects-packer.git"
   },
   "keywords": [
     "spritesheet",

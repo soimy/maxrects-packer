@@ -72,8 +72,7 @@ credential, and the tarball is published with a provenance attestation. The work
 `.github/workflows/publish.yml`, and its publish step strips any token context before running so npm
 cannot fall back to a legacy `NODE_AUTH_TOKEN` path.
 
-Before the first automated publish, the trusted publisher has to be configured **on npmjs.com**, under
-the package's *Settings → Trusted Publisher*:
+The trusted publisher is configured **on npmjs.com**, under the package's *Settings → Trusted Publisher*:
 
 | Field | Value |
 | --- | --- |
@@ -82,9 +81,21 @@ the package's *Settings → Trusted Publisher*:
 | Repository | `maxrects-packer` |
 | Workflow filename | `publish.yml` |
 | Environment | leave blank, or name one and add it to the job |
+| Allowed actions | **Allow npm publish** must be enabled |
 
-That record names the workflow file, so renaming `publish.yml` breaks publishing until the record is
-updated with it; the publish step then fails authentication.
+Three npm rules decide whether that record works, and none of them is visible from the GitHub side:
+
+- **`npm stage publish` is always allowed; a direct `npm publish` is not.** A record created without
+  *Allow npm publish* still completes the OIDC token exchange — so a probe or a dry run looks healthy —
+  and then rejects the publish itself. This repository publishes directly, so that box has to be
+  checked. *Allow dist-tag management* is independent and is not needed here.
+- **A new record must complete its first real publish within 2 days, or it expires** and can no longer
+  be used or edited. A successful token exchange does not count; only the first published tarball
+  validates the record. Create the record immediately before the first prerelease and publish inside
+  that window — if it expires, delete it, create a new one, and publish within 2 days of that.
+- The provider and the required fields are fixed once a record exists; changing them means deleting and
+  re-adding it. The record also names the workflow file, so renaming `publish.yml` breaks publishing
+  until the record is updated with it.
 
 `publish.yml` checks the tag against the version in `package.json` before it publishes anything, and it
 publishes a prerelease (`3.0.0-rc.1`) under the `next` dist-tag so it never becomes what a plain
