@@ -177,8 +177,10 @@ longer place.
 packer also accepts, so a rect serializes to what the guides show rather than to the class's backing
 fields (issue #53). The keys are `width`, `height`, `x`, `y` and `rot`, in that order, plus `oversized`
 when it is set, `allowRotation` when the rect carries an override, `data` unless it is still the
-untouched `{}` the constructor installs, and any other own field — so a subclass or a rect carrying
-custom state still serializes whole. The class's own backing fields are dropped **by name**, not by the
+untouched `{}` the constructor installs, and any other enumerable own field — so a subclass or a rect
+carrying custom state still serializes whole. Enumerable is the boundary `JSON.stringify()` itself draws
+on a plain object, so a field the caller hid stays hidden instead of appearing here and not there, and a
+hidden getter is never read, because reading it would run code the caller's own serialization never runs. The class's own backing fields are dropped **by name**, not by the
 underscore prefix, so a caller's `_assetId` or a subclass's `_meta` survives. That name test is an exact
 membership check rather than a lookup, because a plain object inherits `toString`, `constructor` and the
 rest, and a caller's field named after one of those is a value like any other. An own `__proto__` field is

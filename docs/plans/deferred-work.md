@@ -177,8 +177,11 @@ had been open since 2023 and was still live on `master`. It grew out of
   also keeps the key scan off every payload the caller supplied, which a 50,000-property payload measured
   at one wasted `getOwnPropertyNames` call per serialization. Shape then catches what identity cannot: a
   placeholder mutated where it stands, by an added key or a prototype replaced with one that serializes
-  itself. The geometry keys are written first so the order is fixed rather than following assignment
-  order.
+  itself. "Every other own field" needed the same care: copying all own keys emitted a field the caller
+  had hidden and, worse, read a hidden getter, so that loop reads `Object.keys()` — the enumerable
+  boundary JSON itself draws. The payload test keeps counting every own key, hidden ones included,
+  because "was the placeholder touched at all" is a different question from "can JSON see the field". The
+  geometry keys are written first so the order is fixed rather than following assignment order.
 
 ## `rects` is a public array with the bin's bookkeeping beside it
 

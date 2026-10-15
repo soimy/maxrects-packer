@@ -201,6 +201,50 @@ describe("Rectangle.toJSON()", () => {
         expect(Object.getOwnPropertyDescriptor(json, "__proto__").value).toBe("sprite");
     });
 
+    test("Leaves out a custom field the caller made non-enumerable", () => {
+        // `JSON.stringify()` reads enumerable own string properties only, so a hidden field has to stay out
+        // of the public shape or the rect would expose more than the same data on a plain object.
+        const rect = new Rectangle(10, 20);
+        Object.defineProperty(rect, "secret", { value: "hidden", enumerable: false });
+        expect(JSON.parse(JSON.stringify(rect))).not.toHaveProperty("secret");
+    });
+
+    test("Does not read a custom getter the caller made non-enumerable", () => {
+        // The sharper half of the same rule: reading a hidden getter runs code that the caller's own
+        // serialization would never run.
+        const rect = new Rectangle(10, 20);
+        let reads = 0;
+        Object.defineProperty(rect, "hidden", {
+            get() {
+                reads++;
+                throw new Error("a hidden getter is not part of the public shape");
+            },
+            enumerable: false
+        });
+        expect(() => rect.toJSON()).not.toThrow();
+        expect(reads).toBe(0);
+    });
+
+    test("Keeps a custom getter the caller left enumerable", () => {
+        // The other side of the boundary: an enumerable accessor is read by `JSON.stringify()` too.
+        const rect = new Rectangle(10, 20);
+        Object.defineProperty(rect, "label", {
+            get() {
+                return "visible";
+            },
+            enumerable: true
+        });
+        expect(JSON.parse(JSON.stringify(rect)).label).toBe("visible");
+    });
+
+    test("Keeps a placeholder that was given a hidden own key", () => {
+        // The payload test asks whether the placeholder was touched at all, so it counts every own key,
+        // while the field loop copies the enumerable ones — two different questions about the same words.
+        const rect = new Rectangle(10, 20);
+        Object.defineProperty(rect.data, "hidden", { value: 1, enumerable: false });
+        expect(JSON.parse(JSON.stringify(rect))).toHaveProperty("data");
+    });
+
     test("Keeps a placeholder whose prototype the caller replaced", () => {
         // No own keys were added and neither earlier test changed, but the payload now serializes through
         // the prototype it was given, so it is the caller's value rather than the constructor's.

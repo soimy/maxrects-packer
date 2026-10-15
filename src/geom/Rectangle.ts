@@ -277,9 +277,12 @@ export class Rectangle implements IRectangle {
      * The shape is the placed rect: `width`, `height`, `x`, `y` and `rot`, in that order. `oversized` is
      * added only when set, `data` only when it is not the constructor's own untouched `{}` placeholder —
      * a `{}` the caller assigned is a value, and so is a `null` — and `allowRotation` only when the rect
-     * carries an explicit override, since a plain object may state it as a field. Any other own field is
-     * kept as well, so a subclass or a rect carrying custom state still serializes whole; the class's own
-     * backing fields are the only thing dropped, by name, so a caller's `_assetId` survives.
+     * carries an explicit override, since a plain object may state it as a field. Any other enumerable own
+     * field is kept as well, so a subclass or a rect carrying custom state still serializes whole; the
+     * class's own backing fields are the only thing dropped, by name, so a caller's `_assetId` survives.
+     * Enumerable is the boundary `JSON.stringify()` itself draws on a plain object, so a field the caller
+     * hid stays hidden, and a getter the caller hid is never read — reading it would run code the caller's
+     * own serialization never runs.
      *
      * @returns the rect's own fields, with the backing fields replaced by the public ones
      */
@@ -297,11 +300,16 @@ export class Rectangle implements IRectangle {
         };
         // The backing fields are skipped by name — the public value is read from the getter instead — and
         // everything else is kept, so custom state still serializes.
-        for (const key of ownKeys(this)) {
+        //
+        // `Object.keys`, not every own key: `JSON.stringify()` reads the enumerable own string properties of
+        // a plain object and nothing else, so copying the rest would expose fields a plain object with the
+        // same data would not, and — sharper — would read a getter the caller deliberately hid, running
+        // code their own serialization never runs.
+        for (const key of Object.keys(this)) {
             // `hasOwnProperty` rather than `BACKING_FIELDS[key]`: the latter also reads the prototype chain,
             // so a caller's own `toString` or `constructor` field would match an inherited function and be
             // dropped as if it were a backing field.
-            if (typeof key !== "string" || Object.prototype.hasOwnProperty.call(BACKING_FIELDS, key)) continue;
+            if (Object.prototype.hasOwnProperty.call(BACKING_FIELDS, key)) continue;
             // A tag the packer sets, so it is absent rather than `false` on a normal rect.
             if (key === "oversized" && !this.oversized) continue;
             // An own `__proto__` field is the one name `json[key] = …` cannot record: the assignment reaches

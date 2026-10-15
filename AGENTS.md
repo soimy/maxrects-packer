@@ -124,8 +124,10 @@ version, with the reasoning, is [docs/contributor/behavior-contracts.md](./docs/
 9. **`toJSON()` writes the public shape**: `JSON.stringify()` on a `Rectangle` produces the same
    object as the plain `{ width, height }` rect the packer also accepts — `width`, `height`, `x`,
    `y`, `rot`, in that order, plus `oversized` when set, `allowRotation` when the rect carries an
-   override, `data` unless it is still the constructor's untouched `{}` placeholder, and any other own
-   field — the class's backing fields are dropped **by name**, so a caller's `_assetId` survives. That
+   override, `data` unless it is still the constructor's untouched `{}` placeholder, and any other
+   **enumerable** own field — the class's backing fields are dropped **by name**, so a caller's `_assetId`
+   survives. Enumerable is the boundary `JSON.stringify()` draws on a plain object: a field the caller hid
+   stays hidden, and a getter the caller hid is never read. That
    name test is an exact membership check: a plain lookup also reads `toString`/`constructor` off the
    prototype chain and would drop a caller field named after one, and an own `__proto__` field has to be
    defined rather than assigned or it repoints the result's prototype. Values come from the public
