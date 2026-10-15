@@ -33,6 +33,12 @@ plain.addArray([{ width: 8, height: 8, name: "sprite" }]);
 plain.add({ width: 4, height: 4 });
 const plainInput: IRectangleInput = { width: 2, height: 2 };
 plain.addArray([plainInput]);
+// The widened contract is not the packer's alone: both bins and the copy helper take a coordinate-free
+// rect as well, and each line below is what fails if one of them is narrowed back to \`IRectangle\`.
+const plainBin = new MaxRectsBin(64, 64, 0, options);
+plainBin.add({ width: 8, height: 8 });
+const plainOversized = new OversizedElementBin({ width: 128, height: 128 });
+const plainCopied = Rectangle.Clone({ width: 4, height: 4 });
 const bin = new MaxRectsBin(64, 64, 0, options);
 const oversized = new OversizedElementBin(128, 128, null);
 // The data argument is optional in the runtime (a JavaScript caller can leave it out and gets null),
@@ -52,7 +58,7 @@ const copiedSheet: SheetRect = Rectangle.Clone(new SheetRect(4, 4));
 const sheets = new MaxRectsPacker<SheetRect>(64, 64);
 const readonlySheets: readonly SheetRect[] = Object.freeze([new SheetRect(4, 4)]);
 sheets.addArray(readonlySheets);
-export const summary = [saved.length, bins.length, bin.width, oversized.width, oversizedWithoutData.width, rect.width, copied.width, copiedSheet.label, sheets.rects[0].label, plain.bins.length];
+export const summary = [saved.length, bins.length, bin.width, oversized.width, oversizedWithoutData.width, rect.width, copied.width, copiedSheet.label, sheets.rects[0].label, plain.bins.length, plainBin.width, plainOversized.width, plainCopied.width];
 `;
 // The CommonJS twin of TYPE_FIXTURE: the same ten documented exports, read by a `.cts` file, plus the
 // `import … = require(…)` form. `.cts` is CommonJS to TypeScript whatever the surrounding
