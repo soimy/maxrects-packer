@@ -67,7 +67,7 @@ one that reproduced the bug. The map is exhaustive, so deep imports
 covers the consumer-facing side.
 
 - `types` names the **barrel's** declaration (`dist/index.d.ts`). Naming a module's declaration instead
-  left six of the nine documented exports unimportable from TypeScript.
+  left six of the ten documented exports unimportable from TypeScript.
 - The emitted declarations carry explicit `.js` extensions, written by
   `scripts/fix-declaration-extensions.mjs`. Without them a `node16`/`nodenext` consumer with
   `skipLibCheck: false` fails inside this package's own `.d.ts` files with TS2834/TS2835. `bundler` and

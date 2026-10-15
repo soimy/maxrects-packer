@@ -17,13 +17,28 @@ const EXPECTED = ["Bin", "MaxRectsBin", "MaxRectsPacker", "OversizedElementBin",
 // The documented API, imported by package name — every name src/index.ts re-exports, used so the
 // fixture cannot pass on an unused import.
 const TYPE_FIXTURE = `import { Bin, MaxRectsBin, MaxRectsPacker, OversizedElementBin, PACKING_LOGIC, Rectangle } from "maxrects-packer";
-import type { IBin, IOption, IRectangle } from "maxrects-packer";
+import type { IBin, IOption, IRectangle, IRectangleInput } from "maxrects-packer";
 
 const options: IOption = { smart: true, pot: true, square: false, allowRotation: false, tag: false, border: 0, logic: PACKING_LOGIC.MAX_EDGE };
-const packer = new MaxRectsPacker(64, 64, 0, options);
+const packer = new MaxRectsPacker<Rectangle>(64, 64, 0, options);
 packer.add(new Rectangle(16, 16));
 const saved: IBin[] = packer.save();
 const bins: Bin<Rectangle>[] = packer.bins;
+// The input contract (issue #46). Every guide passes plain \`{ width, height, … }\` objects, so the
+// generic's default has to accept them without a type argument; naming \`Rectangle\` explicitly, as
+// above, is what buys the class back on \`bins[i].rects[i]\`. Both lines below failed to compile while
+// the default was the \`Rectangle\` class, and this fixture is the only gate that can see it.
+const plain = new MaxRectsPacker(64, 64, 0, options);
+plain.addArray([{ width: 8, height: 8, name: "sprite" }]);
+plain.add({ width: 4, height: 4 });
+const plainInput: IRectangleInput = { width: 2, height: 2 };
+plain.addArray([plainInput]);
+// The widened contract is not the packer's alone: both bins and the copy helper take a coordinate-free
+// rect as well, and each line below is what fails if one of them is narrowed back to \`IRectangle\`.
+const plainBin = new MaxRectsBin(64, 64, 0, options);
+plainBin.add({ width: 8, height: 8 });
+const plainOversized = new OversizedElementBin({ width: 128, height: 128 });
+const plainCopied = Rectangle.Clone({ width: 4, height: 4 });
 const bin = new MaxRectsBin(64, 64, 0, options);
 const oversized = new OversizedElementBin(128, 128, null);
 // The data argument is optional in the runtime (a JavaScript caller can leave it out and gets null),
@@ -43,9 +58,25 @@ const copiedSheet: SheetRect = Rectangle.Clone(new SheetRect(4, 4));
 const sheets = new MaxRectsPacker<SheetRect>(64, 64);
 const readonlySheets: readonly SheetRect[] = Object.freeze([new SheetRect(4, 4)]);
 sheets.addArray(readonlySheets);
-export const summary = [saved.length, bins.length, bin.width, oversized.width, oversizedWithoutData.width, rect.width, copied.width, copiedSheet.label, sheets.rects[0].label];
+// \`rects\` has to stay \`T[]\`, and only an explicit array annotation can say so. \`IRectangleInput\`'s
+// index signature types any field read as \`any\`, so \`sheets.rects[0].label\` kept compiling even when
+// \`get rects()\` was widened to \`IRectangleInput[]\` — reading a field cannot pin a generic. These two
+// annotations do bite, and they are separate: the getter and \`Bin.rects\` widen independently.
+const packedSheets: SheetRect[] = sheets.rects;
+const binRects: Rectangle[] = bins[0].rects;
+// A custom input type with no coordinates at all, checked on the way back out: the rects that come
+// out of the packer must still be \`Sprite\`s, extra field intact, not \`IRectangleInput\`s.
+interface Sprite {
+    width: number;
+    height: number;
+    name: string;
+}
+const spritePacker = new MaxRectsPacker<Sprite>(64, 64);
+spritePacker.addArray([{ width: 8, height: 8, name: "sprite" }]);
+const sprites: Sprite[] = spritePacker.rects;
+export const summary = [saved.length, bins.length, bin.width, oversized.width, oversizedWithoutData.width, rect.width, copied.width, copiedSheet.label, packedSheets[0].label, binRects.length, sprites[0].name, plain.bins.length, plainBin.width, plainOversized.width, plainCopied.width];
 `;
-// The CommonJS twin of TYPE_FIXTURE: the same nine documented exports, read by a `.cts` file, plus the
+// The CommonJS twin of TYPE_FIXTURE: the same ten documented exports, read by a `.cts` file, plus the
 // `import … = require(…)` form. `.cts` is CommonJS to TypeScript whatever the surrounding
 // `package.json` says, so this fixture resolves through the `require` condition of the exports map —
 // which is the shape that used to fail with TS1479 (ESM import) and TS1471 (`= require`) under
@@ -222,7 +253,7 @@ try {
 
     // 6) Verify the published types by package name, in every resolution mode a consumer can use.
     // package.json "types" decides what a TypeScript consumer resolves, and it pointed at the
-    // declaration of src/maxrects-packer.ts instead of the barrel's, so six of the nine documented
+    // declaration of src/maxrects-packer.ts instead of the barrel's, so six of the ten documented
     // exports could not be imported while every runtime check above stayed green. Only compiling an
     // import of them catches that. The declarations have to satisfy the strictest modes: this package
     // is `"type": "module"`, so its relative imports need explicit extensions under node16/nodenext

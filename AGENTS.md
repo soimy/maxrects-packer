@@ -25,7 +25,7 @@ possible, each staying within `maxWidth × maxHeight` (sprite sheets / texture a
 
 | File | Responsibility |
 | --- | --- |
-| `src/index.ts` | The only barrel export. Runtime values: `Rectangle / MaxRectsPacker / PACKING_LOGIC / Bin / MaxRectsBin / OversizedElementBin`; types: `IRectangle / IOption / IBin`. The surface is pinned by `test/index.spec.js` — adding or renaming a public value means updating that list in the same commit — and what consumers can actually import is checked by the type fixture in `npm run verify:package` against `package.json`'s `types` entry |
+| `src/index.ts` | The only barrel export. Runtime values: `Rectangle / MaxRectsPacker / PACKING_LOGIC / Bin / MaxRectsBin / OversizedElementBin`; types: `IRectangleInput / IRectangle / IOption / IBin`. The surface is pinned by `test/index.spec.js` — adding or renaming a public value means updating that list in the same commit — and what consumers can actually import is checked by the type fixture in `npm run verify:package` against `package.json`'s `types` entry |
 | `src/types.ts` | `IOption`, `PACKING_LOGIC` (MAX_AREA/MAX_EDGE/FILL_WIDTH), `EDGE_MAX_VALUE=4096` (the default edge size of `MaxRectsBin`/`MaxRectsPacker`), `EDGE_MIN_VALUE=128` (**never used inside the library; both are re-exported by `src/maxrects-packer.ts` and part of the public `.d.ts` — not dead code, do not delete**) |
 | `src/geom/Rectangle.ts` | `IRectangle` interface + `Rectangle`: `width/height/x/y/rot/data/allowRotation` all go through getters/setters and bump `_dirty` on every mutation; the `rot` setter swaps width/height, the `data` setter syncs `data.allowRotation`; the `Clone` static copies a rect for the bins' `clone()` — prototype and own properties, shallow, or the rect's own `clone()` when its class has one |
 | `src/abstract-bin.ts` | `IBin` / abstract `Bin<T>`: the `dirty` semantics and `setDirty()`; `add/reset/repack/clone` are left to subclasses |
@@ -86,8 +86,12 @@ version, with the reasoning, is [docs/contributor/behavior-contracts.md](./docs/
    result is not finite, and both constructors reject numeric `NaN`/`Infinity`/`-Infinity` padding.
    Omitted or `undefined` padding defaults to `0`; other JavaScript values retain their original
    coercion behaviour, and a non-finite result refuses placement instead of retrying forever (issue #43).
-7. **Generics**: `MaxRectsPacker<T extends IRectangle>` / `MaxRectsBin<T>` accept instances of custom
-   classes and preserve their extra properties as-is.
+7. **Generics**: `MaxRectsPacker<T extends IRectangleInput>` / `MaxRectsBin<T>` accept instances of
+   custom classes and preserve their extra properties as-is. `T` defaults to `IRectangleInput` —
+   `width`/`height` plus an index signature — so the plain `{ width, height }` object every guide
+   passes compiles with no type argument (issue #46). Naming `Rectangle`, or your own class, buys that
+   class back on `bins[i].rects[i]`. `IRectangle` is the placed shape: `IRectangleInput` plus the
+   `x`/`y` the packer writes, and it is what `freeRects` and the `collide`/`contain` helpers take.
 8. **`clone()` isolates the two bins**: both implementations copy the rects (`Rectangle.Clone`, so a
    custom class keeps its prototype and its extra fields) and carry over `tag` and `data`. Mutating a
    rect one bin holds, or adding to one bin, therefore never reaches the other. The copy is **shallow**
@@ -361,7 +365,7 @@ English keeps the project history usable for every contributor and every downstr
   [compatibility](./docs/contributor/compatibility.md).
   The `types` field must name the **barrel's** declaration (`dist/index.d.ts`), not a module's: the
   build emits one `.d.ts` per source module, and `dist/maxrects-packer.d.ts` — the declaration of
-  `src/maxrects-packer.ts` — only exports `MaxRectsPacker`, `PACKING_LOGIC` and `IOption` among the nine documented exports (plus
+  `src/maxrects-packer.ts` — only exports `MaxRectsPacker`, `PACKING_LOGIC` and `IOption` among the ten documented exports (plus
   the two `EDGE_*` constants), which left six of them unimportable from TypeScript until the type
   fixture landed.
   The emitted declarations carry explicit `.js` extensions — `scripts/fix-declaration-extensions.mjs`

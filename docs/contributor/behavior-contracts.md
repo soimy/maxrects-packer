@@ -90,9 +90,17 @@ dimensions or free rectangles, so invalid arithmetic cannot trigger an endless p
 
 ## 7. Generics survive
 
-`MaxRectsPacker<T extends IRectangle>` and `MaxRectsBin<T>` accept instances of custom classes and
+`MaxRectsPacker<T extends IRectangleInput>` and `MaxRectsBin<T>` accept instances of custom classes and
 preserve their extra properties as they are — a rect is never converted to a `Rectangle` behind your
 back.
+
+`T` defaults to `IRectangleInput`, which is `width`, `height` and an index signature and nothing else,
+so the plain `{ width, height }` object every guide passes compiles with no type argument. Naming a
+type — `Rectangle`, or your own class — buys that type back on `bins[i].rects[i]`. `IRectangle` is the
+placed shape rather than the input one: `IRectangleInput` plus the `x`/`y` the packer writes, and what
+`freeRects` and the `collide`/`contain` helpers take. Before 3.0.0 the constraint and the default were
+both `IRectangle`/`Rectangle`, which required the coordinates the packer itself supplies and made the
+documented input a compile error (issue #46).
 
 ## 8. `clone()` isolates the two bins {#clone-isolates-the-two-bins}
 

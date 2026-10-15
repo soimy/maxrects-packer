@@ -90,6 +90,61 @@ on the spot.
   would have been the alternative to the mark, and is out of reach: the bundles promise ES5, and
   `scripts/verify-es5.mjs` fails the build on it.
 
+## `addArray()` rejects the plain objects the guides use
+
+Found while checking the untracked issues on 2026-10-15: [issue #46](https://github.com/soimy/maxrects-packer/issues/46)
+has been open since 2022, and it was still live on `master` — with a worse error than the report shows.
+Fixed in the same PR that recorded it; the measurements below are what the fix is measured against.
+
+- **The default type parameter was the `Rectangle` class, so the input the guides advertise did not
+  compile.** `MaxRectsPacker<T extends IRectangle = Rectangle>` made `new MaxRectsPacker(64, 64)` a
+  `MaxRectsPacker<Rectangle>`, and `addArray(input: readonly T[])` then demanded the class:
+  `packer.addArray([{ width: 1, height: 1 }])` failed with `TS2740: … is missing the following
+  properties from type 'Rectangle': oversized, area, collide, contain, and 15 more`. The 2022 report
+  quotes "missing `x`, `y`" instead — that is what an explicit `MaxRectsPacker<IRectangle>` gives, and
+  it still reproduced as `TS2739: … is missing the following properties from type 'IRectangle': x, y`.
+  `IRectangle` requires the two coordinates the packer itself writes, so neither form accepted what
+  `README.md` and `docs/user/getting-started.md` pass. Copied into a TypeScript project, both guides
+  fail to compile — the issue's title read literally: `TS2345: Argument of type … is not assignable to
+  parameter of type 'readonly Rectangle[]'`, and `TS2353: 'name' does not exist in type 'Rectangle'`.
+
+  Nothing caught it because `npm run verify:package` runs the `docs-example` blocks as **`.mjs`
+  JavaScript**: they execute, and no compiler ever reads them. The specs do not either — they are
+  `.spec.js` and import `../src` directly.
+
+  What landed: `IRectangleInput` (`width`, `height` and an index signature) is what `add()`/`addArray()`
+  accept, `IRectangle` extends it with the `x`/`y` the packer writes, and every generic is constrained
+  to and defaulted at `IRectangleInput`. Both guides compile unchanged, a caller who wants the class
+  back writes `new MaxRectsPacker<Rectangle>(…)`, and `IRectangle` still gives a placed rect its
+  `number` coordinates. This is a breaking change to the type surface, so it belongs to 3.0.0:
+  `bins[0].rects[0]` is `IRectangleInput` unless the caller names a narrower `T`.
+
+  Still open: the `docs-example` gate runs its snippets without a compiler, so a guide can keep shipping
+  code that does not type-check. Teaching `verify:package` to compile the TypeScript-looking examples,
+  or adding one type-checked example per guide, is a follow-up of its own.
+
+## `Rectangle` has no `toJSON()`
+
+Found while checking the untracked issues on 2026-10-15: [issue #53](https://github.com/soimy/maxrects-packer/issues/53)
+has been open since 2023 and is still live on `master`. It grew out of
+[discussion #52](https://github.com/soimy/maxrects-packer/discussions/52), which is still open too.
+
+- **`JSON.stringify()` on a `Rectangle` emits the private backing fields.** There is no `toJSON()` in
+  `src/` or `test/`, so `JSON.stringify(new Rectangle(10, 20))` returns
+  `{"oversized":false,"_rot":false,"_dirty":1,"_width":10,"_height":20,"_x":0,"_y":0,"_data":{}}` —
+  `_width`/`_rot` where the public API reads `width`/`rot`, with the internal dirty counter leaking
+  alongside them. The maintainer's answer in #52 was "you can simply use `JSON.stringify()` to serialize
+  as json"; the reporter's counter-example is what became the issue.
+
+  The trigger is narrower than the report implies, which is part of why it survived: `addArray()` keeps
+  the caller's own object, so a rect that arrived as a plain `{ width, height, name }` stringifies to
+  `{"width":10,"height":20,"name":"plain","x":0,"y":0,"rot":false}` and looks right. Only a `Rectangle`
+  instance — a public export the guides mention — serializes to the underscore form.
+
+  Decide whether `toJSON()` returns the public shape (`width`/`height`/`x`/`y`/`rot`/`data`, dropping
+  `_dirty`) or a documented subset of it, and whether `data` travels with the rect at all. Adding the
+  method is additive rather than breaking, so unlike the input typing it does not have to ride on 3.0.0.
+
 ## `rects` is a public array with the bin's bookkeeping beside it
 
 Noticed while reviewing #121. Sound for the library's own paths — `add()`, `repack()` and `reset(true)` all

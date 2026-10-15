@@ -1,4 +1,4 @@
-import { Rectangle, IRectangle } from "./geom/Rectangle";
+import { Rectangle, IRectangle, IRectangleInput } from "./geom/Rectangle";
 import { MaxRectsBin } from "./maxrects-bin";
 import { OversizedElementBin } from "./oversized-element-bin";
 import { Bin, IBin } from "./abstract-bin";
@@ -23,7 +23,7 @@ function find<T>(items: T[], predicate: (item: T) => boolean): T | undefined {
     return undefined;
 }
 
-export class MaxRectsPacker<T extends IRectangle = Rectangle> {
+export class MaxRectsPacker<T extends IRectangleInput = IRectangleInput> {
     /**
      * The Bin array added to the packer
      */
@@ -114,6 +114,10 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
             }
             return rect;
         } else {
+            // The multi-argument form builds its own rect, so the `T` it is declared to return is the
+            // caller's claim rather than something this method can check — that return type predates
+            // 3.0.0, and narrowing it is a decision of its own rather than part of the input typing.
+            // The cast has to go through `unknown` because `T` may be narrower than what is built here.
             const rect: IRectangle = new Rectangle(args[0], args[1]);
             if (args.length > 2) rect.data = args[2];
 
@@ -123,17 +127,20 @@ export class MaxRectsPacker<T extends IRectangle = Rectangle> {
                     (this.options.allowRotation && rect.width <= this.height && rect.height <= this.width)
                 )
             ) {
-                this.bins.push(new OversizedElementBin<T>(rect as T));
+                this.bins.push(new OversizedElementBin<T>(rect as unknown as T));
             } else {
-                let added = find(this.bins.slice(this._currentBinIndex), (bin) => bin.add(rect as T) !== undefined);
+                let added = find(
+                    this.bins.slice(this._currentBinIndex),
+                    (bin) => bin.add(rect as unknown as T) !== undefined
+                );
                 if (!added) {
                     let bin = new MaxRectsBin<T>(this.width, this.height, this.padding, this.options);
                     if (this.options.tag && this.options.exclusiveTag && rect.data && rect.data.tag)
                         bin.tag = rect.data.tag;
-                    if (this.addToBin(bin, rect as T)) this.bins.push(bin);
+                    if (this.addToBin(bin, rect as unknown as T)) this.bins.push(bin);
                 }
             }
-            return rect as T;
+            return rect as unknown as T;
         }
     }
 
