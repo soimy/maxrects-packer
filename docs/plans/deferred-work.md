@@ -125,25 +125,63 @@ Fixed in the same PR that recorded it; the measurements below are what the fix i
 
 ## `Rectangle` has no `toJSON()`
 
+**Verified resolved on 2026-10-15** — `Rectangle.toJSON()` now writes the public shape, so a
+`Rectangle` and the equivalent plain object serialize alike. The measurements below are kept as the
+record of what the fix is measured against. Tracked in
+[issue #53](https://github.com/soimy/maxrects-packer/issues/53).
+
 Found while checking the untracked issues on 2026-10-15: [issue #53](https://github.com/soimy/maxrects-packer/issues/53)
-has been open since 2023 and is still live on `master`. It grew out of
+had been open since 2023 and was still live on `master`. It grew out of
 [discussion #52](https://github.com/soimy/maxrects-packer/discussions/52), which is still open too.
 
-- **`JSON.stringify()` on a `Rectangle` emits the private backing fields.** There is no `toJSON()` in
-  `src/` or `test/`, so `JSON.stringify(new Rectangle(10, 20))` returns
+- **`JSON.stringify()` on a `Rectangle` emitted the private backing fields.** There was no `toJSON()`
+  in `src/` or `test/`, so `JSON.stringify(new Rectangle(10, 20))` returned
   `{"oversized":false,"_rot":false,"_dirty":1,"_width":10,"_height":20,"_x":0,"_y":0,"_data":{}}` —
-  `_width`/`_rot` where the public API reads `width`/`rot`, with the internal dirty counter leaking
-  alongside them. The maintainer's answer in #52 was "you can simply use `JSON.stringify()` to serialize
-  as json"; the reporter's counter-example is what became the issue.
+  `_width` where the public API reads `width`, with the internal dirty counter leaking alongside. The
+  maintainer's answer in #52 was "you can simply use `JSON.stringify()` to serialize as json"; the
+  reporter's counter-example is what became the issue.
 
-  The trigger is narrower than the report implies, which is part of why it survived: `addArray()` keeps
-  the caller's own object, so a rect that arrived as a plain `{ width, height, name }` stringifies to
-  `{"width":10,"height":20,"name":"plain","x":0,"y":0,"rot":false}` and looks right. Only a `Rectangle`
-  instance — a public export the guides mention — serializes to the underscore form.
+  The trigger was narrower than the report implies, which is part of why it survived: `addArray()` keeps
+  the caller's own object, so a rect that arrived as a plain `{ width, height, name }` stringified to
+  `{"width":10,"height":20,"name":"plain","x":0,"y":0,"rot":false}` and looked right. Only a `Rectangle`
+  instance — a public export the guides mention — serialized to the underscore form.
 
-  Decide whether `toJSON()` returns the public shape (`width`/`height`/`x`/`y`/`rot`/`data`, dropping
-  `_dirty`) or a documented subset of it, and whether `data` travels with the rect at all. Adding the
-  method is additive rather than breaking, so unlike the input typing it does not have to ride on 3.0.0.
+  What landed: `toJSON()` writes `width`, `height`, `x`, `y` and `rot`, plus `oversized` only when set,
+  `allowRotation` only when the rect carries an override, `data` only when it holds something other than
+  the constructor's `{}` placeholder (an explicit `null` is a caller value and travels), and any other
+  own field, so a subclass or a rect with custom state still serializes whole. The underscore-prefixed
+  backing fields and the dirty counter are dropped. Measured: the output is byte-identical to the plain
+  object the packer accepts for the same rect, and it satisfies `IRectangleInput`, so it round-trips
+  through `addArray()`. `save()` is untouched — it already rebuilds its entries field by field, so the
+  persisted snapshot keeps its documented shape.
+
+  Six traps worth keeping, all of them found by review or by the fixture rather than by the specs.
+  `JSON.stringify()`'s argument is typed `any`, so the package fixture has to call `toJSON()` directly
+  and assign the result to the published types — a `JSON.stringify()` line compiles whether or not the
+  method exists, and the first version of the fixture assertion was toothless for exactly that reason.
+  `allowRotation` is a prototype accessor rather than an own key, so it has to be written back out by
+  hand, or a `Rectangle` carrying an override would not match a plain object with the field. Reading the
+  backing fields instead of the public getters broke a subclass that overrides `data` or `allowRotation`
+  — the first draft did that while reading the geometry through getters, which was inconsistent as well
+  as wrong. And an "empty payload" test of "no own keys" silently dropped a `Date`, a class instance
+  whose state is on its prototype, and any payload that serializes itself through `toJSON()`; the test
+  now requires a plain empty object. The return type is `IRectangleJSON`, not `Record<string, any>`,
+  because the latter cannot be assigned to `IRectangleInput` or passed to `addArray()` without a cast.
+  Dropping every key that starts with `_` also discarded a caller's own `_assetId` or a subclass's
+  `_meta`, which the contract promises to keep; the class's backing fields are listed by name instead.
+  And "empty payload" still could not tell the constructor's `{}` from a `{}` the caller assigned, so the
+  placeholder is now tracked as the object itself rather than inferred from its shape. A flag the setter
+  clears cannot do that job: a subclass may assign the protected `_data` field directly, which never
+  reaches the setter. Identity and shape are both tested, because each covers a case the other misses, and
+  identity goes first — it is the only thing that sees a fresh `{}` the caller wrote, and testing it first
+  also keeps the key scan off every payload the caller supplied, which a 50,000-property payload measured
+  at one wasted `getOwnPropertyNames` call per serialization. Shape then catches what identity cannot: a
+  placeholder mutated where it stands, by an added key or a prototype replaced with one that serializes
+  itself. "Every other own field" needed the same care: copying all own keys emitted a field the caller
+  had hidden and, worse, read a hidden getter, so that loop reads `Object.keys()` — the enumerable
+  boundary JSON itself draws. The payload test keeps counting every own key, hidden ones included,
+  because "was the placeholder touched at all" is a different question from "can JSON see the field". The
+  geometry keys are written first so the order is fixed rather than following assignment order.
 
 ## `rects` is a public array with the bin's bookkeeping beside it
 

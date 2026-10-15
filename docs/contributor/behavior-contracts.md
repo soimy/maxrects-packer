@@ -170,3 +170,41 @@ detected: a rect that keeps its state in an own accessor closing over the source
 `#private` field behind `width`, `height`, `x`, `y`, `rot` or `data`) fails loudly —
 `Rectangle.Clone` reports what to add, as does `MaxRectsBin.clone()` for a bin holding a rect it can no
 longer place.
+
+## 9. `toJSON()` writes the public shape
+
+`JSON.stringify()` on a `Rectangle` produces the same object as the plain `{ width, height }` rect the
+packer also accepts, so a rect serializes to what the guides show rather than to the class's backing
+fields (issue #53). The keys are `width`, `height`, `x`, `y` and `rot`, in that order, plus `oversized`
+when it is set, `allowRotation` when the rect carries an override, `data` unless it is still the
+untouched `{}` the constructor installs, and any other enumerable own field — so a subclass or a rect
+carrying custom state still serializes whole. Enumerable is the boundary `JSON.stringify()` itself draws
+on a plain object, so a field the caller hid stays hidden instead of appearing here and not there, and a
+hidden getter is never read, because reading it would run code the caller's own serialization never runs. The class's own backing fields are dropped **by name**, not by the
+underscore prefix, so a caller's `_assetId` or a subclass's `_meta` survives. That name test is an exact
+membership check rather than a lookup, because a plain object inherits `toString`, `constructor` and the
+rest, and a caller's field named after one of those is a value like any other. An own `__proto__` field is
+recorded with a property definition rather than an assignment, since assignment reaches the inherited
+accessor and would repoint the result's prototype; the result keeps an ordinary `Object.prototype`
+otherwise. The dirty counter is never written: it is the bin's bookkeeping, not the caller's data.
+
+`data` is omitted only for the constructor's own untouched `{}` placeholder, and that takes two tests
+covering different cases. Identity is checked first: is the value the very object the constructor
+installed? That is the only thing that sees a `{}` the caller wrote — through the setter, or by a subclass
+assigning the protected field directly — and checking it first also means a caller's payload is recognised
+without being scanned, which matters because the shape test enumerates keys and a payload can be a large
+object. Shape is checked second, because identity alone cannot see a placeholder mutated where it stands:
+an added key, or a prototype replaced with one that serializes itself. The placeholder is tracked as the
+object itself rather than as a flag the setter clears, because a direct assignment never reaches the
+setter.
+
+The return type is `IRectangleJSON`, an `IRectangleInput` with the guaranteed `x`, `y` and `rot` declared
+and `oversized`, `allowRotation` and `data` optional, so the result can be assigned to `IRectangleInput`
+or passed to `addArray()` without a cast. The shape is closed under the library's own input contract: the
+output satisfies `IRectangleInput`, so `JSON.parse(JSON.stringify(rect))` can be handed straight back to
+`addArray()`. An explicit `null` payload is a value the caller set, so it is kept, while the
+constructor's `{}` placeholder is not — and the emptiness test looks for a plain empty object rather than
+merely "no own keys", because a `Date` or a self-serializing payload carries none while being very much
+caller data. Every value is read through the public getters rather than the backing fields, so a subclass
+that overrides `data` or `allowRotation` serializes what its callers see. `save()` is unaffected — it
+already rebuilds its entries field by field, so the persisted snapshot keeps its documented shape.

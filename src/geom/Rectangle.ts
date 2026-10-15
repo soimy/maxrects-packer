@@ -14,6 +14,25 @@ export interface IRectangleInput {
 }
 
 /**
+ * What `toJSON()` returns: the placed rect's public shape (issue #53).
+ *
+ * `width`, `height`, `x`, `y` and `rot` are always present. The rest are optional because they are only
+ * written when they carry something: `oversized` when the packer tagged the rect, `allowRotation` when
+ * the rect has an explicit override, `data` when the payload is not the constructor's `{}` placeholder.
+ * The index signature leaves room for a subclass's own fields, which are serialized as well.
+ *
+ * The shape satisfies {@link IRectangleInput}, so the result of `JSON.parse(JSON.stringify(rect))` can be
+ * handed straight back to `addArray()`.
+ */
+export interface IRectangleJSON extends IRectangleInput {
+    x: number;
+    y: number;
+    rot: boolean;
+    oversized?: boolean;
+    allowRotation?: boolean;
+}
+
+/**
  * A rect the packer has placed: an {@link IRectangleInput} plus the `x`/`y` the packer wrote onto it.
  */
 export interface IRectangle extends IRectangleInput {
@@ -60,6 +79,40 @@ function ownPropertyDescriptors(object: object): Record<string | symbol, Propert
     return descriptors;
 }
 
+/**
+ * The class's own backing fields, by name: what `toJSON()` drops in favour of the public getters.
+ *
+ * An exact list rather than "every key starting with `_`", because the underscore is a naming convention
+ * the caller may use too. `IRectangleInput` allows arbitrary custom fields and the serialization contract
+ * keeps them all, so dropping the whole namespace would silently discard a caller's `_assetId` or a
+ * subclass's `_meta`.
+ */
+const BACKING_FIELDS: Record<string, true> = {
+    _width: true,
+    _height: true,
+    _x: true,
+    _y: true,
+    _rot: true,
+    _allowRotation: true,
+    _data: true,
+    _defaultData: true,
+    _dirty: true
+};
+
+/**
+ * Whether a payload the constructor installed is still a plain, empty object with its original prototype.
+ *
+ * The caller has already established identity, so the value is the `{}` the constructor put there and
+ * there is nothing to say about its type; that is why the parameter is an `object`. What identity cannot
+ * see is a placeholder mutated where it stands, which is the whole job here: an added key, or a prototype
+ * replaced with one that serializes itself, both leave identity intact.
+ * @param data - the payload to test, already known to be the object the constructor installed
+ * @returns true when it is a plain empty object that still has its original prototype
+ */
+function isPlainEmptyObject(data: object): boolean {
+    return Object.getPrototypeOf(data) === Object.prototype && ownKeys(data).length === 0;
+}
+
 export class Rectangle implements IRectangle {
     /**
      * Oversized tag on a rect the packer could not put in a bin: one bigger than the packer itself, or
@@ -90,6 +143,7 @@ export class Rectangle implements IRectangle {
         this._x = x;
         this._y = y;
         this._data = {};
+        this._defaultData = this._data;
         this._rot = rot;
         this._allowRotation = allowRotation;
     }
@@ -212,6 +266,88 @@ export class Rectangle implements IRectangle {
     }
 
     /**
+     * The public shape of this rect, for `JSON.stringify()` (issue #53).
+     *
+     * Without this, `JSON.stringify(rect)` walked the own properties and emitted the backing fields —
+     * `{"oversized":false,"_rot":false,"_dirty":1,"_width":10,"_height":20,"_x":0,"_y":0,"_data":{}}` —
+     * so a `Rectangle` serialized differently from the equivalent plain `{ width, height }` object the
+     * packer also accepts. `data` is the caller's payload and belongs in the output; the internal dirty
+     * counter does not.
+     *
+     * The shape is the placed rect: `width`, `height`, `x`, `y` and `rot`, in that order. `oversized` is
+     * added only when set, `data` only when it is not the constructor's own untouched `{}` placeholder —
+     * a `{}` the caller assigned is a value, and so is a `null` — and `allowRotation` only when the rect
+     * carries an explicit override, since a plain object may state it as a field. Any other enumerable own
+     * field is kept as well, so a subclass or a rect carrying custom state still serializes whole; the
+     * class's own backing fields are the only thing dropped, by name, so a caller's `_assetId` survives.
+     * Enumerable is the boundary `JSON.stringify()` itself draws on a plain object, so a field the caller
+     * hid stays hidden, and a getter the caller hid is never read — reading it would run code the caller's
+     * own serialization never runs.
+     *
+     * @returns the rect's own fields, with the backing fields replaced by the public ones
+     */
+    public toJSON(): IRectangleJSON {
+        // The geometry goes in first so the key order is fixed rather than however the caller happened to
+        // assign fields, and so the documented example reads the way it is written. `width`, `height`,
+        // `x`, `y`, `rot`, `data` and `allowRotation` are prototype accessors and never own keys; the own
+        // keys are the backing fields plus `oversized` plus whatever the caller (or a subclass) added.
+        const json: Record<string, any> = {
+            width: this.width,
+            height: this.height,
+            x: this.x,
+            y: this.y,
+            rot: this.rot
+        };
+        // The backing fields are skipped by name — the public value is read from the getter instead — and
+        // everything else is kept, so custom state still serializes.
+        //
+        // `Object.keys`, not every own key: `JSON.stringify()` reads the enumerable own string properties of
+        // a plain object and nothing else, so copying the rest would expose fields a plain object with the
+        // same data would not, and — sharper — would read a getter the caller deliberately hid, running
+        // code their own serialization never runs.
+        for (const key of Object.keys(this)) {
+            // `hasOwnProperty` rather than `BACKING_FIELDS[key]`: the latter also reads the prototype chain,
+            // so a caller's own `toString` or `constructor` field would match an inherited function and be
+            // dropped as if it were a backing field.
+            if (Object.prototype.hasOwnProperty.call(BACKING_FIELDS, key)) continue;
+            // A tag the packer sets, so it is absent rather than `false` on a normal rect.
+            if (key === "oversized" && !this.oversized) continue;
+            // An own `__proto__` field is the one name `json[key] = …` cannot record: the assignment reaches
+            // the inherited accessor and repoints the result's prototype instead of adding the field. Every
+            // other name assigns normally, `toString` included.
+            if (key === "__proto__") {
+                Object.defineProperty(json, key, {
+                    value: (this as Record<string, any>)[key],
+                    enumerable: true,
+                    configurable: true,
+                    writable: true
+                });
+                continue;
+            }
+            json[key] = (this as Record<string, any>)[key];
+        }
+        // `data` is the caller's payload, so it travels. Only the constructor's own untouched `{}` is the
+        // absence of one, which takes two tests that cover different things — each has already been deleted
+        // once as redundant, and each time that lost caller data.
+        const data = this.data;
+        // Identity first, and that order is worth keeping: the shape test enumerates keys, so testing it
+        // first would scan every payload the caller supplied — and a payload can be a large object — only
+        // to discard the answer. Identity is also the only test that sees a `{}` the caller wrote, through
+        // the setter or by assigning the protected field from a subclass, because such an object looks
+        // exactly like the placeholder.
+        //
+        // Shape second, for the one thing identity cannot see: a placeholder mutated where it stands, by an
+        // added key or by a prototype replaced with one that serializes itself.
+        if (!(data === this._defaultData && isPlainEmptyObject(data))) json.data = data;
+        // The per-item rotation override is an accessor here but a plain field on the objects the packer
+        // also accepts, so it has to be written back out or the two rect kinds would not serialize alike.
+        // `undefined` is the absence of an override rather than one, so it stays absent.
+        const allowRotation = this.allowRotation;
+        if (allowRotation !== undefined) json.allowRotation = allowRotation;
+        return json as IRectangleJSON;
+    }
+
+    /**
      * Test if the given rectangle collide with this rectangle.
      *
      * @param rect - rectangle to test collision with
@@ -327,6 +463,15 @@ export class Rectangle implements IRectangle {
     }
 
     protected _data: any;
+    /**
+     * The `{}` the constructor installed as `_data`, held so `toJSON()` can recognise that very object.
+     *
+     * A flag cleared by the setter cannot do this job: a subclass may assign the protected `_data` field
+     * directly, which leaves the flag set while the payload is already the subclass's. An object the
+     * caller wrote is shape-identical to the placeholder, so identity is the only thing that tells them
+     * apart.
+     */
+    protected _defaultData: any;
     /** Opaque caller payload, including explicit null. Objects may also supply allowRotation. */
     get data(): any {
         return this._data;

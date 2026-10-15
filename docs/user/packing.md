@@ -31,6 +31,8 @@ Choose your own namespace; the library adds none. Avoid collisions with rect pro
 `setDirty` and `clone`, and with `Rectangle`'s internal backing fields. Within `data`, `tag` controls
 grouping and `allowRotation` is read by `Rectangle`'s setter; keep unrelated business values elsewhere.
 Custom classes remain supported under the [clone contract](../contributor/behavior-contracts.md#clone-isolates-the-two-bins).
+A custom field survives `JSON.stringify()` too, so a rect you serialize keeps it
+([below](#serializing-a-rect)).
 
 For 3.0.0, stop relying on non-exclusive `addArray()` to reorder your array; read packing order from
 `packer.rects` or `bin.rects`. `Rectangle.data = null` now clears the payload rather than doing
@@ -99,3 +101,27 @@ usable.
 
 If you mutate rects after packing — or push a rect into `bin.rects` yourself — call
 [`repack()`](./repacking.md) so the free space matches the rects again.
+
+## Serializing a rect
+
+`JSON.stringify()` on a `Rectangle` writes the public shape, not the class's backing fields, so a
+serialized rect looks like the plain object the packer also accepts:
+
+<!-- docs-example: tojson -->
+```js
+import { MaxRectsPacker, Rectangle } from "maxrects-packer";
+
+const packer = new MaxRectsPacker(64, 64);
+packer.add(new Rectangle(8, 8));
+
+console.log(JSON.stringify(packer.rects[0]));
+// {"width":8,"height":8,"x":0,"y":0,"rot":false}
+```
+
+The keys are `width`, `height`, `x`, `y` and `rot`, plus `oversized` when it is set, `allowRotation`
+when the rect carries an override, `data` unless it is still the untouched `{}` the constructor
+installs, and any custom field you added — including one whose name starts with an underscore. The internal backing fields and the dirty counter are never written, and every
+value comes from the public API — so a subclass that overrides `data` or `allowRotation` serializes what
+its callers see. `toJSON()` is typed `IRectangleJSON`, which satisfies `IRectangleInput`, so the output
+round-trips: parse it and hand it back to `addArray()`. To persist placements along with the free space,
+see [Persistence](./persistence.md).
