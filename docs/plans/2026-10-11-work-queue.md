@@ -2,9 +2,11 @@
 
 Updated: 2026-10-15. Completed items are removed in the PR that implements them.
 
-**Target: clear this queue, then cut `3.0.0` once.** The next release is a major, not a patch, so the
-`exports` map ([#98](https://github.com/soimy/maxrects-packer/issues/98)) has landed rather than being
-deferred, and no intermediate `2.7.5` is planned.
+**The queue is empty: `3.0.0` shipped on 2026-10-15 and it was the last item in it.** The release is a
+major rather than a patch because the `exports` map
+([#98](https://github.com/soimy/maxrects-packer/issues/98)) and the non-exclusive tag change carried
+breaking markers, and no intermediate `2.7.5` was ever planned. What is still open lives in
+[`deferred-work.md`](./deferred-work.md) as a decision to take, not as queued work.
 
 The **findings** live in [`deferred-work.md`](./deferred-work.md) — measurements, reproducers and the
 options for each decision. This file only decides **order, PR boundaries and what has to be decided
@@ -14,14 +16,16 @@ Every row is one PR: one logical change, an English conventional-commit title, n
 
 ## Order
 
-| # | Item | Type | Issue | Ready to start? |
-| --- | --- | --- | --- | --- |
-| 1 | Release `3.0.0` | release | [#61](https://github.com/soimy/maxrects-packer/issues/61), [#62](https://github.com/soimy/maxrects-packer/issues/62) | yes — nothing else is queued |
+Nothing is queued. Ordering is severity × readiness, not a schedule: keep independent checks and
+tooling work separate from behaviour fixes, and settle the package entry points before a release.
+Re-order whenever a decision lands.
 
-Ordering is severity × readiness, not a schedule. Keep independent checks and tooling work separate
-from behaviour fixes, and settle the package entry points before releasing. Re-order whenever a decision lands.
-
-Earlier completed work is off the list. The `padding` fix
+Earlier completed work is off the list. The `3.0.0` release shipped on 2026-10-15 (commit `88b5d74`,
+tag `v3.0.0`): `commit-and-tag-version` derived the major from the breaking markers, `publish.yml`
+published through the approval-gated OIDC flow with a provenance attestation, and `latest` resolves to
+a build whose `main` (`dist/maxrects-packer.cjs`), `module` and `types` (`dist/index.d.ts`) match this
+repository. [#61](https://github.com/soimy/maxrects-packer/issues/61) and
+[#62](https://github.com/soimy/maxrects-packer/issues/62) are answered and closed. The `padding` fix
 ([#43](https://github.com/soimy/maxrects-packer/issues/43)): numeric `NaN`/`Infinity`/`-Infinity` padding is
 rejected by the constructor that received it; other JavaScript values keep their original coercion.
 `updateBinSize()` refuses a non-finite result, so the `NaN` retry that hung `place()` cannot come back —
@@ -42,25 +46,6 @@ Re-verified on 2026-10-13 at `master` commit `1c889cf`:
 [Node.js CI](https://github.com/soimy/maxrects-packer/actions/runs/38365767187) passed on Node 20/22/24,
 and [Documentation](https://github.com/soimy/maxrects-packer/actions/runs/38365767185) passed its build
 and actual Pages deployment. The release workflow was inspected only; publishing was not exercised.
-
-## 1. Release `3.0.0`
-
-The release includes the fixes accumulated since `v2.7.4`. Everything in this queue lands first, then:
-
-```bash
-npm run prepare-release    # npm test, then commit-and-tag-version
-git push --follow-tags     # release.yml builds the GitHub release; publish.yml publishes to npm via OIDC
-```
-
-The non-exclusive tag metadata fix and the `exports` map both carry breaking markers, so
-`commit-and-tag-version` selects `3.0.0`. Use
-`npm run version -- --release-as major` if the derived version is ever wrong.
-
-**Exit criteria:** `latest` on npm points at a build whose `main`/`types` match this repository;
-[#61](https://github.com/soimy/maxrects-packer/issues/61) and
-[#62](https://github.com/soimy/maxrects-packer/issues/62) are answered and closed;
-`npm run verify:package` green across the release, since the tarball's file list is pinned by
-`PUBLISHED_FILES` in `scripts/verify-package.mjs`.
 
 ## Taking an item
 
