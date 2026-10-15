@@ -325,18 +325,16 @@ export class Rectangle implements IRectangle {
             json[key] = (this as Record<string, any>)[key];
         }
         // `data` is the caller's payload, so it travels. Only the constructor's own untouched `{}` is the
-        // absence of one: a `{}` the caller assigned is a value, a `null` is a value, and so is a
-        // placeholder somebody has since put fields into in place — which is why the flag alone is not
-        // enough and the emptiness test is consulted alongside it.
+        // absence of one, and three conditions have to agree before that is assumed. Each one earns its
+        // place, and each has already been deleted once as redundant — do not do it a second time.
         const data = this.data;
-        // Three conditions, all needed, and together they say the payload is the constructor's own empty
-        // placeholder and nothing else. The flag says the setter never replaced it, so a `{}` the caller
-        // assigned is a value. `data === this._data` says the public getter is handing back that very
-        // backing field, so a subclass getter returning its own `{}` — or a `Date`, or a primitive — is a
-        // value too. The emptiness test catches a caller who filled the placeholder in place without going
-        // through the setter, which is the one way to give it contents while both earlier tests still pass.
-        // That third test needs no prototype check: the first two have already pinned `data` to the plain
-        // object the constructor installed.
+        // The flag says the setter never replaced the payload, so a `{}` the caller assigned is a value.
+        // The identity test says the public getter is handing back that very backing field, so a subclass
+        // getter returning its own `{}` — or a `Date`, or a primitive — is a value too. The shape test
+        // says the object still looks the way the constructor left it, which is what sees a caller who
+        // mutated the placeholder instead of replacing it: an added key, or a replaced prototype that
+        // supplies its own `toJSON()`, leaves both earlier conditions true. Its prototype half is the
+        // only thing that catches the second case, so it is not implied by the other two.
         if (!(this._dataIsDefault && data === this._data && isUntouchedPlaceholder(data))) json.data = data;
         // The per-item rotation override is an accessor here but a plain field on the objects the packer
         // also accepts, so it has to be written back out or the two rect kinds would not serialize alike.
