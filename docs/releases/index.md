@@ -6,8 +6,8 @@ generated from the commit messages on `master` by
 also why a commit type decides whether a change is user-visible at all. The currently published version
 is on [npm](https://www.npmjs.com/package/maxrects-packer).
 
-How a release is cut — the commit and PR title rules, breaking-change markers, the tag workflow and the
-manual `npm publish` step — is documented in
+How a release is cut — the commit and PR title rules, breaking-change markers, the tag workflow, the
+approval-gated npm publish and the trusted-publisher record it depends on — is documented in
 [Releasing](../contributor/releasing.md).
 
 This site is built from the `master` branch. Its content therefore tracks the source, which may be a

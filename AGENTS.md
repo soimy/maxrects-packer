@@ -5,7 +5,7 @@ Human contributors should start with [CONTRIBUTING.md](./CONTRIBUTING.md) instea
 
 ## Project
 
-`maxrects-packer` (v2.7.4, MIT, zero runtime dependencies) is a **MaxRects 2D bin packing** library
+`maxrects-packer` (MIT, zero runtime dependencies) is a **MaxRects 2D bin packing** library
 written in TypeScript. It aims to pack arbitrary `{width, height}` rectangles into as few bins as
 possible, each staying within `maxWidth × maxHeight` (sprite sheets / texture atlases).
 
