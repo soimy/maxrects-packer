@@ -16,6 +16,7 @@ guarantee ([what the algorithm guarantees](./packing.md#what-the-algorithm-guara
 - [Rotation and tags](./rotation-and-tags.md) — 90° rotation and tag-based grouping.
 - [Repacking](./repacking.md) — the dirty flag and `repack()`.
 - [Persistence](./persistence.md) — `save()` and `load()`.
+- [Upgrading to 3.0](./upgrading-to-3.md) — what a 2.x consumer has to change, and why.
 - [Troubleshooting](./troubleshooting.md) — the sharp edges, and what the library does *not* do.
 
 The API reference is generated from the source and its JSDoc: [API](../api/index.md).
