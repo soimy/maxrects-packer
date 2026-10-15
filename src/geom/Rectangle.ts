@@ -99,23 +99,6 @@ const BACKING_FIELDS: Record<string, true> = {
     _dirty: true
 };
 
-/**
- * Whether a rect's payload is the constructor's default rather than something the caller stored.
- *
- * Only a plain empty object counts. "Has no own keys" is not enough: a `Date`, a class instance whose
- * state lives on its prototype and anything that serializes itself through `toJSON()` all carry no own
- * keys while being very much a caller's payload, and dropping them would lose data silently. An explicit
- * `null`, an empty string, `0` and `false` are values the caller chose, so they serialize too.
- * @param data - the payload to test
- * @returns true when the payload is the default `{}`
- */
-function isEmptyPayload(data: any): boolean {
-    if (data === null || typeof data !== "object") return false;
-    const proto = Object.getPrototypeOf(data);
-    if (proto !== Object.prototype && proto !== null) return false;
-    return ownKeys(data).length === 0;
-}
-
 export class Rectangle implements IRectangle {
     /**
      * Oversized tag on a rect the packer could not put in a bin: one bigger than the packer itself, or
@@ -300,9 +283,24 @@ export class Rectangle implements IRectangle {
         // The backing fields are skipped by name — the public value is read from the getter instead — and
         // everything else is kept, so custom state still serializes.
         for (const key of ownKeys(this)) {
-            if (typeof key !== "string" || BACKING_FIELDS[key]) continue;
+            // `hasOwnProperty` rather than `BACKING_FIELDS[key]`: the latter also reads the prototype chain,
+            // so a caller's own `toString` or `constructor` field would match an inherited function and be
+            // dropped as if it were a backing field.
+            if (typeof key !== "string" || Object.prototype.hasOwnProperty.call(BACKING_FIELDS, key)) continue;
             // A tag the packer sets, so it is absent rather than `false` on a normal rect.
             if (key === "oversized" && !this.oversized) continue;
+            // An own `__proto__` field is the one name `json[key] = …` cannot record: the assignment reaches
+            // the inherited accessor and repoints the result's prototype instead of adding the field. Every
+            // other name assigns normally, `toString` included.
+            if (key === "__proto__") {
+                Object.defineProperty(json, key, {
+                    value: (this as Record<string, any>)[key],
+                    enumerable: true,
+                    configurable: true,
+                    writable: true
+                });
+                continue;
+            }
             json[key] = (this as Record<string, any>)[key];
         }
         // `data` is the caller's payload, so it travels. Only the constructor's own untouched `{}` is the
@@ -310,7 +308,15 @@ export class Rectangle implements IRectangle {
         // placeholder somebody has since put fields into in place — which is why the flag alone is not
         // enough and the emptiness test is consulted alongside it.
         const data = this.data;
-        if (!(this._dataIsDefault && isEmptyPayload(data))) json.data = data;
+        // Three conditions, all needed, and together they say the payload is the constructor's own empty
+        // placeholder and nothing else. The flag says the setter never replaced it, so a `{}` the caller
+        // assigned is a value. `data === this._data` says the public getter is handing back that very
+        // backing field, so a subclass getter returning its own `{}` — or a `Date`, or a primitive — is a
+        // value too. The emptiness test catches a caller who filled the placeholder in place without going
+        // through the setter, which is the one way to give it contents while both earlier tests still pass.
+        // That third test needs no prototype check: the first two have already pinned `data` to the plain
+        // object the constructor installed.
+        if (!(this._dataIsDefault && data === this._data && ownKeys(data).length === 0)) json.data = data;
         // The per-item rotation override is an accessor here but a plain field on the objects the packer
         // also accepts, so it has to be written back out or the two rect kinds would not serialize alike.
         // `undefined` is the absence of an override rather than one, so it stays absent.

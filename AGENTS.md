@@ -125,10 +125,14 @@ version, with the reasoning, is [docs/contributor/behavior-contracts.md](./docs/
    object as the plain `{ width, height }` rect the packer also accepts — `width`, `height`, `x`,
    `y`, `rot`, in that order, plus `oversized` when set, `allowRotation` when the rect carries an
    override, `data` unless it is still the constructor's untouched `{}` placeholder, and any other own
-   field — the class's backing fields are dropped **by name**, so a caller's `_assetId` survives.
-   Values come from the public getters (a subclass may override `data` or `allowRotation`). The
-   placeholder is tracked, not inferred: a `{}` the caller assigned serializes, and so does a `null`,
-   a `Date`, or a payload that serializes itself. The return type is `IRectangleJSON`, so the result
+   field — the class's backing fields are dropped **by name**, so a caller's `_assetId` survives. That
+   name test is an exact membership check: a plain lookup also reads `toString`/`constructor` off the
+   prototype chain and would drop a caller field named after one, and an own `__proto__` field has to be
+   defined rather than assigned or it repoints the result's prototype. Values come from the public
+   getters (a subclass may override `data` or `allowRotation`). The placeholder is tracked, not inferred,
+   and omitting it takes three agreeing tests — the setter's flag, the getter returning the backing
+   field, and the placeholder being empty — so a `{}` the caller assigned serializes, and so does a
+   `null`, a `Date`, a primitive, or a subclass getter returning its own `{}`. The return type is `IRectangleJSON`, so the result
    assigns to `IRectangleInput` with no cast. `JSON.stringify()`'s argument is typed `any`, so a
    fixture that pins this has to call `toJSON()` directly — a `JSON.stringify()` line compiles whether
    or not the method exists.

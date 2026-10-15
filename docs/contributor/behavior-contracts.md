@@ -179,10 +179,20 @@ fields (issue #53). The keys are `width`, `height`, `x`, `y` and `rot`, in that 
 when it is set, `allowRotation` when the rect carries an override, `data` unless it is still the
 untouched `{}` the constructor installs, and any other own field — so a subclass or a rect carrying
 custom state still serializes whole. The class's own backing fields are dropped **by name**, not by the
-underscore prefix, so a caller's `_assetId` or a subclass's `_meta` survives. The dirty counter is never
-written: it is the bin's bookkeeping, not the caller's data. `data` is omitted only for the constructor's
-own placeholder, which is tracked rather than inferred — a `{}` the caller assigned is a value and
-serializes, and so is a `null`.
+underscore prefix, so a caller's `_assetId` or a subclass's `_meta` survives. That name test is an exact
+membership check rather than a lookup, because a plain object inherits `toString`, `constructor` and the
+rest, and a caller's field named after one of those is a value like any other. An own `__proto__` field is
+recorded with a property definition rather than an assignment, since assignment reaches the inherited
+accessor and would repoint the result's prototype; the result keeps an ordinary `Object.prototype`
+otherwise. The dirty counter is never written: it is the bin's bookkeeping, not the caller's data.
+
+`data` is omitted only for the constructor's own untouched `{}` placeholder, and three tests have to agree
+before that is assumed: the flag the setter clears, the public getter returning the backing field itself,
+and the placeholder still being empty. Tracking rather than inferring is what lets a `{}` the caller
+assigned serialize, and comparing identity with the backing field is what lets a subclass getter that
+returns its own `{}` — or a `Date`, or a primitive — serialize too. The emptiness test remains for the one
+case the other two cannot see: a caller who filled the placeholder in place without going through the
+setter.
 
 The return type is `IRectangleJSON`, an `IRectangleInput` with the guaranteed `x`, `y` and `rot` declared
 and `oversized`, `allowRotation` and `data` optional, so the result can be assigned to `IRectangleInput`

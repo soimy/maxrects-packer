@@ -175,6 +175,43 @@ describe("Rectangle.toJSON()", () => {
         expect(JSON.parse(JSON.stringify(rect))._assetId).toBe("sprite");
     });
 
+    test("Keeps a field named after an Object.prototype member", () => {
+        // `BACKING_FIELDS[key]` reads the prototype chain, so a plain lookup treated `toString` and
+        // friends as backing fields and dropped them.
+        const names = ["constructor", "toString", "valueOf", "hasOwnProperty", "isPrototypeOf"];
+        for (const name of names) {
+            const rect = new Rectangle(10, 20);
+            rect[name] = "sprite";
+            expect(JSON.parse(JSON.stringify(rect))[name]).toBe("sprite");
+        }
+    });
+
+    test("Keeps an own __proto__ data field", () => {
+        // The one name `json[key] = value` cannot record: it reaches the inherited accessor and repoints
+        // the result's prototype instead of adding the field.
+        const rect = new Rectangle(10, 20);
+        Object.defineProperty(rect, "__proto__", {
+            value: "sprite",
+            enumerable: true,
+            configurable: true,
+            writable: true
+        });
+        const json = JSON.parse(JSON.stringify(rect));
+        expect(Object.prototype.hasOwnProperty.call(json, "__proto__")).toBe(true);
+        expect(Object.getOwnPropertyDescriptor(json, "__proto__").value).toBe("sprite");
+    });
+
+    test("Keeps a subclass getter that returns its own empty object", () => {
+        // The backing field is still the base placeholder, but the getter is what the caller reads, so the
+        // value is the caller's.
+        class EmptyPayloadRect extends Rectangle {
+            get data() {
+                return {};
+            }
+        }
+        expect(JSON.parse(JSON.stringify(new EmptyPayloadRect(10, 20)))).toHaveProperty("data");
+    });
+
     test("Keeps a subclass's underscore-prefixed field", () => {
         class MetaRect extends Rectangle {
             constructor(...args) {
