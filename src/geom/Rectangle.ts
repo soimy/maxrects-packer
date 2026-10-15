@@ -95,23 +95,24 @@ const BACKING_FIELDS: Record<string, true> = {
     _rot: true,
     _allowRotation: true,
     _data: true,
-    _dataIsDefault: true,
+    _defaultData: true,
     _dirty: true
 };
 
 /**
- * Whether the payload is the untouched `{}` the constructor installed.
+ * Whether a payload is a plain, empty object that still has its original prototype.
  *
- * Counting keys is not enough on its own, in either direction. The value has to be an object before its
- * keys can be counted, because a subclass may assign the protected `_data` field directly — the setter is
- * the documented path, but the field is reachable — and a `null` or a primitive there is a payload, while
- * `Object.getOwnPropertyNames(null)` throws rather than answering. And the prototype has to be the
- * original `Object.prototype`, because replacing it leaves the value with no own keys while giving it
- * behaviour of its own, which is a payload the caller wrote rather than an empty placeholder.
+ * This is one half of "is it the constructor's placeholder"; identity is the other, and `toJSON()` checks
+ * both because neither covers the other. Shape is what sees a placeholder that was mutated where it
+ * stands — an added key, or a prototype replaced with one that serializes itself — while identity is what
+ * sees a `{}` the caller wrote, which is shape-identical to the placeholder. The value has to be an object
+ * before its keys can be counted: a subclass may assign the protected `_data` field directly, and a `null`
+ * or a primitive there is a payload, while `Object.getOwnPropertyNames(null)` throws rather than
+ * answering.
  * @param data - the payload to test
  * @returns true when it is a plain empty object that still has its original prototype
  */
-function isUntouchedPlaceholder(data: any): boolean {
+function isEmptyPlainObject(data: any): boolean {
     return (
         data !== null &&
         typeof data === "object" &&
@@ -150,6 +151,7 @@ export class Rectangle implements IRectangle {
         this._x = x;
         this._y = y;
         this._data = {};
+        this._defaultData = this._data;
         this._rot = rot;
         this._allowRotation = allowRotation;
     }
@@ -325,17 +327,17 @@ export class Rectangle implements IRectangle {
             json[key] = (this as Record<string, any>)[key];
         }
         // `data` is the caller's payload, so it travels. Only the constructor's own untouched `{}` is the
-        // absence of one, and three conditions have to agree before that is assumed. Each one earns its
-        // place, and each has already been deleted once as redundant — do not do it a second time.
+        // absence of one, which takes two tests that cover different things — each has already been
+        // deleted once as redundant, and each time that lost caller data.
         const data = this.data;
-        // The flag says the setter never replaced the payload, so a `{}` the caller assigned is a value.
-        // The identity test says the public getter is handing back that very backing field, so a subclass
-        // getter returning its own `{}` — or a `Date`, or a primitive — is a value too. The shape test
-        // says the object still looks the way the constructor left it, which is what sees a caller who
-        // mutated the placeholder instead of replacing it: an added key, or a replaced prototype that
-        // supplies its own `toJSON()`, leaves both earlier conditions true. Its prototype half is the
-        // only thing that catches the second case, so it is not implied by the other two.
-        if (!(this._dataIsDefault && data === this._data && isUntouchedPlaceholder(data))) json.data = data;
+        // Shape comes first, so the key count is never taken on a value that is not an object. Shape alone
+        // sees a placeholder mutated where it stands, by an added key or by a prototype replaced with one
+        // that serializes itself.
+        //
+        // Identity comes second, because shape cannot see a `{}` the caller wrote — through the setter, or
+        // by assigning the protected field from a subclass. Such an object looks exactly like the
+        // placeholder, and only identity tells them apart.
+        if (!(isEmptyPlainObject(data) && data === this._defaultData)) json.data = data;
         // The per-item rotation override is an accessor here but a plain field on the objects the packer
         // also accepts, so it has to be written back out or the two rect kinds would not serialize alike.
         // `undefined` is the absence of an override rather than one, so it stays absent.
@@ -461,12 +463,14 @@ export class Rectangle implements IRectangle {
 
     protected _data: any;
     /**
-     * Whether `_data` is still the `{}` the constructor installed, rather than a value the caller
-     * assigned. A caller's own `{}` is a payload and has to serialize, so "is it empty" cannot tell the
-     * two apart — the constructor's placeholder is tracked by identity of purpose instead, and the
-     * setter is the only way to replace it.
+     * The `{}` the constructor installed as `_data`, held so `toJSON()` can recognise that very object.
+     *
+     * A flag cleared by the setter cannot do this job: a subclass may assign the protected `_data` field
+     * directly, which leaves the flag set while the payload is already the subclass's. An object the
+     * caller wrote is shape-identical to the placeholder, so identity is the only thing that tells them
+     * apart.
      */
-    protected _dataIsDefault: boolean = true;
+    protected _defaultData: any;
     /** Opaque caller payload, including explicit null. Objects may also supply allowRotation. */
     get data(): any {
         return this._data;
@@ -474,7 +478,6 @@ export class Rectangle implements IRectangle {
     set data(value: any) {
         if (value === this._data) return;
         this._data = value;
-        this._dataIsDefault = false;
         // extract allowRotation settings
         if (
             value !== null &&

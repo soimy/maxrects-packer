@@ -169,11 +169,14 @@ had been open since 2023 and was still live on `master`. It grew out of
   because the latter cannot be assigned to `IRectangleInput` or passed to `addArray()` without a cast.
   Dropping every key that starts with `_` also discarded a caller's own `_assetId` or a subclass's
   `_meta`, which the contract promises to keep; the class's backing fields are listed by name instead.
-  And "empty payload" still could not tell the constructor's `{}` from a `{}` the caller assigned, so
-  the placeholder is now tracked with a flag rather than inferred from the object's shape — the setter
-  is the only way to replace it, and a caller who fills the placeholder in place is caught by the
-  emptiness test still being consulted alongside it. The geometry keys are written first so the order is
-  fixed rather than following assignment order.
+  And "empty payload" still could not tell the constructor's `{}` from a `{}` the caller assigned, so the
+  placeholder is now tracked as the object itself rather than inferred from its shape. A flag the setter
+  clears cannot do that job: a subclass may assign the protected `_data` field directly, which never
+  reaches the setter. Shape and identity are both tested, because each covers a case the other misses —
+  shape catches a placeholder mutated where it stands, by an added key or a prototype replaced with one
+  that serializes itself, and keeps the key count off a value that is not an object, while identity is the
+  only thing that sees a fresh `{}` the caller wrote, which is shape-identical to the placeholder. The
+  geometry keys are written first so the order is fixed rather than following assignment order.
 
 ## `rects` is a public array with the bin's bookkeeping beside it
 

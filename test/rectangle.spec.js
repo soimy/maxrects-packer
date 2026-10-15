@@ -219,6 +219,18 @@ describe("Rectangle.toJSON()", () => {
         expect(JSON.parse(JSON.stringify(rect))).toHaveProperty("data");
     });
 
+    test("Keeps a fresh payload object a subclass assigned to the backing field", () => {
+        // A new `{}` is the subclass's value even though it is shape-identical to the placeholder, so the
+        // constructor's own object has to be recognised by identity rather than by how it looks.
+        class EmptyDataRect extends Rectangle {
+            constructor(...args) {
+                super(...args);
+                this._data = {};
+            }
+        }
+        expect(JSON.parse(JSON.stringify(new EmptyDataRect(10, 20)))).toHaveProperty("data");
+    });
+
     test("Keeps a payload a subclass assigned to the backing field as null", () => {
         // The setter is the documented path, but the field is reachable from a subclass, and a `null`
         // there is a payload. Counting keys on it throws rather than answering.

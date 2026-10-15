@@ -186,16 +186,16 @@ recorded with a property definition rather than an assignment, since assignment 
 accessor and would repoint the result's prototype; the result keeps an ordinary `Object.prototype`
 otherwise. The dirty counter is never written: it is the bin's bookkeeping, not the caller's data.
 
-`data` is omitted only for the constructor's own untouched `{}` placeholder, and three tests have to agree
-before that is assumed: the flag the setter clears, the public getter returning that very backing field,
-and the value still looking the way the constructor left it — a plain object whose prototype is
-`Object.prototype` and which carries no own keys at all, whatever their kind. Each covers
-something the others cannot. Tracking rather than inferring is what lets a `{}` the caller assigned
-serialize. The identity comparison is what makes a subclass getter returning its own `{}` — or a `Date`,
-or a primitive — authoritative. And the shape test is what sees a caller who mutated the placeholder in
-place rather than replacing it, whether by adding a key or by giving it a prototype that serializes
-itself. That same test keeps the key count off a value that is not an object, so a subclass writing `null`
-into the backing field serializes a field instead of throwing.
+`data` is omitted only for the constructor's own untouched `{}` placeholder, and that takes two tests
+covering different cases. The shape test says the value is a plain empty object that still has its
+original `Object.prototype`; it is what sees a placeholder mutated where it stands — an added key, or a
+prototype replaced with one that serializes itself — and it keeps the key count off a value that is not an
+object, so a subclass writing `null` into the protected backing field serializes rather than throwing. The
+identity test says the value is the very object the constructor installed, which is the only thing that
+sees a `{}` the caller wrote, since the setter and a subclass assigning the protected field directly both
+produce an object the shape test cannot tell from the placeholder. The placeholder is therefore tracked as
+the object itself rather than as a flag the setter clears, because a direct assignment never reaches the
+setter.
 
 The return type is `IRectangleJSON`, an `IRectangleInput` with the guaranteed `x`, `y` and `rot` declared
 and `oversized`, `allowRotation` and `data` optional, so the result can be assigned to `IRectangleInput`

@@ -129,13 +129,14 @@ version, with the reasoning, is [docs/contributor/behavior-contracts.md](./docs/
    name test is an exact membership check: a plain lookup also reads `toString`/`constructor` off the
    prototype chain and would drop a caller field named after one, and an own `__proto__` field has to be
    defined rather than assigned or it repoints the result's prototype. Values come from the public
-   getters (a subclass may override `data` or `allowRotation`). The placeholder is tracked, not inferred,
-   and omitting it takes three agreeing tests — the setter's flag, the getter returning the backing
-   field, and the placeholder being empty — so a `{}` the caller assigned serializes, and so does a
-   `null`, a `Date`, a primitive, or a subclass getter returning its own `{}`. The third test is the one
-   that sees a placeholder mutated in place, whether by an added key or by a replaced prototype, so it is
-   not redundant beside the flag; it is also what keeps the key count off a value that is not an object,
-   so a subclass writing `null` into the backing field serializes a field instead of throwing. The return type is `IRectangleJSON`, so the result
+   getters (a subclass may override `data` or `allowRotation`). Two tests decide whether the payload is the
+   placeholder, and neither is redundant. Shape: a plain empty object that still has its original
+   `Object.prototype`, which sees a placeholder mutated where it stands — an added key, or a prototype
+   replaced with one that serializes itself — and keeps the key count off a value that is not an object,
+   so a subclass writing `null` into the protected field serializes instead of throwing. Identity: the very
+   object the constructor installed, which is the only thing that sees a `{}` the caller wrote, through
+   the setter or by direct assignment from a subclass. The placeholder is tracked as that object rather
+   than as a flag the setter clears, because a direct assignment never reaches the setter. The return type is `IRectangleJSON`, so the result
    assigns to `IRectangleInput` with no cast. `JSON.stringify()`'s argument is typed `any`, so a
    fixture that pins this has to call `toJSON()` directly — a `JSON.stringify()` line compiles whether
    or not the method exists.
