@@ -58,7 +58,8 @@ git push --follow-tags
 
 Pushing a `v*` tag starts two workflows from the same commit:
 
-- `.github/workflows/release.yml` builds the bundles and creates the GitHub release with `dist/` attached.
+- `.github/workflows/release.yml` builds the bundles and creates the GitHub release with `dist/`
+  attached; a tag carrying a hyphen (`v3.0.0-rc.1`) is marked as a pre-release.
 - `.github/workflows/publish.yml` re-runs the gates and publishes the package to npm. Its deployment to
   the `npm-publish` environment waits for an approval from the repository owner, so the release is not
   finished until that approval is granted in the Actions run.

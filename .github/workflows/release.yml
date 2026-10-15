@@ -28,7 +28,19 @@ jobs:
 
     - name: Get tag version
       id: get_version
-      run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      env:
+        TAG: ${{ github.ref_name }}
+      run: |
+        VERSION="${TAG#v}"
+        echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+        # A semver prerelease carries a hyphen (`3.0.0-rc.1`), and `gh release create` publishes a
+        # normal release unless it is told otherwise. The flag is decided here and passed to the next
+        # step through the environment, so the tag stays data rather than script text.
+        if [[ "$VERSION" == *-* ]]; then
+          echo "prerelease=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "prerelease=false" >> "$GITHUB_OUTPUT"
+        fi
 
     # Everything this step reads arrives through `env:`, never through `${{ }}` in the script body.
     # An expression is substituted into the script *text* before bash parses it, so a value carrying
@@ -60,12 +72,14 @@ jobs:
 
     - name: Create release
       run: |
-        gh release create "$GITHUB_REF_NAME" \
-          --title "Release $GITHUB_REF_NAME" \
-          --notes-file release-notes.md \
-          --generate-notes
+        ARGS=(--title "Release $GITHUB_REF_NAME" --notes-file release-notes.md --generate-notes)
+        if [ "$PRERELEASE" = "true" ]; then
+          ARGS+=(--prerelease)
+        fi
+        gh release create "$GITHUB_REF_NAME" "${ARGS[@]}"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PRERELEASE: ${{ steps.get_version.outputs.prerelease }}
 
     - name: Upload release assets
       run: |
