@@ -123,14 +123,15 @@ version, with the reasoning, is [docs/contributor/behavior-contracts.md](./docs/
    list: [behaviour contracts](./docs/contributor/behavior-contracts.md#clone-isolates-the-two-bins).
 9. **`toJSON()` writes the public shape**: `JSON.stringify()` on a `Rectangle` produces the same
    object as the plain `{ width, height }` rect the packer also accepts — `width`, `height`, `x`,
-   `y`, `rot`, plus `oversized` when set, `allowRotation` when the rect carries an override, `data`
-   when it is not the constructor's `{}` placeholder, and any other own field. The underscore
-   backing fields and the dirty counter are never written, values come from the public getters (a
-   subclass may override `data` or `allowRotation`), and "empty payload" means a plain empty object —
-   not merely "no own keys", which a `Date` or a self-serializing payload also has. The return type is
-   `IRectangleJSON`, so the result assigns to `IRectangleInput` with no cast. `JSON.stringify()`'s
-   argument is typed `any`, so a fixture that pins this has to call `toJSON()` directly — a
-   `JSON.stringify()` line compiles whether or not the method exists.
+   `y`, `rot`, in that order, plus `oversized` when set, `allowRotation` when the rect carries an
+   override, `data` unless it is still the constructor's untouched `{}` placeholder, and any other own
+   field — the class's backing fields are dropped **by name**, so a caller's `_assetId` survives.
+   Values come from the public getters (a subclass may override `data` or `allowRotation`). The
+   placeholder is tracked, not inferred: a `{}` the caller assigned serializes, and so does a `null`,
+   a `Date`, or a payload that serializes itself. The return type is `IRectangleJSON`, so the result
+   assigns to `IRectangleInput` with no cast. `JSON.stringify()`'s argument is typed `any`, so a
+   fixture that pins this has to call `toJSON()` directly — a `JSON.stringify()` line compiles whether
+   or not the method exists.
 
 ## Documentation map
 

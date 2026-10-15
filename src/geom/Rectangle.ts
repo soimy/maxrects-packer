@@ -80,6 +80,26 @@ function ownPropertyDescriptors(object: object): Record<string | symbol, Propert
 }
 
 /**
+ * The class's own backing fields, by name: what `toJSON()` drops in favour of the public getters.
+ *
+ * An exact list rather than "every key starting with `_`", because the underscore is a naming convention
+ * the caller may use too. `IRectangleInput` allows arbitrary custom fields and the serialization contract
+ * keeps them all, so dropping the whole namespace would silently discard a caller's `_assetId` or a
+ * subclass's `_meta`.
+ */
+const BACKING_FIELDS: Record<string, true> = {
+    _width: true,
+    _height: true,
+    _x: true,
+    _y: true,
+    _rot: true,
+    _allowRotation: true,
+    _data: true,
+    _dataIsDefault: true,
+    _dirty: true
+};
+
+/**
  * Whether a rect's payload is the constructor's default rather than something the caller stored.
  *
  * Only a plain empty object counts. "Has no own keys" is not enough: a `Date`, a class instance whose
@@ -256,37 +276,41 @@ export class Rectangle implements IRectangle {
      * packer also accepts. `data` is the caller's payload and belongs in the output; the internal dirty
      * counter does not.
      *
-     * The shape is the placed rect: `width`, `height`, `x`, `y` and `rot`. `oversized` is added only when
-     * set, `data` only when it holds something other than the default `{}` — an explicit `null` is a
-     * caller value rather than an empty default, so it travels — and `allowRotation` only when the rect
+     * The shape is the placed rect: `width`, `height`, `x`, `y` and `rot`, in that order. `oversized` is
+     * added only when set, `data` only when it is not the constructor's own untouched `{}` placeholder —
+     * a `{}` the caller assigned is a value, and so is a `null` — and `allowRotation` only when the rect
      * carries an explicit override, since a plain object may state it as a field. Any other own field is
-     * kept as well, so a subclass or a rect carrying custom state still serializes whole; the
-     * underscore-prefixed backing fields are the only thing dropped.
+     * kept as well, so a subclass or a rect carrying custom state still serializes whole; the class's own
+     * backing fields are the only thing dropped, by name, so a caller's `_assetId` survives.
      *
      * @returns the rect's own fields, with the backing fields replaced by the public ones
      */
     public toJSON(): IRectangleJSON {
-        const json: Record<string, any> = {};
-        // `width`, `height`, `x`, `y`, `rot`, `data` and `allowRotation` are prototype accessors, so they
-        // are not own keys at all; the own keys are the backing fields plus `oversized` plus whatever the
-        // caller (or a subclass) added. The backing fields are skipped wholesale — the public value is
-        // read from the getter below — and everything else is kept, so custom state still serializes.
+        // The geometry goes in first so the key order is fixed rather than however the caller happened to
+        // assign fields, and so the documented example reads the way it is written. `width`, `height`,
+        // `x`, `y`, `rot`, `data` and `allowRotation` are prototype accessors and never own keys; the own
+        // keys are the backing fields plus `oversized` plus whatever the caller (or a subclass) added.
+        const json: Record<string, any> = {
+            width: this.width,
+            height: this.height,
+            x: this.x,
+            y: this.y,
+            rot: this.rot
+        };
+        // The backing fields are skipped by name — the public value is read from the getter instead — and
+        // everything else is kept, so custom state still serializes.
         for (const key of ownKeys(this)) {
-            if (typeof key !== "string" || key.charAt(0) === "_") continue;
+            if (typeof key !== "string" || BACKING_FIELDS[key]) continue;
             // A tag the packer sets, so it is absent rather than `false` on a normal rect.
             if (key === "oversized" && !this.oversized) continue;
             json[key] = (this as Record<string, any>)[key];
         }
-        json.width = this.width;
-        json.height = this.height;
-        json.x = this.x;
-        json.y = this.y;
-        json.rot = this.rot;
-        // `data` is the caller's payload, so it travels — except the default `{}`, which is the
-        // constructor's placeholder rather than something the caller stored. An explicit `null` is a
-        // value the caller set, so it stays.
+        // `data` is the caller's payload, so it travels. Only the constructor's own untouched `{}` is the
+        // absence of one: a `{}` the caller assigned is a value, a `null` is a value, and so is a
+        // placeholder somebody has since put fields into in place — which is why the flag alone is not
+        // enough and the emptiness test is consulted alongside it.
         const data = this.data;
-        if (!isEmptyPayload(data)) json.data = data;
+        if (!(this._dataIsDefault && isEmptyPayload(data))) json.data = data;
         // The per-item rotation override is an accessor here but a plain field on the objects the packer
         // also accepts, so it has to be written back out or the two rect kinds would not serialize alike.
         // `undefined` is the absence of an override rather than one, so it stays absent.
@@ -411,6 +435,13 @@ export class Rectangle implements IRectangle {
     }
 
     protected _data: any;
+    /**
+     * Whether `_data` is still the `{}` the constructor installed, rather than a value the caller
+     * assigned. A caller's own `{}` is a payload and has to serialize, so "is it empty" cannot tell the
+     * two apart — the constructor's placeholder is tracked by identity of purpose instead, and the
+     * setter is the only way to replace it.
+     */
+    protected _dataIsDefault: boolean = true;
     /** Opaque caller payload, including explicit null. Objects may also supply allowRotation. */
     get data(): any {
         return this._data;
@@ -418,6 +449,7 @@ export class Rectangle implements IRectangle {
     set data(value: any) {
         if (value === this._data) return;
         this._data = value;
+        this._dataIsDefault = false;
         // extract allowRotation settings
         if (
             value !== null &&

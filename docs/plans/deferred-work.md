@@ -155,7 +155,7 @@ had been open since 2023 and was still live on `master`. It grew out of
   through `addArray()`. `save()` is untouched — it already rebuilds its entries field by field, so the
   persisted snapshot keeps its documented shape.
 
-  Four traps worth keeping, all of them found by review or by the fixture rather than by the specs.
+  Six traps worth keeping, all of them found by review or by the fixture rather than by the specs.
   `JSON.stringify()`'s argument is typed `any`, so the package fixture has to call `toJSON()` directly
   and assign the result to the published types — a `JSON.stringify()` line compiles whether or not the
   method exists, and the first version of the fixture assertion was toothless for exactly that reason.
@@ -167,6 +167,13 @@ had been open since 2023 and was still live on `master`. It grew out of
   whose state is on its prototype, and any payload that serializes itself through `toJSON()`; the test
   now requires a plain empty object. The return type is `IRectangleJSON`, not `Record<string, any>`,
   because the latter cannot be assigned to `IRectangleInput` or passed to `addArray()` without a cast.
+  Dropping every key that starts with `_` also discarded a caller's own `_assetId` or a subclass's
+  `_meta`, which the contract promises to keep; the class's backing fields are listed by name instead.
+  And "empty payload" still could not tell the constructor's `{}` from a `{}` the caller assigned, so
+  the placeholder is now tracked with a flag rather than inferred from the object's shape — the setter
+  is the only way to replace it, and a caller who fills the placeholder in place is caught by the
+  emptiness test still being consulted alongside it. The geometry keys are written first so the order is
+  fixed rather than following assignment order.
 
 ## `rects` is a public array with the bin's bookkeeping beside it
 

@@ -152,6 +152,39 @@ describe("Rectangle.toJSON()", () => {
         expect(JSON.stringify(new Rectangle(10, 20))).not.toContain("data");
     });
 
+    test("Keeps a payload the caller explicitly set to an empty object", () => {
+        // The constructor's `{}` and a caller's `{}` are different things, and the plain object the
+        // packer also accepts keeps the field, so a Rectangle has to as well.
+        const rect = new Rectangle(10, 20);
+        rect.data = {};
+        expect(JSON.parse(JSON.stringify(rect))).toHaveProperty("data");
+        expect(JSON.parse(JSON.stringify(rect)).data).toEqual({});
+    });
+
+    test("Keeps an explicit null-prototype payload", () => {
+        const rect = new Rectangle(10, 20);
+        rect.data = Object.create(null);
+        expect(JSON.parse(JSON.stringify(rect))).toHaveProperty("data");
+    });
+
+    test("Keeps a custom field whose name starts with an underscore", () => {
+        // Only the class's own backing fields are internal; the underscore is a naming convention the
+        // caller may use too, and the contract keeps every other own field.
+        const rect = new Rectangle(10, 20);
+        rect._assetId = "sprite";
+        expect(JSON.parse(JSON.stringify(rect))._assetId).toBe("sprite");
+    });
+
+    test("Keeps a subclass's underscore-prefixed field", () => {
+        class MetaRect extends Rectangle {
+            constructor(...args) {
+                super(...args);
+                this._meta = { v: 1 };
+            }
+        }
+        expect(JSON.parse(JSON.stringify(new MetaRect(10, 20)))._meta).toEqual({ v: 1 });
+    });
+
     test("Keeps an explicit null payload, which is not the default", () => {
         const rect = new Rectangle(10, 20);
         rect.data = null;
@@ -226,6 +259,35 @@ describe("Rectangle.toJSON()", () => {
             }
         }
         expect(JSON.parse(JSON.stringify(new PayloadRect(10, 20))).data).toEqual({ fromSubclass: true });
+    });
+
+    test("Reads a subclass's data getter that returns a non-plain object", () => {
+        // The backing field is still the constructor's `{}`, so the payload test is the only thing that
+        // can see this value; a prototype other than `Object.prototype` is a caller payload.
+        class DateRect extends Rectangle {
+            get data() {
+                return new Date("2026-01-01T00:00:00Z");
+            }
+        }
+        expect(JSON.parse(JSON.stringify(new DateRect(10, 20))).data).toBe("2026-01-01T00:00:00.000Z");
+    });
+
+    test("Reads a subclass's data getter that returns a primitive", () => {
+        class PrimitiveRect extends Rectangle {
+            get data() {
+                return 0;
+            }
+        }
+        // `0` is a value the caller chose, not the absence of one.
+        expect(JSON.parse(JSON.stringify(new PrimitiveRect(10, 20))).data).toBe(0);
+    });
+
+    test("Keeps a placeholder the caller filled in place", () => {
+        // No setter call, so the field is still the constructor's object — but it is no longer empty, and
+        // its contents are the caller's.
+        const rect = new Rectangle(10, 20);
+        rect.data.id = 7;
+        expect(JSON.parse(JSON.stringify(rect)).data).toEqual({ id: 7 });
     });
 
     test("Reads a subclass's allowRotation getter rather than the backing field", () => {

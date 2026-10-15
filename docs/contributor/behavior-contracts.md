@@ -175,11 +175,14 @@ longer place.
 
 `JSON.stringify()` on a `Rectangle` produces the same object as the plain `{ width, height }` rect the
 packer also accepts, so a rect serializes to what the guides show rather than to the class's backing
-fields (issue #53). The keys are `width`, `height`, `x`, `y` and `rot`, plus `oversized` when it is set,
-`allowRotation` when the rect carries an override, `data` when it holds anything other than the default
-`{}`, and any other own field — so a subclass or a rect carrying custom state still serializes whole.
-The underscore-prefixed backing fields and the dirty counter are never written: the dirty flag is the
-bin's bookkeeping, not the caller's data.
+fields (issue #53). The keys are `width`, `height`, `x`, `y` and `rot`, in that order, plus `oversized`
+when it is set, `allowRotation` when the rect carries an override, `data` unless it is still the
+untouched `{}` the constructor installs, and any other own field — so a subclass or a rect carrying
+custom state still serializes whole. The class's own backing fields are dropped **by name**, not by the
+underscore prefix, so a caller's `_assetId` or a subclass's `_meta` survives. The dirty counter is never
+written: it is the bin's bookkeeping, not the caller's data. `data` is omitted only for the constructor's
+own placeholder, which is tracked rather than inferred — a `{}` the caller assigned is a value and
+serializes, and so is a `null`.
 
 The return type is `IRectangleJSON`, an `IRectangleInput` with the guaranteed `x`, `y` and `rot` declared
 and `oversized`, `allowRotation` and `data` optional, so the result can be assigned to `IRectangleInput`

@@ -119,8 +119,8 @@ console.log(JSON.stringify(packer.rects[0]));
 ```
 
 The keys are `width`, `height`, `x`, `y` and `rot`, plus `oversized` when it is set, `allowRotation`
-when the rect carries an override, `data` when it holds anything other than the default `{}`, and any
-custom field you added. The internal backing fields and the dirty counter are never written, and every
+when the rect carries an override, `data` unless it is still the untouched `{}` the constructor
+installs, and any custom field you added — including one whose name starts with an underscore. The internal backing fields and the dirty counter are never written, and every
 value comes from the public API — so a subclass that overrides `data` or `allowRotation` serializes what
 its callers see. `toJSON()` is typed `IRectangleJSON`, which satisfies `IRectangleInput`, so the output
 round-trips: parse it and hand it back to `addArray()`. To persist placements along with the free space,
