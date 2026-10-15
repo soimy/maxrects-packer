@@ -181,8 +181,13 @@ fields (issue #53). The keys are `width`, `height`, `x`, `y` and `rot`, plus `ov
 The underscore-prefixed backing fields and the dirty counter are never written: the dirty flag is the
 bin's bookkeeping, not the caller's data.
 
-The shape is closed under the library's own input contract: the output satisfies `IRectangleInput`, so
-`JSON.parse(JSON.stringify(rect))` can be handed straight back to `addArray()`. An explicit `null`
-payload is a value the caller set, so it is kept, while the constructor's `{}` placeholder is not.
-`save()` is unaffected — it already rebuilds its entries field by field, so the persisted snapshot keeps
-its documented shape.
+The return type is `IRectangleJSON`, an `IRectangleInput` with the guaranteed `x`, `y` and `rot` declared
+and `oversized`, `allowRotation` and `data` optional, so the result can be assigned to `IRectangleInput`
+or passed to `addArray()` without a cast. The shape is closed under the library's own input contract: the
+output satisfies `IRectangleInput`, so `JSON.parse(JSON.stringify(rect))` can be handed straight back to
+`addArray()`. An explicit `null` payload is a value the caller set, so it is kept, while the
+constructor's `{}` placeholder is not — and the emptiness test looks for a plain empty object rather than
+merely "no own keys", because a `Date` or a self-serializing payload carries none while being very much
+caller data. Every value is read through the public getters rather than the backing fields, so a subclass
+that overrides `data` or `allowRotation` serializes what its callers see. `save()` is unaffected — it
+already rebuilds its entries field by field, so the persisted snapshot keeps its documented shape.

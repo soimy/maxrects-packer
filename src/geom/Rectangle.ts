@@ -14,6 +14,25 @@ export interface IRectangleInput {
 }
 
 /**
+ * What `toJSON()` returns: the placed rect's public shape (issue #53).
+ *
+ * `width`, `height`, `x`, `y` and `rot` are always present. The rest are optional because they are only
+ * written when they carry something: `oversized` when the packer tagged the rect, `allowRotation` when
+ * the rect has an explicit override, `data` when the payload is not the constructor's `{}` placeholder.
+ * The index signature leaves room for a subclass's own fields, which are serialized as well.
+ *
+ * The shape satisfies {@link IRectangleInput}, so the result of `JSON.parse(JSON.stringify(rect))` can be
+ * handed straight back to `addArray()`.
+ */
+export interface IRectangleJSON extends IRectangleInput {
+    x: number;
+    y: number;
+    rot: boolean;
+    oversized?: boolean;
+    allowRotation?: boolean;
+}
+
+/**
  * A rect the packer has placed: an {@link IRectangleInput} plus the `x`/`y` the packer wrote onto it.
  */
 export interface IRectangle extends IRectangleInput {
@@ -63,14 +82,18 @@ function ownPropertyDescriptors(object: object): Record<string | symbol, Propert
 /**
  * Whether a rect's payload is the constructor's default rather than something the caller stored.
  *
- * Only a plain empty object counts: an explicit `null`, an empty string, `0` and `false` are all values
- * a caller chose, so they serialize. The check reads own string keys, since `JSON.stringify()` would
- * drop a payload that carried only symbol keys.
+ * Only a plain empty object counts. "Has no own keys" is not enough: a `Date`, a class instance whose
+ * state lives on its prototype and anything that serializes itself through `toJSON()` all carry no own
+ * keys while being very much a caller's payload, and dropping them would lose data silently. An explicit
+ * `null`, an empty string, `0` and `false` are values the caller chose, so they serialize too.
  * @param data - the payload to test
  * @returns true when the payload is the default `{}`
  */
 function isEmptyPayload(data: any): boolean {
-    return data !== null && typeof data === "object" && ownKeys(data).length === 0;
+    if (data === null || typeof data !== "object") return false;
+    const proto = Object.getPrototypeOf(data);
+    if (proto !== Object.prototype && proto !== null) return false;
+    return ownKeys(data).length === 0;
 }
 
 export class Rectangle implements IRectangle {
@@ -242,7 +265,7 @@ export class Rectangle implements IRectangle {
      *
      * @returns the rect's own fields, with the backing fields replaced by the public ones
      */
-    public toJSON(): Record<string, any> {
+    public toJSON(): IRectangleJSON {
         const json: Record<string, any> = {};
         // `width`, `height`, `x`, `y`, `rot`, `data` and `allowRotation` are prototype accessors, so they
         // are not own keys at all; the own keys are the backing fields plus `oversized` plus whatever the
@@ -262,12 +285,14 @@ export class Rectangle implements IRectangle {
         // `data` is the caller's payload, so it travels — except the default `{}`, which is the
         // constructor's placeholder rather than something the caller stored. An explicit `null` is a
         // value the caller set, so it stays.
-        if (!isEmptyPayload(this._data)) json.data = this._data;
+        const data = this.data;
+        if (!isEmptyPayload(data)) json.data = data;
         // The per-item rotation override is an accessor here but a plain field on the objects the packer
         // also accepts, so it has to be written back out or the two rect kinds would not serialize alike.
         // `undefined` is the absence of an override rather than one, so it stays absent.
-        if (this._allowRotation !== undefined) json.allowRotation = this._allowRotation;
-        return json;
+        const allowRotation = this.allowRotation;
+        if (allowRotation !== undefined) json.allowRotation = allowRotation;
+        return json as IRectangleJSON;
     }
 
     /**

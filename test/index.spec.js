@@ -10,17 +10,17 @@ import { OversizedElementBin } from "../src/oversized-element-bin";
 // re-export that is renamed or dropped ships without a single test noticing. This list is the
 // contract: adding a public value means adding it here in the same commit.
 const RUNTIME_EXPORTS = ["Bin", "MaxRectsBin", "MaxRectsPacker", "OversizedElementBin", "PACKING_LOGIC", "Rectangle"];
-// The four type-only re-exports leave no binding behind, but esbuild — which is what vitest
+// The five type-only re-exports leave no binding behind, but esbuild — which is what vitest
 // transforms these sources with — cannot tell `export { IRectangle }` from a value re-export and
 // keeps it, so the namespace carries them as keys holding `undefined`
-// (`npx esbuild --loader=ts --format=esm < src/index.ts` prints all ten names). The bundle that
+// (`npx esbuild --loader=ts --format=esm < src/index.ts` prints all eleven names). The bundle that
 // actually ships is built by rollup + tsc, which drop them: importing `dist/maxrects-packer.mjs`
 // reports the six names above and nothing else.
 // Those `undefined` keys are a transform artifact, not the consumer contract, so they are pinned
 // only far enough to keep a typo'd or dropped re-export from hiding among them. What a consumer can
 // actually import is checked by `npm run verify:package`, which compiles a fixture against the
 // `types` entry in package.json.
-const TYPE_ONLY_EXPORTS = ["IBin", "IOption", "IRectangle", "IRectangleInput"];
+const TYPE_ONLY_EXPORTS = ["IBin", "IOption", "IRectangle", "IRectangleInput", "IRectangleJSON"];
 
 describe("public API surface", () => {
     const entries = Object.entries(publicApi);

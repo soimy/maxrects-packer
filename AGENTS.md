@@ -25,7 +25,7 @@ possible, each staying within `maxWidth × maxHeight` (sprite sheets / texture a
 
 | File | Responsibility |
 | --- | --- |
-| `src/index.ts` | The only barrel export. Runtime values: `Rectangle / MaxRectsPacker / PACKING_LOGIC / Bin / MaxRectsBin / OversizedElementBin`; types: `IRectangleInput / IRectangle / IOption / IBin`. The surface is pinned by `test/index.spec.js` — adding or renaming a public value means updating that list in the same commit — and what consumers can actually import is checked by the type fixture in `npm run verify:package` against `package.json`'s `types` entry |
+| `src/index.ts` | The only barrel export. Runtime values: `Rectangle / MaxRectsPacker / PACKING_LOGIC / Bin / MaxRectsBin / OversizedElementBin`; types: `IRectangleInput / IRectangle / IRectangleJSON / IOption / IBin`. The surface is pinned by `test/index.spec.js` — adding or renaming a public value means updating that list in the same commit — and what consumers can actually import is checked by the type fixture in `npm run verify:package` against `package.json`'s `types` entry |
 | `src/types.ts` | `IOption`, `PACKING_LOGIC` (MAX_AREA/MAX_EDGE/FILL_WIDTH), `EDGE_MAX_VALUE=4096` (the default edge size of `MaxRectsBin`/`MaxRectsPacker`), `EDGE_MIN_VALUE=128` (**never used inside the library; both are re-exported by `src/maxrects-packer.ts` and part of the public `.d.ts` — not dead code, do not delete**) |
 | `src/geom/Rectangle.ts` | `IRectangle` interface + `Rectangle`: `width/height/x/y/rot/data/allowRotation` all go through getters/setters and bump `_dirty` on every mutation; the `rot` setter swaps width/height, the `data` setter syncs `data.allowRotation`; the `Clone` static copies a rect for the bins' `clone()` — prototype and own properties, shallow, or the rect's own `clone()` when its class has one |
 | `src/abstract-bin.ts` | `IBin` / abstract `Bin<T>`: the `dirty` semantics and `setDirty()`; `add/reset/repack/clone` are left to subclasses |
@@ -125,10 +125,12 @@ version, with the reasoning, is [docs/contributor/behavior-contracts.md](./docs/
    object as the plain `{ width, height }` rect the packer also accepts — `width`, `height`, `x`,
    `y`, `rot`, plus `oversized` when set, `allowRotation` when the rect carries an override, `data`
    when it is not the constructor's `{}` placeholder, and any other own field. The underscore
-   backing fields and the dirty counter are never written. The output satisfies `IRectangleInput`,
-   so it round-trips through `addArray()`. `JSON.stringify()`'s argument is typed `any`, so a
-   fixture that pins this has to call `toJSON()` directly — a `JSON.stringify()` line compiles
-   whether or not the method exists.
+   backing fields and the dirty counter are never written, values come from the public getters (a
+   subclass may override `data` or `allowRotation`), and "empty payload" means a plain empty object —
+   not merely "no own keys", which a `Date` or a self-serializing payload also has. The return type is
+   `IRectangleJSON`, so the result assigns to `IRectangleInput` with no cast. `JSON.stringify()`'s
+   argument is typed `any`, so a fixture that pins this has to call `toJSON()` directly — a
+   `JSON.stringify()` line compiles whether or not the method exists.
 
 ## Documentation map
 
@@ -373,7 +375,7 @@ English keeps the project history usable for every contributor and every downstr
   [compatibility](./docs/contributor/compatibility.md).
   The `types` field must name the **barrel's** declaration (`dist/index.d.ts`), not a module's: the
   build emits one `.d.ts` per source module, and `dist/maxrects-packer.d.ts` — the declaration of
-  `src/maxrects-packer.ts` — only exports `MaxRectsPacker`, `PACKING_LOGIC` and `IOption` among the ten documented exports (plus
+  `src/maxrects-packer.ts` — only exports `MaxRectsPacker`, `PACKING_LOGIC` and `IOption` among the eleven documented exports (plus
   the two `EDGE_*` constants), which left six of them unimportable from TypeScript until the type
   fixture landed.
   The emitted declarations carry explicit `.js` extensions — `scripts/fix-declaration-extensions.mjs`

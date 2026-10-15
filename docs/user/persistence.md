@@ -56,8 +56,8 @@ accepts, so both kinds of rect go into that file unchanged: `width`, `height`, `
 `oversized` when it is set, `allowRotation` when the rect carries an override, `data` when it holds
 anything other than the default `{}`, and any custom field you added. The internal backing fields are
 not written, and neither is the dirty counter — `JSON.stringify(new Rectangle(10, 20))` is
-`{"width":10,"height":20,"x":0,"y":0,"rot":false}`. That output is valid input again: it satisfies
-`IRectangleInput`, so a rect round-trips through `addArray()`.
+`{"width":10,"height":20,"x":0,"y":0,"rot":false}`. That output is valid input again: `toJSON()` is typed
+`IRectangleJSON`, which satisfies `IRectangleInput`, so a rect round-trips through `addArray()`.
 
 `load()` writes the loaded bins over the packer's by index and does **not** clear the ones after them:
 a packer holding three bins that loads one still has three — the first replaced, the other two keeping

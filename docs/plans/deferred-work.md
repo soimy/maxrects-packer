@@ -155,11 +155,18 @@ had been open since 2023 and was still live on `master`. It grew out of
   through `addArray()`. `save()` is untouched — it already rebuilds its entries field by field, so the
   persisted snapshot keeps its documented shape.
 
-  Two traps worth keeping. `JSON.stringify()`'s argument is typed `any`, so the package fixture has to
-  call `toJSON()` directly and annotate the result — a `JSON.stringify()` line compiles whether or not
-  the method exists, and the first version of the fixture assertion was toothless for exactly that
-  reason. And `allowRotation` is a prototype accessor rather than an own key, so it has to be written
-  back out by hand, or a `Rectangle` carrying an override would not match a plain object with the field.
+  Four traps worth keeping, all of them found by review or by the fixture rather than by the specs.
+  `JSON.stringify()`'s argument is typed `any`, so the package fixture has to call `toJSON()` directly
+  and assign the result to the published types — a `JSON.stringify()` line compiles whether or not the
+  method exists, and the first version of the fixture assertion was toothless for exactly that reason.
+  `allowRotation` is a prototype accessor rather than an own key, so it has to be written back out by
+  hand, or a `Rectangle` carrying an override would not match a plain object with the field. Reading the
+  backing fields instead of the public getters broke a subclass that overrides `data` or `allowRotation`
+  — the first draft did that while reading the geometry through getters, which was inconsistent as well
+  as wrong. And an "empty payload" test of "no own keys" silently dropped a `Date`, a class instance
+  whose state is on its prototype, and any payload that serializes itself through `toJSON()`; the test
+  now requires a plain empty object. The return type is `IRectangleJSON`, not `Record<string, any>`,
+  because the latter cannot be assigned to `IRectangleInput` or passed to `addArray()` without a cast.
 
 ## `rects` is a public array with the bin's bookkeeping beside it
 

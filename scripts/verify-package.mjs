@@ -17,7 +17,7 @@ const EXPECTED = ["Bin", "MaxRectsBin", "MaxRectsPacker", "OversizedElementBin",
 // The documented API, imported by package name — every name src/index.ts re-exports, used so the
 // fixture cannot pass on an unused import.
 const TYPE_FIXTURE = `import { Bin, MaxRectsBin, MaxRectsPacker, OversizedElementBin, PACKING_LOGIC, Rectangle } from "maxrects-packer";
-import type { IBin, IOption, IRectangle, IRectangleInput } from "maxrects-packer";
+import type { IBin, IOption, IRectangle, IRectangleInput, IRectangleJSON } from "maxrects-packer";
 
 const options: IOption = { smart: true, pot: true, square: false, allowRotation: false, tag: false, border: 0, logic: PACKING_LOGIC.MAX_EDGE };
 const packer = new MaxRectsPacker<Rectangle>(64, 64, 0, options);
@@ -51,11 +51,13 @@ const rect: IRectangle = new Rectangle(8, 8);
 const copied: Rectangle = Rectangle.Clone(new Rectangle(4, 4));
 // toJSON() is part of the published surface too (issue #53), and it has to be called directly: a
 // \`JSON.stringify()\` argument is typed \`any\`, so it would compile whether or not the method exists.
-// These annotations are what fail if the declaration drops the method (TS2339) or narrows its return.
-const rectJson = new Rectangle(8, 8).toJSON();
+// The declared return shape is what a consumer sees, so the result is assigned to the published types
+// with no cast — that is what fails if the declaration drops the method (TS2339), widens the return to
+// \`Record<string, any>\` (TS2739), or loses the guaranteed geometry fields.
+const rectJson: IRectangleJSON = new Rectangle(8, 8).toJSON();
 const rectJsonWidth: number = rectJson.width;
 const rectJsonRot: boolean = rectJson.rot;
-const roundTripped: IRectangleInput = JSON.parse(JSON.stringify(new Rectangle(8, 8))) as IRectangleInput;
+const roundTripped: IRectangleInput = rectJson;
 // The generic has to survive: a subclass must come back as that subclass, extra field included, or
 // this line stops compiling.
 class SheetRect extends Rectangle {
@@ -83,7 +85,7 @@ spritePacker.addArray([{ width: 8, height: 8, name: "sprite" }]);
 const sprites: Sprite[] = spritePacker.rects;
 export const summary = [saved.length, bins.length, bin.width, oversized.width, oversizedWithoutData.width, rect.width, copied.width, copiedSheet.label, packedSheets[0].label, binRects.length, sprites[0].name, rectJsonWidth, rectJsonRot, roundTripped.width, plain.bins.length, plainBin.width, plainOversized.width, plainCopied.width];
 `;
-// The CommonJS twin of TYPE_FIXTURE: the same ten documented exports, read by a `.cts` file, plus the
+// The CommonJS twin of TYPE_FIXTURE: the same eleven documented exports, read by a `.cts` file, plus the
 // `import … = require(…)` form. `.cts` is CommonJS to TypeScript whatever the surrounding
 // `package.json` says, so this fixture resolves through the `require` condition of the exports map —
 // which is the shape that used to fail with TS1479 (ESM import) and TS1471 (`= require`) under
@@ -260,7 +262,7 @@ try {
 
     // 6) Verify the published types by package name, in every resolution mode a consumer can use.
     // package.json "types" decides what a TypeScript consumer resolves, and it pointed at the
-    // declaration of src/maxrects-packer.ts instead of the barrel's, so six of the ten documented
+    // declaration of src/maxrects-packer.ts instead of the barrel's, so six of the eleven documented
     // exports could not be imported while every runtime check above stayed green. Only compiling an
     // import of them catches that. The declarations have to satisfy the strictest modes: this package
     // is `"type": "module"`, so its relative imports need explicit extensions under node16/nodenext

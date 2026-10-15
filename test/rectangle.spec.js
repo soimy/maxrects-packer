@@ -198,6 +198,45 @@ describe("Rectangle.toJSON()", () => {
         expect(JSON.stringify(new Rectangle(10, 20))).not.toContain("allowRotation");
     });
 
+    test("Carries a payload that only has prototype state", () => {
+        // A Date has no own properties at all, so an "own keys are empty" test mistakes it for the
+        // constructor's `{}` placeholder and drops the caller's payload.
+        const rect = new Rectangle(10, 20);
+        rect.data = new Date("2026-01-01T00:00:00Z");
+        expect(JSON.parse(JSON.stringify(rect)).data).toBe("2026-01-01T00:00:00.000Z");
+    });
+
+    test("Carries a payload that serializes itself", () => {
+        const rect = new Rectangle(10, 20);
+        rect.data = { toJSON: () => "custom" };
+        expect(JSON.parse(JSON.stringify(rect)).data).toBe("custom");
+    });
+
+    test("Carries a class-instance payload with no own fields", () => {
+        class Payload {}
+        const rect = new Rectangle(10, 20);
+        rect.data = new Payload();
+        expect(JSON.parse(JSON.stringify(rect))).toHaveProperty("data");
+    });
+
+    test("Reads a subclass's data getter rather than the backing field", () => {
+        class PayloadRect extends Rectangle {
+            get data() {
+                return { fromSubclass: true };
+            }
+        }
+        expect(JSON.parse(JSON.stringify(new PayloadRect(10, 20))).data).toEqual({ fromSubclass: true });
+    });
+
+    test("Reads a subclass's allowRotation getter rather than the backing field", () => {
+        class PinnedRect extends Rectangle {
+            get allowRotation() {
+                return true;
+            }
+        }
+        expect(JSON.parse(JSON.stringify(new PinnedRect(10, 20))).allowRotation).toBe(true);
+    });
+
     test("Matches the plain object the packer accepts for the same rect", () => {
         const packer = new MaxRectsPacker(64, 64);
         packer.addArray([{ width: 8, height: 8 }]);
