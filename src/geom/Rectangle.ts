@@ -60,6 +60,19 @@ function ownPropertyDescriptors(object: object): Record<string | symbol, Propert
     return descriptors;
 }
 
+/**
+ * Whether a rect's payload is the constructor's default rather than something the caller stored.
+ *
+ * Only a plain empty object counts: an explicit `null`, an empty string, `0` and `false` are all values
+ * a caller chose, so they serialize. The check reads own string keys, since `JSON.stringify()` would
+ * drop a payload that carried only symbol keys.
+ * @param data - the payload to test
+ * @returns true when the payload is the default `{}`
+ */
+function isEmptyPayload(data: any): boolean {
+    return data !== null && typeof data === "object" && ownKeys(data).length === 0;
+}
+
 export class Rectangle implements IRectangle {
     /**
      * Oversized tag on a rect the packer could not put in a bin: one bigger than the packer itself, or
@@ -209,6 +222,52 @@ export class Rectangle implements IRectangle {
      */
     public area(): number {
         return this.width * this.height;
+    }
+
+    /**
+     * The public shape of this rect, for `JSON.stringify()` (issue #53).
+     *
+     * Without this, `JSON.stringify(rect)` walked the own properties and emitted the backing fields —
+     * `{"oversized":false,"_rot":false,"_dirty":1,"_width":10,"_height":20,"_x":0,"_y":0,"_data":{}}` —
+     * so a `Rectangle` serialized differently from the equivalent plain `{ width, height }` object the
+     * packer also accepts. `data` is the caller's payload and belongs in the output; the internal dirty
+     * counter does not.
+     *
+     * The shape is the placed rect: `width`, `height`, `x`, `y` and `rot`. `oversized` is added only when
+     * set, `data` only when it holds something other than the default `{}` — an explicit `null` is a
+     * caller value rather than an empty default, so it travels — and `allowRotation` only when the rect
+     * carries an explicit override, since a plain object may state it as a field. Any other own field is
+     * kept as well, so a subclass or a rect carrying custom state still serializes whole; the
+     * underscore-prefixed backing fields are the only thing dropped.
+     *
+     * @returns the rect's own fields, with the backing fields replaced by the public ones
+     */
+    public toJSON(): Record<string, any> {
+        const json: Record<string, any> = {};
+        // `width`, `height`, `x`, `y`, `rot`, `data` and `allowRotation` are prototype accessors, so they
+        // are not own keys at all; the own keys are the backing fields plus `oversized` plus whatever the
+        // caller (or a subclass) added. The backing fields are skipped wholesale — the public value is
+        // read from the getter below — and everything else is kept, so custom state still serializes.
+        for (const key of ownKeys(this)) {
+            if (typeof key !== "string" || key.charAt(0) === "_") continue;
+            // A tag the packer sets, so it is absent rather than `false` on a normal rect.
+            if (key === "oversized" && !this.oversized) continue;
+            json[key] = (this as Record<string, any>)[key];
+        }
+        json.width = this.width;
+        json.height = this.height;
+        json.x = this.x;
+        json.y = this.y;
+        json.rot = this.rot;
+        // `data` is the caller's payload, so it travels — except the default `{}`, which is the
+        // constructor's placeholder rather than something the caller stored. An explicit `null` is a
+        // value the caller set, so it stays.
+        if (!isEmptyPayload(this._data)) json.data = this._data;
+        // The per-item rotation override is an accessor here but a plain field on the objects the packer
+        // also accepts, so it has to be written back out or the two rect kinds would not serialize alike.
+        // `undefined` is the absence of an override rather than one, so it stays absent.
+        if (this._allowRotation !== undefined) json.allowRotation = this._allowRotation;
+        return json;
     }
 
     /**

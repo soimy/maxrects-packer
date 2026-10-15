@@ -49,6 +49,13 @@ const rect: IRectangle = new Rectangle(8, 8);
 // The copy helper the bins' clone() uses is part of the public surface, so its declaration is pinned
 // too: a static that lost its generic, or its parameter, fails on this line.
 const copied: Rectangle = Rectangle.Clone(new Rectangle(4, 4));
+// toJSON() is part of the published surface too (issue #53), and it has to be called directly: a
+// \`JSON.stringify()\` argument is typed \`any\`, so it would compile whether or not the method exists.
+// These annotations are what fail if the declaration drops the method (TS2339) or narrows its return.
+const rectJson = new Rectangle(8, 8).toJSON();
+const rectJsonWidth: number = rectJson.width;
+const rectJsonRot: boolean = rectJson.rot;
+const roundTripped: IRectangleInput = JSON.parse(JSON.stringify(new Rectangle(8, 8))) as IRectangleInput;
 // The generic has to survive: a subclass must come back as that subclass, extra field included, or
 // this line stops compiling.
 class SheetRect extends Rectangle {
@@ -74,7 +81,7 @@ interface Sprite {
 const spritePacker = new MaxRectsPacker<Sprite>(64, 64);
 spritePacker.addArray([{ width: 8, height: 8, name: "sprite" }]);
 const sprites: Sprite[] = spritePacker.rects;
-export const summary = [saved.length, bins.length, bin.width, oversized.width, oversizedWithoutData.width, rect.width, copied.width, copiedSheet.label, packedSheets[0].label, binRects.length, sprites[0].name, plain.bins.length, plainBin.width, plainOversized.width, plainCopied.width];
+export const summary = [saved.length, bins.length, bin.width, oversized.width, oversizedWithoutData.width, rect.width, copied.width, copiedSheet.label, packedSheets[0].label, binRects.length, sprites[0].name, rectJsonWidth, rectJsonRot, roundTripped.width, plain.bins.length, plainBin.width, plainOversized.width, plainCopied.width];
 `;
 // The CommonJS twin of TYPE_FIXTURE: the same ten documented exports, read by a `.cts` file, plus the
 // `import … = require(…)` form. `.cts` is CommonJS to TypeScript whatever the surrounding

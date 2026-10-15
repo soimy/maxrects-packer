@@ -51,6 +51,14 @@ so they serialize fine:
 writeFileSync("state.json", JSON.stringify({ bins: packer.save(), rects: packer.rects }));
 ```
 
+A `Rectangle` serializes to the same public shape as the plain `{ width, height }` object the packer
+accepts, so both kinds of rect go into that file unchanged: `width`, `height`, `x`, `y` and `rot`, plus
+`oversized` when it is set, `allowRotation` when the rect carries an override, `data` when it holds
+anything other than the default `{}`, and any custom field you added. The internal backing fields are
+not written, and neither is the dirty counter — `JSON.stringify(new Rectangle(10, 20))` is
+`{"width":10,"height":20,"x":0,"y":0,"rot":false}`. That output is valid input again: it satisfies
+`IRectangleInput`, so a rect round-trips through `addArray()`.
+
 `load()` writes the loaded bins over the packer's by index and does **not** clear the ones after them:
 a packer holding three bins that loads one still has three — the first replaced, the other two keeping
 the rects they already held. Load into a fresh packer, or `reset()` first, when you want the loaded

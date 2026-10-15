@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { Rectangle } from "../src/geom/Rectangle";
+import { MaxRectsPacker } from "../src/maxrects-packer";
 
 const bigRect = new Rectangle(512, 512, 0, 0);
 const containedRect = new Rectangle(256, 256, 16, 128);
@@ -124,5 +125,97 @@ describe("Rectangle", () => {
         expect(containedRect.contain(collideRect)).toBe(false);
         expect(Rectangle.Contain(bigRect, containedRect)).toBe(true);
         expect(Rectangle.Contain(bigRect, collideRect)).toBe(false);
+    });
+});
+
+describe("Rectangle.toJSON()", () => {
+    test("Serializes the public shape, not the backing fields", () => {
+        // The regression: without toJSON() this was
+        // {"oversized":false,"_rot":false,"_dirty":0,"_width":10,"_height":20,"_x":0,"_y":0,"_data":{}}
+        expect(JSON.stringify(new Rectangle(10, 20))).toBe('{"width":10,"height":20,"x":0,"y":0,"rot":false}');
+    });
+
+    test("Never leaks the dirty counter", () => {
+        const rect = new Rectangle(10, 20);
+        rect.width = 11; // bumps the internal counter
+        expect(JSON.stringify(rect)).not.toContain("_dirty");
+        expect(Object.keys(JSON.parse(JSON.stringify(rect)))).toEqual(["width", "height", "x", "y", "rot"]);
+    });
+
+    test("Carries a non-empty data payload", () => {
+        const rect = new Rectangle(10, 20);
+        rect.data = { id: 7 };
+        expect(JSON.parse(JSON.stringify(rect)).data).toEqual({ id: 7 });
+    });
+
+    test("Omits the default empty payload", () => {
+        expect(JSON.stringify(new Rectangle(10, 20))).not.toContain("data");
+    });
+
+    test("Keeps an explicit null payload, which is not the default", () => {
+        const rect = new Rectangle(10, 20);
+        rect.data = null;
+        expect(JSON.parse(JSON.stringify(rect)).data).toBeNull();
+    });
+
+    test("Carries oversized only when it is set", () => {
+        const plain = new Rectangle(10, 20);
+        expect(JSON.stringify(plain)).not.toContain("oversized");
+        const oversized = new Rectangle(10, 20);
+        oversized.oversized = true;
+        expect(JSON.parse(JSON.stringify(oversized)).oversized).toBe(true);
+    });
+
+    test("Reports the stored orientation of a rotated rect", () => {
+        const rect = new Rectangle(10, 20);
+        rect.rot = true; // swaps width and height
+        expect(JSON.stringify(rect)).toBe('{"width":20,"height":10,"x":0,"y":0,"rot":true}');
+    });
+
+    test("Keeps a subclass's own fields", () => {
+        class SheetRect extends Rectangle {
+            constructor(...args) {
+                super(...args);
+                this.label = "sheet";
+            }
+        }
+        expect(JSON.parse(JSON.stringify(new SheetRect(4, 4))).label).toBe("sheet");
+    });
+
+    test("Keeps a field assigned after construction", () => {
+        const rect = new Rectangle(4, 4);
+        rect.assetId = "sprite";
+        expect(JSON.parse(JSON.stringify(rect)).assetId).toBe("sprite");
+    });
+
+    test("Carries an explicit allowRotation override", () => {
+        const rect = new Rectangle(10, 20);
+        rect.allowRotation = false;
+        expect(JSON.parse(JSON.stringify(rect)).allowRotation).toBe(false);
+    });
+
+    test("Omits allowRotation when no override is set", () => {
+        expect(JSON.stringify(new Rectangle(10, 20))).not.toContain("allowRotation");
+    });
+
+    test("Matches the plain object the packer accepts for the same rect", () => {
+        const packer = new MaxRectsPacker(64, 64);
+        packer.addArray([{ width: 8, height: 8 }]);
+        const plain = JSON.stringify(packer.rects[0]);
+
+        const other = new MaxRectsPacker(64, 64);
+        other.add(new Rectangle(8, 8));
+        expect(JSON.stringify(other.rects[0])).toBe(plain);
+    });
+
+    test("Round-trips through the packer's own input contract", () => {
+        const source = new MaxRectsPacker(64, 64);
+        source.add(new Rectangle(8, 8));
+        const revived = JSON.parse(JSON.stringify(source.rects[0]));
+
+        const next = new MaxRectsPacker(64, 64);
+        next.addArray([revived]);
+        expect(next.rects[0].x).toBe(0);
+        expect(next.rects[0].y).toBe(0);
     });
 });

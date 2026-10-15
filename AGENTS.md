@@ -121,6 +121,14 @@ version, with the reasoning, is [docs/contributor/behavior-contracts.md](./docs/
    documented rather than detected: an own accessor closing over the source, with no `clone()`, stays
    shared with the copy; `#private`-backed state with no `clone()` fails loudly. Details and the full
    list: [behaviour contracts](./docs/contributor/behavior-contracts.md#clone-isolates-the-two-bins).
+9. **`toJSON()` writes the public shape**: `JSON.stringify()` on a `Rectangle` produces the same
+   object as the plain `{ width, height }` rect the packer also accepts — `width`, `height`, `x`,
+   `y`, `rot`, plus `oversized` when set, `allowRotation` when the rect carries an override, `data`
+   when it is not the constructor's `{}` placeholder, and any other own field. The underscore
+   backing fields and the dirty counter are never written. The output satisfies `IRectangleInput`,
+   so it round-trips through `addArray()`. `JSON.stringify()`'s argument is typed `any`, so a
+   fixture that pins this has to call `toJSON()` directly — a `JSON.stringify()` line compiles
+   whether or not the method exists.
 
 ## Documentation map
 

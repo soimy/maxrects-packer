@@ -170,3 +170,19 @@ detected: a rect that keeps its state in an own accessor closing over the source
 `#private` field behind `width`, `height`, `x`, `y`, `rot` or `data`) fails loudly —
 `Rectangle.Clone` reports what to add, as does `MaxRectsBin.clone()` for a bin holding a rect it can no
 longer place.
+
+## 9. `toJSON()` writes the public shape
+
+`JSON.stringify()` on a `Rectangle` produces the same object as the plain `{ width, height }` rect the
+packer also accepts, so a rect serializes to what the guides show rather than to the class's backing
+fields (issue #53). The keys are `width`, `height`, `x`, `y` and `rot`, plus `oversized` when it is set,
+`allowRotation` when the rect carries an override, `data` when it holds anything other than the default
+`{}`, and any other own field — so a subclass or a rect carrying custom state still serializes whole.
+The underscore-prefixed backing fields and the dirty counter are never written: the dirty flag is the
+bin's bookkeeping, not the caller's data.
+
+The shape is closed under the library's own input contract: the output satisfies `IRectangleInput`, so
+`JSON.parse(JSON.stringify(rect))` can be handed straight back to `addArray()`. An explicit `null`
+payload is a value the caller set, so it is kept, while the constructor's `{}` placeholder is not.
+`save()` is unaffected — it already rebuilds its entries field by field, so the persisted snapshot keeps
+its documented shape.
