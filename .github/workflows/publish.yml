@@ -8,8 +8,15 @@
 #   Organization/user:  soimy
 #   Repository:         maxrects-packer
 #   Workflow filename:  publish.yml
-#   Environment:        (leave blank, or name one and add it to the job below)
+#   Environment:        npm-publish
+#   Allowed actions:    Allow npm publish
 # Renaming this file therefore breaks publishing until that record is updated with it.
+#
+# The environment is the publish authorization boundary, not a label. npm validates a run's
+# environment claim against the record, and `npm-publish` requires a deployment approval: a run that
+# drops the environment is refused, and a branch that keeps it cannot do anything until an approver
+# releases it. The `Protect release tags` ruleset guards the normal release path on top of that; it is
+# not what authorizes publishing, because a branch run of this file reaches the same OIDC trust path.
 #
 # `release.yml` runs from the same tag and owns the GitHub release; this workflow owns npm, so the
 # trusted-publisher record names one file with one purpose.
@@ -35,6 +42,12 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # The trusted-publisher record names this environment, and the environment requires a deployment
+    # approval — so the authorization boundary is here rather than in the tag ruleset. A run that
+    # drops the environment loses the claim npm validates; one that keeps it waits for the approver.
+    environment:
+      name: npm-publish
+      url: https://www.npmjs.com/package/maxrects-packer
 
     steps:
     - name: Checkout

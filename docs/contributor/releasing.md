@@ -59,15 +59,25 @@ git push --follow-tags
 Pushing a `v*` tag starts two workflows from the same commit:
 
 - `.github/workflows/release.yml` builds the bundles and creates the GitHub release with `dist/` attached.
-- `.github/workflows/publish.yml` re-runs the gates and publishes the package to npm.
+- `.github/workflows/publish.yml` re-runs the gates and publishes the package to npm. Its deployment to
+  the `npm-publish` environment waits for an approval from the repository owner, so the release is not
+  finished until that approval is granted in the Actions run.
 
 Contributors never need to touch versions, tags or `CHANGELOG.md`; both `CHANGELOG.md` and the version
 in `package.json` belong to `commit-and-tag-version`.
 
-Because the tag is what triggers the npm publish, release tags are protected rather than left to
-whoever can push: the repository ruleset *Protect release tags* restricts the creation, update and
-deletion of `refs/tags/v*` to the repository-admin role. Write access to branches is therefore not by
-itself the ability to publish, and a maintainer without the admin role needs an admin to cut the tag.
+Because the tag is what triggers the npm publish, release tags are protected too: the repository ruleset
+*Protect release tags* restricts the creation, update and deletion of `refs/tags/v*` to the
+repository-admin role, so a maintainer without that role needs an admin to cut the tag.
+
+That ruleset guards the normal release path; it is not what authorizes publishing. The
+trusted-publisher record is bound to the repository and the workflow file, so a branch run of
+`publish.yml` reaches the same OIDC path — the tag ruleset alone would not keep a writer out. The
+boundary is the `npm-publish` environment described below: the record names it, and it requires a
+deployment approval, so a writer who alters or copies the workflow either loses the environment claim
+and is refused by npm, or lands in a run that waits for an approver. Branch write access therefore does
+not have to include the ability to publish, but it does put the holder inside the workflow that
+publishing runs.
 
 ## Publishing to npm
 
@@ -85,7 +95,7 @@ The trusted publisher is configured **on npmjs.com**, under the package's *Setti
 | Organization/user | `soimy` |
 | Repository | `maxrects-packer` |
 | Workflow filename | `publish.yml` |
-| Environment | leave blank, or name one and add it to the job |
+| Environment | `npm-publish` — must match the job's `environment:` |
 | Allowed actions | **Allow npm publish** must be enabled |
 
 Three npm rules decide whether that record works, and none of them is visible from the GitHub side:
@@ -101,6 +111,12 @@ Three npm rules decide whether that record works, and none of them is visible fr
 - The provider and the required fields are fixed once a record exists; changing them means deleting and
   re-adding it. The record also names the workflow file, so renaming `publish.yml` breaks publishing
   until the record is updated with it.
+
+The environment field is what turns all of this into a gate rather than a label. `.github/workflows/publish.yml`
+runs its job in `npm-publish`, which requires a deployment approval from the repository owner
+(`prevent_self_review` is off, so the owner can approve their own tag-triggered run); the record only
+accepts a run whose OIDC token carries that environment. A run that leaves the environment out is
+refused, and one that keeps it waits for the approver.
 
 `publish.yml` checks the tag against the version in `package.json` before it publishes anything, and it
 publishes a prerelease (`3.0.0-rc.1`) under the `next` dist-tag so it never becomes what a plain
