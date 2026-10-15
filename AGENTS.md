@@ -216,7 +216,10 @@ npx vitest run test/maxrects-packer.spec.js   # run a single spec (no rebuild ne
   carries swapped dimensions afterwards, so a shared fixture would let one candidate measure what the
   previous one left behind.
 - CI: `.github/workflows/node.js.yml` (Node 20/22/24: lint → format:check → typecheck → verify:docs →
-  docs:build → cover → verify:package); `release.yml` is triggered by `v*` tags.
+  docs:build → cover → verify:package); `release.yml` is triggered by `v*` tags and builds the GitHub
+  release, while `publish.yml` runs from the same tags and publishes to npm through OIDC trusted
+  publishing (no `NPM_TOKEN` secret exists; the trusted publisher is configured on npmjs.com and names
+  `publish.yml`).
 
 ## Worktrees
 

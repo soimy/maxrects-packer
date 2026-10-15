@@ -56,10 +56,36 @@ npm run prepare-release   # npm test, then commit-and-tag-version (bumps version
 git push --follow-tags
 ```
 
-Pushing a `v*` tag triggers `.github/workflows/release.yml`, which builds the bundles and creates a
-GitHub release with `dist/` attached. **`release.yml` does not publish to npm** — there is no
-`npm publish` step and no `NPM_TOKEN` in the repository, so publishing is a separate manual
-`npm publish` from the tagged commit.
+Pushing a `v*` tag starts two workflows from the same commit:
+
+- `.github/workflows/release.yml` builds the bundles and creates the GitHub release with `dist/` attached.
+- `.github/workflows/publish.yml` re-runs the gates and publishes the package to npm.
 
 Contributors never need to touch versions, tags or `CHANGELOG.md`; both `CHANGELOG.md` and the version
 in `package.json` belong to `commit-and-tag-version`.
+
+## Publishing to npm
+
+Publishing uses [npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers), so this repository
+holds **no `NPM_TOKEN`**: GitHub Actions presents an OIDC token, npm exchanges it for a short-lived
+credential, and the tarball is published with a provenance attestation. The workflow is
+`.github/workflows/publish.yml`, and its publish step strips any token context before running so npm
+cannot fall back to a legacy `NODE_AUTH_TOKEN` path.
+
+Before the first automated publish, the trusted publisher has to be configured **on npmjs.com**, under
+the package's *Settings → Trusted Publisher*:
+
+| Field | Value |
+| --- | --- |
+| Publisher | GitHub Actions |
+| Organization/user | `soimy` |
+| Repository | `maxrects-packer` |
+| Workflow filename | `publish.yml` |
+| Environment | leave blank, or name one and add it to the job |
+
+That record names the workflow file, so renaming `publish.yml` breaks publishing until the record is
+updated with it; the publish step then fails authentication.
+
+`publish.yml` checks the tag against the version in `package.json` before it publishes anything, and it
+publishes a prerelease (`3.0.0-rc.1`) under the `next` dist-tag so it never becomes what a plain
+`npm install` resolves to. `release.yml` keeps working on its own; npm is the second workflow's only job.
