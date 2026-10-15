@@ -201,6 +201,46 @@ describe("Rectangle.toJSON()", () => {
         expect(Object.getOwnPropertyDescriptor(json, "__proto__").value).toBe("sprite");
     });
 
+    test("Keeps a placeholder whose prototype the caller replaced", () => {
+        // No own keys were added and neither earlier test changed, but the payload now serializes through
+        // the prototype it was given, so it is the caller's value rather than the constructor's.
+        const rect = new Rectangle(10, 20);
+        Object.setPrototypeOf(rect.data, {
+            toJSON() {
+                return "custom";
+            }
+        });
+        expect(JSON.parse(JSON.stringify(rect)).data).toBe("custom");
+    });
+
+    test("Keeps a placeholder whose prototype was set to null", () => {
+        const rect = new Rectangle(10, 20);
+        Object.setPrototypeOf(rect.data, null);
+        expect(JSON.parse(JSON.stringify(rect))).toHaveProperty("data");
+    });
+
+    test("Keeps a payload a subclass assigned to the backing field as null", () => {
+        // The setter is the documented path, but the field is reachable from a subclass, and a `null`
+        // there is a payload. Counting keys on it throws rather than answering.
+        class NullDataRect extends Rectangle {
+            constructor(...args) {
+                super(...args);
+                this._data = null;
+            }
+        }
+        expect(JSON.parse(JSON.stringify(new NullDataRect(10, 20))).data).toBeNull();
+    });
+
+    test("Keeps a payload a subclass assigned to the backing field as a primitive", () => {
+        class PrimitiveDataRect extends Rectangle {
+            constructor(...args) {
+                super(...args);
+                this._data = "payload";
+            }
+        }
+        expect(JSON.parse(JSON.stringify(new PrimitiveDataRect(10, 20))).data).toBe("payload");
+    });
+
     test("Keeps a subclass getter that returns its own empty object", () => {
         // The backing field is still the base placeholder, but the getter is what the caller reads, so the
         // value is the caller's.

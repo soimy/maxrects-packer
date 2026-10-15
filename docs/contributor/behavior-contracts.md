@@ -187,12 +187,15 @@ accessor and would repoint the result's prototype; the result keeps an ordinary 
 otherwise. The dirty counter is never written: it is the bin's bookkeeping, not the caller's data.
 
 `data` is omitted only for the constructor's own untouched `{}` placeholder, and three tests have to agree
-before that is assumed: the flag the setter clears, the public getter returning the backing field itself,
-and the placeholder still being empty. Tracking rather than inferring is what lets a `{}` the caller
-assigned serialize, and comparing identity with the backing field is what lets a subclass getter that
-returns its own `{}` — or a `Date`, or a primitive — serialize too. The emptiness test remains for the one
-case the other two cannot see: a caller who filled the placeholder in place without going through the
-setter.
+before that is assumed: the flag the setter clears, the public getter returning that very backing field,
+and the value still looking the way the constructor left it — a plain object whose prototype is
+`Object.prototype` and which carries no own keys at all, whatever their kind. Each covers
+something the others cannot. Tracking rather than inferring is what lets a `{}` the caller assigned
+serialize. The identity comparison is what makes a subclass getter returning its own `{}` — or a `Date`,
+or a primitive — authoritative. And the shape test is what sees a caller who mutated the placeholder in
+place rather than replacing it, whether by adding a key or by giving it a prototype that serializes
+itself. That same test keeps the key count off a value that is not an object, so a subclass writing `null`
+into the backing field serializes a field instead of throwing.
 
 The return type is `IRectangleJSON`, an `IRectangleInput` with the guaranteed `x`, `y` and `rot` declared
 and `oversized`, `allowRotation` and `data` optional, so the result can be assigned to `IRectangleInput`

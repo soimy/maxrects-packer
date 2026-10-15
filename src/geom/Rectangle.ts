@@ -99,6 +99,27 @@ const BACKING_FIELDS: Record<string, true> = {
     _dirty: true
 };
 
+/**
+ * Whether the payload is the untouched `{}` the constructor installed.
+ *
+ * Counting keys is not enough on its own, in either direction. The value has to be an object before its
+ * keys can be counted, because a subclass may assign the protected `_data` field directly — the setter is
+ * the documented path, but the field is reachable — and a `null` or a primitive there is a payload, while
+ * `Object.getOwnPropertyNames(null)` throws rather than answering. And the prototype has to be the
+ * original `Object.prototype`, because replacing it leaves the value with no own keys while giving it
+ * behaviour of its own, which is a payload the caller wrote rather than an empty placeholder.
+ * @param data - the payload to test
+ * @returns true when it is a plain empty object that still has its original prototype
+ */
+function isUntouchedPlaceholder(data: any): boolean {
+    return (
+        data !== null &&
+        typeof data === "object" &&
+        Object.getPrototypeOf(data) === Object.prototype &&
+        ownKeys(data).length === 0
+    );
+}
+
 export class Rectangle implements IRectangle {
     /**
      * Oversized tag on a rect the packer could not put in a bin: one bigger than the packer itself, or
@@ -316,7 +337,7 @@ export class Rectangle implements IRectangle {
         // through the setter, which is the one way to give it contents while both earlier tests still pass.
         // That third test needs no prototype check: the first two have already pinned `data` to the plain
         // object the constructor installed.
-        if (!(this._dataIsDefault && data === this._data && ownKeys(data).length === 0)) json.data = data;
+        if (!(this._dataIsDefault && data === this._data && isUntouchedPlaceholder(data))) json.data = data;
         // The per-item rotation override is an accessor here but a plain field on the objects the packer
         // also accepts, so it has to be written back out or the two rect kinds would not serialize alike.
         // `undefined` is the absence of an override rather than one, so it stays absent.
