@@ -100,25 +100,17 @@ const BACKING_FIELDS: Record<string, true> = {
 };
 
 /**
- * Whether a payload is a plain, empty object that still has its original prototype.
+ * Whether a payload the constructor installed is still a plain, empty object with its original prototype.
  *
- * This is one half of "is it the constructor's placeholder"; identity is the other, and `toJSON()` checks
- * both because neither covers the other. Shape is what sees a placeholder that was mutated where it
- * stands — an added key, or a prototype replaced with one that serializes itself — while identity is what
- * sees a `{}` the caller wrote, which is shape-identical to the placeholder. The value has to be an object
- * before its keys can be counted: a subclass may assign the protected `_data` field directly, and a `null`
- * or a primitive there is a payload, while `Object.getOwnPropertyNames(null)` throws rather than
- * answering.
- * @param data - the payload to test
+ * The caller has already established identity, so the value is the `{}` the constructor put there and
+ * there is nothing to say about its type; that is why the parameter is an `object`. What identity cannot
+ * see is a placeholder mutated where it stands, which is the whole job here: an added key, or a prototype
+ * replaced with one that serializes itself, both leave identity intact.
+ * @param data - the payload to test, already known to be the object the constructor installed
  * @returns true when it is a plain empty object that still has its original prototype
  */
-function isEmptyPlainObject(data: any): boolean {
-    return (
-        data !== null &&
-        typeof data === "object" &&
-        Object.getPrototypeOf(data) === Object.prototype &&
-        ownKeys(data).length === 0
-    );
+function isPlainEmptyObject(data: object): boolean {
+    return Object.getPrototypeOf(data) === Object.prototype && ownKeys(data).length === 0;
 }
 
 export class Rectangle implements IRectangle {
@@ -327,17 +319,18 @@ export class Rectangle implements IRectangle {
             json[key] = (this as Record<string, any>)[key];
         }
         // `data` is the caller's payload, so it travels. Only the constructor's own untouched `{}` is the
-        // absence of one, which takes two tests that cover different things — each has already been
-        // deleted once as redundant, and each time that lost caller data.
+        // absence of one, which takes two tests that cover different things — each has already been deleted
+        // once as redundant, and each time that lost caller data.
         const data = this.data;
-        // Shape comes first, so the key count is never taken on a value that is not an object. Shape alone
-        // sees a placeholder mutated where it stands, by an added key or by a prototype replaced with one
-        // that serializes itself.
+        // Identity first, and that order is worth keeping: the shape test enumerates keys, so testing it
+        // first would scan every payload the caller supplied — and a payload can be a large object — only
+        // to discard the answer. Identity is also the only test that sees a `{}` the caller wrote, through
+        // the setter or by assigning the protected field from a subclass, because such an object looks
+        // exactly like the placeholder.
         //
-        // Identity comes second, because shape cannot see a `{}` the caller wrote — through the setter, or
-        // by assigning the protected field from a subclass. Such an object looks exactly like the
-        // placeholder, and only identity tells them apart.
-        if (!(isEmptyPlainObject(data) && data === this._defaultData)) json.data = data;
+        // Shape second, for the one thing identity cannot see: a placeholder mutated where it stands, by an
+        // added key or by a prototype replaced with one that serializes itself.
+        if (!(data === this._defaultData && isPlainEmptyObject(data))) json.data = data;
         // The per-item rotation override is an accessor here but a plain field on the objects the packer
         // also accepts, so it has to be written back out or the two rect kinds would not serialize alike.
         // `undefined` is the absence of an override rather than one, so it stays absent.

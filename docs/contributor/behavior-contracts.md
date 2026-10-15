@@ -187,14 +187,13 @@ accessor and would repoint the result's prototype; the result keeps an ordinary 
 otherwise. The dirty counter is never written: it is the bin's bookkeeping, not the caller's data.
 
 `data` is omitted only for the constructor's own untouched `{}` placeholder, and that takes two tests
-covering different cases. The shape test says the value is a plain empty object that still has its
-original `Object.prototype`; it is what sees a placeholder mutated where it stands — an added key, or a
-prototype replaced with one that serializes itself — and it keeps the key count off a value that is not an
-object, so a subclass writing `null` into the protected backing field serializes rather than throwing. The
-identity test says the value is the very object the constructor installed, which is the only thing that
-sees a `{}` the caller wrote, since the setter and a subclass assigning the protected field directly both
-produce an object the shape test cannot tell from the placeholder. The placeholder is therefore tracked as
-the object itself rather than as a flag the setter clears, because a direct assignment never reaches the
+covering different cases. Identity is checked first: is the value the very object the constructor
+installed? That is the only thing that sees a `{}` the caller wrote — through the setter, or by a subclass
+assigning the protected field directly — and checking it first also means a caller's payload is recognised
+without being scanned, which matters because the shape test enumerates keys and a payload can be a large
+object. Shape is checked second, because identity alone cannot see a placeholder mutated where it stands:
+an added key, or a prototype replaced with one that serializes itself. The placeholder is tracked as the
+object itself rather than as a flag the setter clears, because a direct assignment never reaches the
 setter.
 
 The return type is `IRectangleJSON`, an `IRectangleInput` with the guaranteed `x`, `y` and `rot` declared

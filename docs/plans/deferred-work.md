@@ -172,11 +172,13 @@ had been open since 2023 and was still live on `master`. It grew out of
   And "empty payload" still could not tell the constructor's `{}` from a `{}` the caller assigned, so the
   placeholder is now tracked as the object itself rather than inferred from its shape. A flag the setter
   clears cannot do that job: a subclass may assign the protected `_data` field directly, which never
-  reaches the setter. Shape and identity are both tested, because each covers a case the other misses —
-  shape catches a placeholder mutated where it stands, by an added key or a prototype replaced with one
-  that serializes itself, and keeps the key count off a value that is not an object, while identity is the
-  only thing that sees a fresh `{}` the caller wrote, which is shape-identical to the placeholder. The
-  geometry keys are written first so the order is fixed rather than following assignment order.
+  reaches the setter. Identity and shape are both tested, because each covers a case the other misses, and
+  identity goes first — it is the only thing that sees a fresh `{}` the caller wrote, and testing it first
+  also keeps the key scan off every payload the caller supplied, which a 50,000-property payload measured
+  at one wasted `getOwnPropertyNames` call per serialization. Shape then catches what identity cannot: a
+  placeholder mutated where it stands, by an added key or a prototype replaced with one that serializes
+  itself. The geometry keys are written first so the order is fixed rather than following assignment
+  order.
 
 ## `rects` is a public array with the bin's bookkeeping beside it
 
