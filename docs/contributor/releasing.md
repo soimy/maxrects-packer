@@ -64,6 +64,11 @@ Pushing a `v*` tag starts two workflows from the same commit:
 Contributors never need to touch versions, tags or `CHANGELOG.md`; both `CHANGELOG.md` and the version
 in `package.json` belong to `commit-and-tag-version`.
 
+Because the tag is what triggers the npm publish, release tags are protected rather than left to
+whoever can push: the repository ruleset *Protect release tags* restricts the creation, update and
+deletion of `refs/tags/v*` to the repository-admin role. Write access to branches is therefore not by
+itself the ability to publish, and a maintainer without the admin role needs an admin to cut the tag.
+
 ## Publishing to npm
 
 Publishing uses [npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers), so this repository

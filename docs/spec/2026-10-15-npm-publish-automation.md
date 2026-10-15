@@ -39,6 +39,10 @@ tag and neither depends on the other.
   record it depends on: publisher GitHub Actions, user `soimy`, repository `maxrects-packer`, workflow
   filename `publish.yml`, environment blank, and **Allow npm publish** enabled. The guide also records
   the 2-day validation window, which no local check can observe.
+- OIDC turned a pushed `v*` tag into a publish trigger, so the tag namespace is protected rather than
+  left open to anyone with write access: the repository ruleset *Protect release tags* (id 25144033)
+  restricts creation, update and deletion of `refs/tags/v*` to the repository-admin role, which keeps
+  the bypass the owner needs to cut a release.
 
 ## Rejected alternatives
 
