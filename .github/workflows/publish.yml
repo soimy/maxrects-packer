@@ -1,0 +1,118 @@
+# Publishes a tagged release to the public npm registry through npm Trusted Publishing: GitHub Actions
+# exchanges its OIDC token for a short-lived npm credential, so the repository stores no NPM_TOKEN and
+# every tarball carries a provenance attestation.
+#
+# The trusted publisher lives on npmjs.com, not in this repository. One-time setup, under the
+# package's Settings -> Trusted Publisher:
+#   Publisher:          GitHub Actions
+#   Organization/user:  soimy
+#   Repository:         maxrects-packer
+#   Workflow filename:  publish.yml
+#   Environment:        npm-publish
+#   Allowed actions:    Allow npm publish
+# Renaming this file therefore breaks publishing until that record is updated with it.
+#
+# The environment is the publish authorization boundary, not a label. npm validates a run's
+# environment claim against the record, and `npm-publish` requires a deployment approval: a run that
+# drops the environment is refused, and a branch that keeps it cannot do anything until an approver
+# releases it. The `Protect release tags` ruleset guards the normal release path on top of that; it is
+# not what authorizes publishing, because a branch run of this file reaches the same OIDC trust path.
+#
+# `release.yml` runs from the same tag and owns the GitHub release; this workflow owns npm, so the
+# trusted-publisher record names one file with one purpose.
+name: Publish to npm
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+# The OIDC token is the only credential this workflow needs: `id-token: write` is what npm exchanges
+# for the publish token, and `contents: read` is all the checkout needs. Nothing else is granted.
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  # A publish is never cancelled midway: a half-applied release is worse than one that waits its turn.
+  group: npm-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # The trusted-publisher record names this environment, and the environment requires a deployment
+    # approval — so the authorization boundary is here rather than in the tag ruleset. A run that
+    # drops the environment loses the claim npm validates; one that keeps it waits for the approver.
+    environment:
+      name: npm-publish
+      url: https://www.npmjs.com/package/maxrects-packer
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+
+    # No `registry-url` on purpose: setup-node would write an .npmrc whose `_authToken` reads
+    # `${NODE_AUTH_TOKEN}`, and an unset NODE_AUTH_TOKEN sends npm down the legacy token path instead
+    # of trusted publishing.
+    - name: Setup Node.js
+      uses: actions/setup-node@v7
+      with:
+        node-version: 24
+        cache: npm
+
+    - name: Install dependencies
+      run: npm ci --include=dev
+
+    # Trusted publishing needs npm 11.5.1 or newer, and the runner's bundled npm version is not ours
+    # to pin, so it is upgraded explicitly rather than assumed.
+    - name: Upgrade npm for trusted publishing
+      run: npm install --global npm@^11.5.1
+
+    # The tag is the release's identity and package.json is the version's: if they disagree, the wrong
+    # number would ship under the tag. The dist-tag is decided here too, because `npm publish` defaults
+    # to `latest` whatever the version looks like — a prerelease has to be routed to `next` explicitly
+    # or it becomes what a plain `npm install` resolves to.
+    - name: Verify the tag matches the package version
+      id: release
+      env:
+        TAG: ${{ github.ref_name }}
+      run: |
+        set -euo pipefail
+        VERSION="${TAG#v}"
+        PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+        if [ "$VERSION" != "$PACKAGE_VERSION" ]; then
+          echo "::error::tag ${TAG} does not match package.json version ${PACKAGE_VERSION}"
+          exit 1
+        fi
+        NPM_TAG="latest"
+        case "$VERSION" in
+          *-*) NPM_TAG="next" ;;
+        esac
+        echo "npm_tag=${NPM_TAG}" >> "$GITHUB_OUTPUT"
+        echo "Publishing ${VERSION} under the ${NPM_TAG} dist-tag"
+
+    # The gates CI runs, minus the documentation build: a publish is gated on the tests and on the real
+    # tarball, not on the site. `cover` rebuilds `dist/` and `verify:package` packs and consumes it, so
+    # the published artifact is the one these checks passed.
+    - run: npm run lint
+    - run: npm run format:check
+    - run: npm run typecheck
+    - run: npm run cover
+    - run: npm run verify:package
+
+    - name: Publish to npm
+      env:
+        NPM_TAG: ${{ steps.release.outputs.npm_tag }}
+      run: |
+        set -euo pipefail
+        # Force the trusted-publishing path. A leftover user-level .npmrc, or an empty NODE_AUTH_TOKEN,
+        # makes npm authenticate with a token that does not exist and fail with ENEEDAUTH before it ever
+        # tries OIDC.
+        if [ -n "${NPM_CONFIG_USERCONFIG:-}" ] && [ -f "${NPM_CONFIG_USERCONFIG}" ]; then
+          rm -f "${NPM_CONFIG_USERCONFIG}"
+        fi
+        unset NODE_AUTH_TOKEN
+        unset NPM_TOKEN
+        npm publish --tag "$NPM_TAG" --access public

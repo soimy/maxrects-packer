@@ -49,8 +49,7 @@ The release includes the fixes accumulated since `v2.7.4`. Everything in this qu
 
 ```bash
 npm run prepare-release    # npm test, then commit-and-tag-version
-git push --follow-tags     # release.yml builds the GitHub release
-npm publish                # manual — release.yml does not publish to npm
+git push --follow-tags     # release.yml builds the GitHub release; publish.yml publishes to npm via OIDC
 ```
 
 The non-exclusive tag metadata fix and the `exports` map both carry breaking markers, so

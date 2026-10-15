@@ -237,9 +237,13 @@ npm run prepare-release   # npm test, then commit-and-tag-version (bumps version
 git push --follow-tags
 ```
 
-Pushing a `v*` tag triggers `.github/workflows/release.yml`, which builds the bundles and creates a
-GitHub release with `dist/` attached. **It does not publish to npm** — there is no `npm publish` step and
-no `NPM_TOKEN` in the repository, so publishing is a separate manual step from the tagged commit.
+Pushing a `v*` tag triggers two workflows from the same commit. `.github/workflows/release.yml` builds
+the bundles and creates a GitHub release with `dist/` attached. `.github/workflows/publish.yml` re-runs
+the gates and publishes the package to npm through [npm Trusted
+Publishing](https://docs.npmjs.com/trusted-publishers): GitHub Actions exchanges its OIDC token for a
+short-lived npm credential, so the repository holds no `NPM_TOKEN` secret and each tarball carries a
+provenance attestation. The tag is checked against the version in `package.json` before anything ships,
+and a prerelease goes to the `next` dist-tag instead of `latest`.
 
 ## Security
 

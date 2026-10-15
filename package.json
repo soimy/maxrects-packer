@@ -28,6 +28,10 @@
     "tsconfig.build.json",
     "typedoc.json"
   ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
   "scripts": {
     "clean": "rimraf ./dist ./lib",
     "build": "rollup -c",
@@ -56,7 +60,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://soimy@github.com/soimy/maxrects-packer.git"
+    "url": "git+https://github.com/soimy/maxrects-packer.git"
   },
   "keywords": [
     "spritesheet",

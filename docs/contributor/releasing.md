@@ -56,10 +56,68 @@ npm run prepare-release   # npm test, then commit-and-tag-version (bumps version
 git push --follow-tags
 ```
 
-Pushing a `v*` tag triggers `.github/workflows/release.yml`, which builds the bundles and creates a
-GitHub release with `dist/` attached. **`release.yml` does not publish to npm** — there is no
-`npm publish` step and no `NPM_TOKEN` in the repository, so publishing is a separate manual
-`npm publish` from the tagged commit.
+Pushing a `v*` tag starts two workflows from the same commit:
+
+- `.github/workflows/release.yml` builds the bundles and creates the GitHub release with `dist/` attached.
+- `.github/workflows/publish.yml` re-runs the gates and publishes the package to npm. Its deployment to
+  the `npm-publish` environment waits for an approval from the repository owner, so the release is not
+  finished until that approval is granted in the Actions run.
 
 Contributors never need to touch versions, tags or `CHANGELOG.md`; both `CHANGELOG.md` and the version
 in `package.json` belong to `commit-and-tag-version`.
+
+Because the tag is what triggers the npm publish, release tags are protected too: the repository ruleset
+*Protect release tags* restricts the creation, update and deletion of `refs/tags/v*` to the
+repository-admin role, so a maintainer without that role needs an admin to cut the tag.
+
+That ruleset guards the normal release path; it is not what authorizes publishing. The
+trusted-publisher record is bound to the repository and the workflow file, so a branch run of
+`publish.yml` reaches the same OIDC path — the tag ruleset alone would not keep a writer out. The
+boundary is the `npm-publish` environment described below: the record names it, and it requires a
+deployment approval, so a writer who alters or copies the workflow either loses the environment claim
+and is refused by npm, or lands in a run that waits for an approver. Branch write access therefore does
+not have to include the ability to publish, but it does put the holder inside the workflow that
+publishing runs.
+
+## Publishing to npm
+
+Publishing uses [npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers), so this repository
+holds **no `NPM_TOKEN`**: GitHub Actions presents an OIDC token, npm exchanges it for a short-lived
+credential, and the tarball is published with a provenance attestation. The workflow is
+`.github/workflows/publish.yml`, and its publish step strips any token context before running so npm
+cannot fall back to a legacy `NODE_AUTH_TOKEN` path.
+
+The trusted publisher is configured **on npmjs.com**, under the package's *Settings → Trusted Publisher*:
+
+| Field | Value |
+| --- | --- |
+| Publisher | GitHub Actions |
+| Organization/user | `soimy` |
+| Repository | `maxrects-packer` |
+| Workflow filename | `publish.yml` |
+| Environment | `npm-publish` — must match the job's `environment:` |
+| Allowed actions | **Allow npm publish** must be enabled |
+
+Three npm rules decide whether that record works, and none of them is visible from the GitHub side:
+
+- **`npm stage publish` is always allowed; a direct `npm publish` is not.** A record created without
+  *Allow npm publish* still completes the OIDC token exchange — so a probe or a dry run looks healthy —
+  and then rejects the publish itself. This repository publishes directly, so that box has to be
+  checked. *Allow dist-tag management* is independent and is not needed here.
+- **A new record must complete its first real publish within 2 days, or it expires** and can no longer
+  be used or edited. A successful token exchange does not count; only the first published tarball
+  validates the record. Create the record immediately before the first prerelease and publish inside
+  that window — if it expires, delete it, create a new one, and publish within 2 days of that.
+- The provider and the required fields are fixed once a record exists; changing them means deleting and
+  re-adding it. The record also names the workflow file, so renaming `publish.yml` breaks publishing
+  until the record is updated with it.
+
+The environment field is what turns all of this into a gate rather than a label. `.github/workflows/publish.yml`
+runs its job in `npm-publish`, which requires a deployment approval from the repository owner
+(`prevent_self_review` is off, so the owner can approve their own tag-triggered run); the record only
+accepts a run whose OIDC token carries that environment. A run that leaves the environment out is
+refused, and one that keeps it waits for the approver.
+
+`publish.yml` checks the tag against the version in `package.json` before it publishes anything, and it
+publishes a prerelease (`3.0.0-rc.1`) under the `next` dist-tag so it never becomes what a plain
+`npm install` resolves to. `release.yml` keeps working on its own; npm is the second workflow's only job.
