@@ -1,5 +1,5 @@
 import { EDGE_MAX_VALUE, PACKING_LOGIC, IOption } from "./types";
-import { Rectangle, IRectangle } from "./geom/Rectangle";
+import { Rectangle, IRectangle, IRectangleInput } from "./geom/Rectangle";
 import { Bin } from "./abstract-bin";
 
 /**
@@ -10,7 +10,7 @@ import { Bin } from "./abstract-bin";
  *
  * @param rect - the copy to restore, mutated in place
  */
-function undoBinRotation(rect: IRectangle): void {
+function undoBinRotation(rect: IRectangleInput): void {
     const width = rect.width;
     const height = rect.height;
     rect.rot = !rect.rot;
@@ -18,7 +18,7 @@ function undoBinRotation(rect: IRectangle): void {
     rect.height = width;
 }
 
-export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
+export class MaxRectsBin<T extends IRectangleInput = IRectangleInput> extends Bin<T> {
     public width: number;
     public height: number;
     public freeRects: Rectangle[] = [];
@@ -101,7 +101,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
      */
     public add(width: number, height: number, data: any): T | undefined;
     public add(...args: any[]): any {
-        let rect: IRectangle;
+        let rect: IRectangleInput;
         if (args.length === 1) {
             if (typeof args[0] !== "object") throw new Error("MacrectsBin.add(): Wrong parameters");
             rect = args[0] as T;
@@ -272,7 +272,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
         return wasRotated !== (rect.rot === true);
     }
 
-    private place(rect: IRectangle): T | undefined {
+    private place(rect: IRectangleInput): T | undefined {
         // Preserve falsy bin labels as metadata, but use the rect reader's untagged rule on both sides.
         let tag = rect.data && rect.data.tag ? rect.data.tag : rect.tag ? rect.tag : undefined;
         if (this.options.tag && this.options.exclusiveTag && (this.tag || undefined) !== tag) return undefined;
@@ -321,7 +321,7 @@ export class MaxRectsBin<T extends IRectangle = Rectangle> extends Bin<T> {
                 rect.height = width;
             }
             this._dirty++;
-            return rect as T;
+            return rect as unknown as T;
         } else if (!this.verticalExpand) {
             if (
                 this.updateBinSize(

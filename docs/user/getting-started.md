@@ -38,8 +38,10 @@ const { MaxRectsPacker } = require("maxrects-packer");
 
 `addArray()` writes `x`, `y` and `rot` **onto the objects you passed in** — the same objects come back
 out of `bin.rects`, carrying their placement. Any object with `width` and `height` is accepted; in
-TypeScript that is any class implementing [`IRectangle`](../api/interfaces/IRectangle.md), and extra
-properties such as `name` above survive untouched.
+TypeScript that is [`IRectangleInput`](../api/interfaces/IRectangleInput.md), which is those two fields
+plus whatever else the object carries, so extra properties such as `name` above survive untouched and
+no type argument is needed. The packer's own [`IRectangle`](../api/interfaces/IRectangle.md) is that
+same shape plus the `x`/`y` it writes.
 
 ## Reading the result
 

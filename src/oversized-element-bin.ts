@@ -1,8 +1,8 @@
-import { IRectangle, Rectangle } from "./geom/Rectangle";
+import { IRectangle, IRectangleInput, Rectangle } from "./geom/Rectangle";
 import { IOption } from "./types";
 import { Bin } from "./abstract-bin";
 
-export class OversizedElementBin<T extends IRectangle = Rectangle> extends Bin<T> {
+export class OversizedElementBin<T extends IRectangleInput = IRectangleInput> extends Bin<T> {
     public width: number;
     public height: number;
     public data: any;
@@ -43,10 +43,12 @@ export class OversizedElementBin<T extends IRectangle = Rectangle> extends Bin<T
             // A two-argument construction is supported (and declared, so TypeScript callers can use it):
             // leaving `data` out keeps the original `null` rather than falling through to `undefined`.
             this.data = args.length > 2 ? args[2] : null;
+            // As with `MaxRectsPacker.add(width, height, data)`: this form builds its own rect, so the
+            // `T` it is stored as is the caller's declaration rather than something this class can check.
             const rect: IRectangle = new Rectangle(this.width, this.height);
             rect.oversized = true;
             if (args.length > 2) rect.data = this.data;
-            this.rects.push(rect as T);
+            this.rects.push(rect as unknown as T);
         }
         this.freeRects = [];
         this.maxWidth = this.width;

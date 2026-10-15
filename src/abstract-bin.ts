@@ -1,4 +1,4 @@
-import { IRectangle } from "./geom/Rectangle";
+import { IRectangle, IRectangleInput } from "./geom/Rectangle";
 import { IOption } from "./types";
 
 export interface IBin {
@@ -7,12 +7,12 @@ export interface IBin {
     maxWidth: number;
     maxHeight: number;
     freeRects: IRectangle[];
-    rects: IRectangle[];
+    rects: IRectangleInput[];
     options: IOption;
     [propName: string]: any;
 }
 
-export abstract class Bin<T extends IRectangle> implements IBin {
+export abstract class Bin<T extends IRectangleInput> implements IBin {
     public width!: number;
     public height!: number;
     public maxWidth!: number;

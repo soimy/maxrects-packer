@@ -1,9 +1,24 @@
-export interface IRectangle {
+/**
+ * What `add()` and `addArray()` accept: any object carrying `width` and `height`.
+ *
+ * A caller supplies the size, and the packer writes the placement onto that very object, so `x`, `y`,
+ * `rot` and `oversized` are deliberately absent here — {@link IRectangle} is the placed shape, and
+ * requiring its coordinates up front is what made a plain `{ width, height }` object fail to compile
+ * (issue #46). The index signature is what lets an object keep the fields of its own class, so the
+ * rect that comes back out of a bin is still that class.
+ */
+export interface IRectangleInput {
     width: number;
     height: number;
+    [propName: string]: any;
+}
+
+/**
+ * A rect the packer has placed: an {@link IRectangleInput} plus the `x`/`y` the packer wrote onto it.
+ */
+export interface IRectangle extends IRectangleInput {
     x: number;
     y: number;
-    [propName: string]: any;
 }
 
 /**
@@ -135,7 +150,7 @@ export class Rectangle implements IRectangle {
      * @returns a new object carrying the same own values as the source, built on whatever `rect.clone()`
      * returns when the rect class has one
      */
-    public static Clone<T extends IRectangle>(rect: T): T {
+    public static Clone<T extends IRectangleInput>(rect: T): T {
         const copier = (rect as { clone?: () => T }).clone;
         let copy: T;
         if (typeof copier === "function") {
